@@ -1,25 +1,33 @@
-use std::f64::consts::PI;
 use crate::plater::bitmap::Bitmap;
+use std::f64::consts::PI;
 
 pub struct Part {
-    locked: bool ,// if true, part cannot be moved or rotated
-    id:String,
-    pub(crate) precision:f64,
-    pub(crate) delta_r:f64,
-    width:f64,
-    height:f64,
-    center_x:f64,
-    center_y:f64,
-    surface:f64, // average bitmap size
-    pub(crate) bitmaps:Vec<Option<Bitmap>>
+    pub(crate) locked: bool, // if true, part cannot be moved or rotated
+    pub(crate) id: String,
+    pub(crate) precision: f64,
+    pub(crate) delta_r: f64,
+    width: f64,
+    height: f64,
+    center_x: f64,
+    center_y: f64,
+    surface: f64, // average bitmap size
+    pub(crate) bitmaps: Vec<Option<Bitmap>>,
 }
 
 impl Part {
-    fn new(id: String, bitmap: Bitmap, center_x: f64,
-           center_y: f64, precision: f64, delta_r: f64, spacing: f64, plate_width: f64,
-        plate_height: f64, locked: bool
+    fn new(
+        id: String,
+        bitmap: Bitmap,
+        center_x: f64,
+        center_y: f64,
+        precision: f64,
+        delta_r: f64,
+        spacing: f64,
+        plate_width: f64,
+        plate_height: f64,
+        locked: bool,
     ) -> (Self, usize) {
-        let mut num_bitmaps = f64::ceil(PI * 2.0/delta_r) as i32;
+        let mut num_bitmaps = f64::ceil(PI * 2.0 / delta_r) as i32;
         if locked {
             num_bitmaps = 1;
         }
@@ -31,8 +39,7 @@ impl Part {
                 Some(x.trim())
             })
             .collect();
-        
-        
+
         let mut p = Part {
             precision,
             delta_r,
@@ -43,15 +50,15 @@ impl Part {
             center_x,
             width: bitmap.width as f64 + 2.0 * spacing,
             height: bitmap.height as f64 + 2.0 * spacing,
-            surface: 0.0
+            surface: 0.0,
         };
 
         let mut correct = 0;
 
         for k in 0..num_bitmaps as usize {
-            let Bitmap {width, height, .. } = &p.bitmaps[k].as_ref().unwrap();
-            if *width as f64 * precision < plate_width
-                && *height as f64 * precision < plate_height {
+            let Bitmap { width, height, .. } = &p.bitmaps[k].as_ref().unwrap();
+            if *width as f64 * precision < plate_width && *height as f64 * precision < plate_height
+            {
                 p.surface += (width * height) as f64;
                 correct += 1;
             } else {
@@ -84,10 +91,6 @@ impl Part {
 
     fn get_density(&self, index: usize) -> f64 {
         let bmp = self.get_bitmap(index).unwrap();
-        (bmp.pixels as f64)/(bmp.width *bmp.height) as f64
+        (bmp.pixels as f64) / (bmp.width * bmp.height) as f64
     }
-
-
-
-
 }

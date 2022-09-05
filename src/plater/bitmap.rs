@@ -1,4 +1,5 @@
 use std::cmp::{max, min};
+use std::hash::Hash;
 use std::path::PathBuf;
 
 pub struct Bitmap {
@@ -15,20 +16,20 @@ pub struct Bitmap {
     pub(crate) s_y: i64,
     pub(crate) pixels: i32,
 
-    data: Vec<u8>
+    data: Vec<u8>,
 }
 
 impl Clone for Bitmap {
     fn clone(&self) -> Self {
         Bitmap {
-            width : self.width,
+            width: self.width,
             height: self.height,
             center_x: self.center_x,
             center_y: self.center_y,
             data: Vec::clone(&self.data),
             s_x: self.s_x,
             s_y: self.s_y,
-            pixels: self.pixels
+            pixels: self.pixels,
         }
     }
 }
@@ -38,8 +39,8 @@ impl Bitmap {
         Bitmap {
             width,
             height,
-            center_x: (width as f64)/2.0,
-            center_y: (height as f64)/2.0,
+            center_x: (width as f64) / 2.0,
+            center_y: (height as f64) / 2.0,
             data: vec![0; (width * height) as usize],
             s_x: 0,
             s_y: 0,
@@ -66,7 +67,6 @@ impl Bitmap {
         Some(bitmap)
     }
 
-
     fn index(&self, x: i32, y: i32) -> usize {
         (self.height * y + x) as usize
     }
@@ -90,19 +90,22 @@ impl Bitmap {
 
         let last_row_index = (self.width - 1) as usize;
         let casted_width = self.width as usize;
-        for (index, byte)  in (&self.data).into_iter().enumerate() {
+        for (index, byte) in (&self.data).into_iter().enumerate() {
             let color = match *byte {
                 0 => '6',
                 1 => '4',
-                _ => '0'
+                _ => '0',
             };
             ppm.push(color);
-            let sep = if index % casted_width == last_row_index { EOL } else { ' ' };
+            let sep = if index % casted_width == last_row_index {
+                EOL
+            } else {
+                ' '
+            };
             ppm.push(sep)
         }
         ppm
     }
-
 
     fn get_point(&self, x: i32, y: i32) -> u8 {
         if x < 0 || y < 0 || x >= self.width || y >= self.height {
@@ -112,7 +115,7 @@ impl Bitmap {
         }
     }
 
-    pub(crate) fn set_point(&mut self, x: i32, y: i32, value: u8)  {
+    pub(crate) fn set_point(&mut self, x: i32, y: i32, value: u8) {
         if x < 0 || y < 0 || x >= self.width || y >= self.height {
             return;
         }
@@ -141,7 +144,7 @@ impl Bitmap {
         let casted_height = self.height as usize;
 
         for _ in 0..distance {
-            for index  in 0..old.data.len() {
+            for index in 0..old.data.len() {
                 let x = index % casted_width;
                 let y = (index - x) / casted_height;
 
@@ -152,7 +155,7 @@ impl Bitmap {
                             if dx == 0 && dy == 0 {
                                 continue;
                             }
-                            if old.get_point((x as i32)  +dx, (y as i32) + dy) != 0 {
+                            if old.get_point((x as i32) + dx, (y as i32) + dy) != 0 {
                                 score += 1;
                             };
                         }
@@ -164,14 +167,13 @@ impl Bitmap {
                 }
             }
         }
-
     }
 
     // TODO: switch x and y cache
     pub(crate) fn overlaps(&self, other: &Bitmap, off_x: i32, off_y: i32) -> bool {
         for x in 0..self.width {
             for y in 0..self.height {
-                if *&self.at(x, y) != 0 && other.get_point(x+off_x, y+off_y) != 0 {
+                if *&self.at(x, y) != 0 && other.get_point(x + off_x, y + off_y) != 0 {
                     return true;
                 }
             }
@@ -186,28 +188,25 @@ impl Bitmap {
             for y in 0..other.height {
                 let pixel = other.at(x, y);
                 if pixel != 0 {
-                    self.set_point(x+off_x, y+off_y, pixel);
+                    self.set_point(x + off_x, y + off_y, pixel);
                 }
             }
         }
-
     }
 
-    fn apply_rotation_f64(point: (f64, f64), angle: f64) -> (f64, f64)  {
+    fn apply_rotation_f64(point: (f64, f64), angle: f64) -> (f64, f64) {
         let x = f64::ceil(point.0 * f64::cos(angle) - point.1 * f64::sin(angle));
         let y = f64::ceil(point.0 * f64::sin(angle) + point.1 * f64::cos(angle));
 
         (x, y)
     }
 
-
-    fn apply_rotation(point: (f64, f64), angle: f64) -> (i32, i32)  {
+    fn apply_rotation(point: (f64, f64), angle: f64) -> (i32, i32) {
         let (x, y) = Bitmap::apply_rotation_f64(point, angle);
         (x as i32, y as i32)
     }
 
-
-    pub(crate) fn rotate(&self, mut r: f64) -> Self{
+    pub(crate) fn rotate(&self, mut r: f64) -> Self {
         r = -r;
 
         let w = self.width as f64;
@@ -223,10 +222,8 @@ impl Bitmap {
         let y_min = min(min(0, a_y), min(b_y, c_y));
         let y_max = max(max(0, a_y), max(b_y, c_y));
 
-
         let width = x_max - x_min;
         let height = y_max - y_min;
-
 
         let old_center_x = *&self.center_x;
         let old_center_y = *&self.center_y;
@@ -238,26 +235,31 @@ impl Bitmap {
         // Removed casts for c_x & c_y
         for x in 0..width {
             for y in 0..height {
-                let c_x =  f64::round((x as f64) - center_x);
-                let c_y =  f64::round((y as f64) - center_y);
+                let c_x = f64::round((x as f64) - center_x);
+                let c_y = f64::round((y as f64) - center_y);
                 let (X, Y) = Bitmap::apply_rotation_f64((c_x, c_y), r);
-                rotated.set_point(x,y, *&self.get_point(f64::round(X + old_center_x) as i32, f64::round(Y + old_center_y) as i32));
+                rotated.set_point(
+                    x,
+                    y,
+                    *&self.get_point(
+                        f64::round(X + old_center_x) as i32,
+                        f64::round(Y + old_center_y) as i32,
+                    ),
+                );
             }
         }
         rotated
     }
-
 
     pub(crate) fn trim(&self) -> Self {
         let mut found = false;
         let (mut min_x, mut min_y) = (0, 0);
         let (mut max_x, mut max_y) = (0, 0);
 
-
         // // swap x, y order
         for x in 0..self.width {
             for y in 0..self.height {
-                if self.at(x, y) != 0{
+                if self.at(x, y) != 0 {
                     if !found {
                         found = true;
                         min_x = x;
@@ -278,11 +280,9 @@ impl Bitmap {
                             max_y = y
                         }
                     }
-
                 }
             }
         }
-
 
         let delta_x = max_x - min_x;
         let delta_y = max_y - min_y;
@@ -316,9 +316,5 @@ impl Bitmap {
         }
 
         expanded
-
     }
-
-
 }
-

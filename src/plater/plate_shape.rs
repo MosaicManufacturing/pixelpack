@@ -1,3 +1,4 @@
+use std::rc::Rc;
 use crate::plater::bitmap::Bitmap;
 
 pub trait PlateShape {
@@ -5,14 +6,14 @@ pub trait PlateShape {
     fn height(&self) -> f64;
     fn string(&self) -> String;
     fn mask_bitmap(&self, bitmap: &mut Bitmap, precision: f64);
-    fn expand(&self, size: f64) -> Box<dyn PlateShape>;
+    fn expand(&self, size: f64) -> Rc<dyn PlateShape>;
 }
 
 // PlateRectangle represents a rectangular build plate.
 struct PlateRectangle {
     resolution: f64,
     width: f64,
-    height: f64
+    height: f64,
 }
 
 impl PlateRectangle {
@@ -20,7 +21,7 @@ impl PlateRectangle {
         PlateRectangle {
             resolution,
             width: width * resolution,
-            height: height * resolution
+            height: height * resolution,
         }
     }
 }
@@ -38,16 +39,18 @@ impl PlateShape for PlateRectangle {
         format!("{} x {} micron", self.width, self.height)
     }
 
-    fn mask_bitmap(&self,_bitmap: &mut Bitmap ,  precision: f64) {
+    fn mask_bitmap(&self, _bitmap: &mut Bitmap, precision: f64) {
         // no-op for rectangular piece
     }
 
-    fn expand(&self, size: f64) -> Box<dyn PlateShape>{
-        Box::new(PlateRectangle::new(self.width + size,
-                            self.height + size, self.resolution))
+    fn expand(&self, size: f64) -> Rc<dyn PlateShape> {
+        Rc::new(PlateRectangle::new(
+            self.width + size,
+            self.height + size,
+            self.resolution,
+        ))
     }
 }
-
 
 struct PlateCircle {
     resolution: f64,
@@ -58,7 +61,7 @@ impl PlateCircle {
     fn new(diameter: f64, resolution: f64) -> Self {
         PlateCircle {
             resolution,
-            diameter: diameter * resolution
+            diameter: diameter * resolution,
         }
     }
 }
@@ -90,12 +93,11 @@ impl PlateShape for PlateCircle {
                 }
             }
         }
-
     }
 
     // Expand returns a new PlateCircle with the diameter
     // of the receiver increased by size.
-    fn expand(&self, size: f64) -> Box<dyn PlateShape> {
-        Box::new(PlateCircle::new(self.diameter + size, self.resolution))
+    fn expand(&self, size: f64) -> Rc<dyn PlateShape> {
+        Rc::new(PlateCircle::new(self.diameter + size, self.resolution))
     }
 }

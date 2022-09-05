@@ -1,11 +1,11 @@
 pub struct Point {
     x: f64,
-    y: f64
+    y: f64,
 }
 
 impl Point {
     pub(crate) fn new(x: f64, y: f64) -> Self {
-        Point {x, y}
+        Point { x, y }
     }
 }
 
