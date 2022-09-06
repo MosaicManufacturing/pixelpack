@@ -5,8 +5,8 @@ mod placement;
 mod placer;
 mod plate;
 mod plate_shape;
-mod point;
-mod rectangle;
+pub(crate) mod point;
+pub mod rectangle;
 mod request;
 mod solution;
 

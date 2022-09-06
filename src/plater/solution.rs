@@ -11,9 +11,9 @@ impl Solution {
 
     // Score represents the score associated with this solution.
     // A lower score represents a more optimal solution.
-    fn score(&self, s: &Solution) -> f64 {
-        return (s.count_plates()) as f64
-            + (1.0 - 1.0 / (1 + s.get_last_plate().count_parts()) as f64);
+    pub(crate) fn score(&self) -> f64 {
+        return (self.count_plates()) as f64
+            + (1.0 - 1.0 / (1 + self.get_last_plate().count_parts()) as f64);
     }
 
     pub(crate) fn count_plates(&self) -> usize {

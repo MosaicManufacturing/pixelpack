@@ -1,8 +1,10 @@
+use std::borrow::Borrow;
 use crate::plater::part::Part;
 use crate::plater::plate_shape::PlateShape;
 use std::collections::HashMap;
 use std::f64::consts::PI;
 use std::rc::Rc;
+use dashmap::DashMap;
 use crate::plater::placer::{GRAVITY_MODE_LIST, Placer, SortMode};
 use crate::plater::placer::SortMode::{SortShuffle, SortSurfaceDec, SortSurfaceInc};
 use crate::plater::solution::Solution;
@@ -28,7 +30,7 @@ pub struct Request {
     pub(crate) delta_r: f64,
 
     // Parts to place
-    pub(crate) parts: HashMap<String, Rc<Part>>,
+    pub(crate) parts: DashMap<String, Rc<Part>>,
     resolution: f64, // internal resolution (pixels per mm)
 }
 
@@ -41,7 +43,7 @@ fn default_sort_modes() -> Vec<SortMode> {
 }
 
 impl Request {
-    fn new(plate_shape: Rc<dyn PlateShape>, resolution: f64) -> Self {
+    pub(crate) fn new(plate_shape: Rc<dyn PlateShape>, resolution: f64) -> Self {
         Request {
             plate_shape,
             single_plate_mode: false,
@@ -70,22 +72,37 @@ impl Request {
 
     // Replace with explicit error handling
     fn process(self) -> Option<Solution> {
-
         let mut placers = vec![];
-
         let sort_modes = Vec::clone(&self.sort_modes);
 
         for sort_mode in sort_modes {
             for rotate_offset in 0..2 {
                 for rotate_direction in 0..2 {
                     for gravity_mode in GRAVITY_MODE_LIST {
-                        let placer = Placer::new(self);
+                        let mut placer = Placer::new(&self);
+                        placer.sort_parts(sort_mode);
+                        placer.set_gravity_mode(gravity_mode);
+                        placer.set_rotate_direction(rotate_direction);
+                        placer.set_rotate_offset(rotate_offset);
                         placers.push(placer)
                     }
                 }
             }
         }
 
+
+        // // TODO: multi thread later
+        let mut solutions = vec![];
+        for mut placer in placers {
+            let solution = placer.place();
+            solutions.push(solution);
+        }
+
+        solutions.sort_by(|x, y| {
+            f64::partial_cmp(&x.score(), &y.score()).unwrap()
+        });
+
+        let best_solution = &solutions[0];
         None
     }
 

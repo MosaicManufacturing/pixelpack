@@ -3,6 +3,7 @@ use std::collections::HashMap;
 use std::f64::consts::PI;
 use std::pin::Pin;
 use std::rc::Rc;
+use dashmap::mapref::multiple::RefMulti;
 use crate::plater::placed_part::PlacedPart;
 use crate::plater::request::Request;
 use rand::rngs::StdRng;
@@ -14,7 +15,7 @@ use crate::plater::plate::Plate;
 use crate::plater::plate_shape::PlateShape;
 use crate::plater::solution::Solution;
 
-#[derive(Clone)]
+#[derive(Clone, Copy)]
 pub(crate) enum SortMode {
     // SortSurfaceDec sorts parts in descending order of surface area.
     SortSurfaceDec,
@@ -57,7 +58,7 @@ impl From<GravityMode> for usize {
 
 type PlateId = usize;
 
-pub struct Placer {
+pub struct Placer<'a> {
     rotate_offset: i32,
     rotate_direction: i32, // 0 = CCW, 1 = CW, TODO: make an enum
     cache: HashMap<PlateId, HashMap<String, bool>>,
@@ -68,11 +69,11 @@ pub struct Placer {
     // input data
     locked_parts: Vec<Rc<RefCell<PlacedPart>>>,
     unlocked_parts: Vec<Rc<RefCell<PlacedPart>>>,
-    request: Request
+    request: &'a Request
 }
 
-impl Placer {
-    pub(crate) fn new(request: Request) -> Self {
+impl<'a> Placer<'a> {
+    pub(crate) fn new(request: &'a Request) -> Self {
         let mut p = Placer {
             rotate_offset: 0,
             rotate_direction: 0,
@@ -84,7 +85,8 @@ impl Placer {
             request,
         };
 
-        for (_, part) in &p.request.parts {
+        for x in &p.request.parts {
+            let part = RefMulti::value(&x);
             let placed_part =
                 Rc::new(
                 RefCell::new(
@@ -104,7 +106,7 @@ impl Placer {
         self.cache.clear();
     }
 
-    fn sort_parts(&mut self, sort_mode: SortMode) {
+    pub(crate) fn sort_parts(&mut self, sort_mode: SortMode) {
         match sort_mode {
             SortMode::SortSurfaceDec => {
                 self.unlocked_parts.sort_by(|x, y| {
@@ -127,7 +129,7 @@ impl Placer {
         }
     }
 
-    fn set_gravity_mode(&mut self, gravity_mode: GravityMode) {
+    pub(crate) fn set_gravity_mode(&mut self, gravity_mode: GravityMode) {
         let (new_x_coef, new_y_coef) = match gravity_mode {
             GravityMode::GravityYX => { (1.0, 10.0) }
             GravityMode::GravityXY => { (10.0, 1.0) }
@@ -138,11 +140,11 @@ impl Placer {
         self.y_coef = new_y_coef;
     }
 
-    fn set_rotation_direction(&mut self, direction: i32) {
+    pub(crate) fn set_rotate_direction(&mut self, direction: i32) {
         self.rotate_direction = direction;
     }
 
-    fn set_rotate_offset(&mut self, offset: i32) {
+    pub(crate) fn set_rotate_offset(&mut self, offset: i32) {
         self.rotate_offset = offset;
     }
 
@@ -314,7 +316,7 @@ impl Placer {
         solution
     }
 
-    fn place(&mut self) -> Solution {
+    pub(crate) fn place(&mut self) -> Solution {
         if self.request.single_plate_mode {
             self.place_single_plate()
         } else {

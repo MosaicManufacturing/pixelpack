@@ -10,14 +10,14 @@ pub trait PlateShape {
 }
 
 // PlateRectangle represents a rectangular build plate.
-struct PlateRectangle {
+pub struct PlateRectangle {
     resolution: f64,
     width: f64,
     height: f64,
 }
 
 impl PlateRectangle {
-    fn new(width: f64, height: f64, resolution: f64) -> Self {
+    pub(crate) fn new(width: f64, height: f64, resolution: f64) -> Self {
         PlateRectangle {
             resolution,
             width: width * resolution,

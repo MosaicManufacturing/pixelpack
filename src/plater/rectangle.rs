@@ -1,4 +1,4 @@
-struct Rectangle {
+pub(crate) struct Rectangle {
     // X1 is the minimum X coordinate of the box.
     x1: f64,
     // Y1 is the minimum Y coordinate of the box.
