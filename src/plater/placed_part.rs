@@ -4,15 +4,15 @@ use crate::plater::part::Part;
 use crate::plater::placement::Placement;
 use crate::plater::point::Point;
 
-pub struct PlacedPart {
-    part: Rc<Part>,
+pub struct PlacedPart<'a> {
+    part: &'a Part,
     x: f64,
     y: f64,
     rotation: i32,
 }
 
-impl PlacedPart {
-    pub(crate) fn new_placed_part(part: Rc<Part>) -> PlacedPart {
+impl<'a> PlacedPart<'a> {
+    pub(crate) fn new_placed_part(part: &Part) -> PlacedPart {
         PlacedPart {
             part,
             x: 0.0,

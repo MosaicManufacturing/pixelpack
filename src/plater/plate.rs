@@ -10,16 +10,16 @@ use crate::plater::plate_shape::PlateShape;
 static COUNTER: AtomicUsize = AtomicUsize::new(1);
 fn generate_unique_plate_id() -> usize { COUNTER.fetch_add(1, Ordering::Relaxed) }
 
-pub struct Plate {
+pub struct Plate<'a> {
     pub(crate) plate_id: usize,
     pub(crate) width: f64,
     pub(crate) height: f64,
     precision: f64,
-    parts: Vec<Rc<RefCell<PlacedPart>>>,
+    pub(crate) parts: Vec<PlacedPart<'a>>,
     bitmap: Bitmap,
 }
 
-impl Plate{
+impl<'a> Plate<'a>{
     pub(crate) fn new(shape: &dyn PlateShape, precision: f64) -> Self {
         let width = shape.width();
         let height = shape.height();
@@ -34,13 +34,12 @@ impl Plate{
         }
     }
 
-    // Internal borrow mut
-    pub(crate) fn place(&mut self, placed_part: Rc<RefCell<PlacedPart>>) {
+    pub(crate) fn place(&mut self, placed_part: PlacedPart<'a>) {
         {
-            let borrowed_placed_part = (*placed_part).borrow_mut();
-            let bitmap = borrowed_placed_part.get_bitmap().unwrap();
-            let off_x = borrowed_placed_part.get_x() / self.precision;
-            let off_y = borrowed_placed_part.get_y() / self.precision;
+            // let borrowed_placed_part = (*placed_part).borrow_mut();
+            let bitmap = placed_part.get_bitmap().unwrap();
+            let off_x = placed_part.get_x() / self.precision;
+            let off_y = placed_part.get_y() / self.precision;
             self.bitmap.write(bitmap, off_x as i32, off_y as i32);
         }
         self.parts.push(placed_part);
@@ -71,9 +70,8 @@ impl Plate{
 
     fn get_placements(&self) -> Vec<Placement> {
         let mut result = vec![];
-        for x in &self.parts {
-            let borrowed_part = RefCell::borrow(x);
-            result.push(borrowed_part.get_placement());
+        for part in &self.parts { ;
+            result.push(part.get_placement());
         }
 
         result

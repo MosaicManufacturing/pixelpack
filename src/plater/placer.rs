@@ -3,7 +3,6 @@ use std::collections::HashMap;
 use std::f64::consts::PI;
 use std::pin::Pin;
 use std::rc::Rc;
-use dashmap::mapref::multiple::RefMulti;
 use crate::plater::placed_part::PlacedPart;
 use crate::plater::request::Request;
 use rand::rngs::StdRng;
@@ -67,13 +66,13 @@ pub struct Placer<'a> {
     x_coef: f64,
     y_coef: f64,
     // input data
-    locked_parts: Vec<Rc<RefCell<PlacedPart>>>,
-    unlocked_parts: Vec<Rc<RefCell<PlacedPart>>>,
-    request: &'a Request
+    locked_parts: Vec<PlacedPart<'a>>,
+    unlocked_parts: Vec<PlacedPart<'a>>,
+    request: &'a Request<'a>
 }
 
 impl<'a> Placer<'a> {
-    pub(crate) fn new(request: &'a Request) -> Self {
+    pub(crate) fn new(request: &'a Request<'a>) -> Self {
         let mut p = Placer {
             rotate_offset: 0,
             rotate_direction: 0,
@@ -85,13 +84,10 @@ impl<'a> Placer<'a> {
             request,
         };
 
-        for x in &p.request.parts {
-            let part = RefMulti::value(&x);
+        for (key, value) in &p.request.parts {
+            let part = *value;
             let placed_part =
-                Rc::new(
-                RefCell::new(
-                    PlacedPart::new_placed_part(
-                        Rc::clone(part))));
+                    PlacedPart::new_placed_part(part);
             if part.locked {
                 p.locked_parts.push(placed_part)
             } else {
@@ -110,15 +106,15 @@ impl<'a> Placer<'a> {
         match sort_mode {
             SortMode::SortSurfaceDec => {
                 self.unlocked_parts.sort_by(|x, y| {
-                    let s1 = (**x).borrow().get_surface();
-                    let s2 = (**y).borrow().get_surface();
+                    let s1 = x.get_surface();
+                    let s2 = y.get_surface();
                     f64::partial_cmp(&s1, &s2).unwrap()
                 })
             }
             SortMode::SortSurfaceInc => {
                 self.unlocked_parts.sort_by(|x, y| {
-                    let s1 = (**x).borrow().get_surface();
-                    let s2 = (**y).borrow().get_surface();
+                    let s1 = x.get_surface();
+                    let s2 = y.get_surface();
                     f64::partial_cmp(&s2, &s1).unwrap()
                 });
             }
@@ -148,23 +144,22 @@ impl<'a> Placer<'a> {
         self.rotate_offset = offset;
     }
 
-    fn make_plate(&mut self, shape: &dyn PlateShape) -> Plate {
+    fn make_plate(&mut self, shape: &dyn PlateShape) -> Plate<'a> {
         let mut plate = Plate::new(shape, self.request.precision);
-        for part in &self.locked_parts {
-            plate.place(Rc::clone(part));
+
+        let n = self.locked_parts.len();
+        let mut xs = &mut self.locked_parts.drain(0..n);
+        for part in xs {
+            plate.place(part);
         }
         plate
     }
 
     // Internal borrow mut
-    fn place_unlocked_part(&mut self, plate: &mut Plate, part: &Rc<RefCell<PlacedPart>>) -> bool {
+    fn place_unlocked_part<'b>(&mut self, plate: &mut Plate<'b>, mut part: PlacedPart<'b>) -> Result<bool, PlacedPart<'b>> {
         let cache_name;
-
-            let mut borrowed_part = RefCell::borrow_mut(part);
             // TODO: optimize string clone
-            cache_name = String::from(borrowed_part.get_id());
-
-
+        cache_name = String::from(part.get_id());
 
         if self.cache.get(&plate.plate_id).is_none() {
             self.cache.insert(plate.plate_id, HashMap::new());
@@ -173,7 +168,7 @@ impl<'a> Placer<'a> {
         let k = self.cache.get(&plate.plate_id).unwrap().get(cache_name.as_str());
         // If already seen, don't recompute
         if let Some(_) = k {
-            return false;
+            return Ok(false);
         }
 
         let mut better_x = 0.0;
@@ -193,21 +188,21 @@ impl<'a> Placer<'a> {
 
         for r in iter {
             let vr = (r + self.rotate_offset as usize) % rs;
-            borrowed_part.set_rotation(vr as i32);
+            part.set_rotation(vr as i32);
 
             let delta = self.request.delta;
             let mut x = 0.0;
             while x < plate.width {
                 let mut y = 0.0;
                 while y < plate.height {
-                    let gx = borrowed_part.get_gx() + x;
-                    let gy = borrowed_part.get_gy() + y;
+                    let gx = part.get_gx() + x;
+                    let gy = part.get_gy() + y;
 
                     let score = gy * self.y_coef + gx * self.x_coef;
 
                     if !found || score < better_score {
-                        borrowed_part.set_offset(x, y);
-                        if plate.can_place(&borrowed_part) {
+                        part.set_offset(x, y);
+                        if plate.can_place(&part) {
                             found = true;
                             better_x = x;
                             better_y = y;
@@ -223,24 +218,25 @@ impl<'a> Placer<'a> {
             }
 
             return if found {
-                borrowed_part.set_rotation(better_r as i32);
-                borrowed_part.set_offset(better_x, better_y);
-                plate.place(Rc::clone(part));
-                true
+                part.set_rotation(better_r as i32);
+                part.set_offset(better_x, better_y);
+                plate.place(part);
+                Ok(true)
             } else {
                 self
                     .cache
                     .get_mut(&plate.plate_id)
                     .unwrap()
                     .insert(String::from(cache_name), true);
-                false
+                Err(part)
+
             }
         }
         // TODO: verify correctness
-        false
+         Err(part)
     }
 
-    fn place_single_plate(&mut self) -> Solution {
+    fn place_single_plate(&mut self) -> Solution<'a> {
 
         // TODO: TRY TO OPTIMIZE AWAY THE RC CLONE // PASS HEIGHT, WIDTH INSTEAD OF CLONING
         let mut shape = Rc::clone(&self.request.plate_shape);
@@ -248,28 +244,43 @@ impl<'a> Placer<'a> {
 
         self.locked_parts.clear();
         let mut all_placed = false;
+        let mut unlocked_parts = vec![];
 
-        // TODO: Optimization, make locked and unlocked parts Rc<Vec<_>>
-        let rc_cloned_unlocked_parts =
-            (&self.unlocked_parts)
-            .into_iter()
-            .map(Rc::clone)
-            .collect::<Vec<_>>();
-
-
+        std::mem::swap(&mut self.unlocked_parts, &mut unlocked_parts);
         while !all_placed {
             all_placed = true;
             self.reset_cache();
 
-            for part in &rc_cloned_unlocked_parts {
-                if !self.place_unlocked_part(&mut plate, part) {
-                    all_placed = false;
-                    break;
+            let mut reclaimed_unlocked_parts = vec![];
+            let n = (&self.unlocked_parts).len();
+            for part in unlocked_parts.drain(0..n) {
+                match self.place_unlocked_part(&mut plate, part) {
+                    Ok(flag) => {
+                        if !flag {
+                            all_placed = false;
+                            break;
+                        }
+                    }
+                    Err(part) => {
+                        reclaimed_unlocked_parts.push(part)
+                    }
                 }
             }
             if !all_placed {
                 let EXPAND_MM = 100.0;
                 shape = shape.expand(EXPAND_MM);
+
+                let n = (&plate.parts).len();
+                for part in &mut plate.parts.drain(0..n) {
+                    reclaimed_unlocked_parts.push(part)
+                }
+                // If we reach here, we have drained all elements out of unlocked_parts so it is EMPTY
+
+                // reclaimed_unlocked_parts contains all parts that were returned from self.place_unlocked_part and
+                // we reclaimed all consumed parts that were in plate.parts
+
+                // So, parts_to_handle contains all Parts that were originally in self.unlocked_parts
+                std::mem::swap(&mut unlocked_parts, &mut reclaimed_unlocked_parts);
                 plate = self.make_plate(shape.as_ref());
             }
         }
@@ -289,24 +300,28 @@ impl<'a> Placer<'a> {
             let mut plate = self.make_plate(plate_shape.as_ref());
             solution.add_plate(plate);
         }
-        // TODO: Optimization, make locked and unlocked parts Rc<Vec<_>>
-        let rc_cloned_unlocked_parts =
-            (&self.unlocked_parts)
-                .into_iter()
-                .map(Rc::clone)
-                .collect::<Vec<_>>();
 
-        for part in &rc_cloned_unlocked_parts {
-            let mut placed = false;
+        let mut unlocked_parts = vec![];
+        std::mem::swap(&mut unlocked_parts, &mut self.unlocked_parts);
+
+        for part in unlocked_parts {
             let mut i = 0;
-            while i < solution.count_plates() && !placed {
-                let plate = solution.get_plate_mut(i).unwrap();
-                if self.place_unlocked_part(plate, part) {
-                    placed = true;
-                } else if i + 1 == solution.count_plates() {
-                    let shape = Rc::clone(&self.request.plate_shape);
-                    let plate = self.make_plate(shape.as_ref());
-                    solution.add_plate(plate)
+            let mut current_part = part;
+            while solution.count_plates() < i {
+                let res =  self.place_unlocked_part(solution.get_plate_mut(i).unwrap(), current_part);
+                match res {
+                    Ok(_) => {
+                        break;
+                    },
+                    Err(part) => {
+                        if i + 1 == solution.count_plates() {
+                            let shape = Rc::clone(&self.request.plate_shape);
+                            let next_plate = self.make_plate(shape.as_ref());;
+                            solution.add_plate(next_plate);
+                        }
+                        current_part = part;
+                    }
+
                 }
                 i += 1;
             }

@@ -1,10 +1,10 @@
 use crate::plater::plate::Plate;
 
-pub struct Solution {
-    plates: Vec<Plate>,
+pub struct Solution<'a> {
+    plates: Vec<Plate<'a>>,
 }
 
-impl Solution {
+impl<'a> Solution<'a> {
     pub(crate) fn new() -> Self {
         Solution { plates: vec![] }
     }
@@ -24,7 +24,7 @@ impl Solution {
         self.plates.get(n)
     }
 
-    pub(crate) fn get_plate_mut(&mut self, n: usize) -> Option<&mut Plate> {
+    pub(crate) fn get_plate_mut<'b>(&'b mut self, n: usize) -> Option<&'b mut Plate<'a>> {
         self.plates.get_mut(n)
     }
 
@@ -32,7 +32,7 @@ impl Solution {
         self.get_plate(self.plates.len()).unwrap()
     }
 
-    pub(crate) fn add_plate(&mut self, plate: Plate) {
+    pub(crate) fn add_plate(&mut self, plate: Plate<'a>) {
         self.plates.push(plate);
     }
 }

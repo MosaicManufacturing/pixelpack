@@ -4,7 +4,6 @@ use crate::plater::plate_shape::PlateShape;
 use std::collections::HashMap;
 use std::f64::consts::PI;
 use std::rc::Rc;
-use dashmap::DashMap;
 use crate::plater::placer::{GRAVITY_MODE_LIST, Placer, SortMode};
 use crate::plater::placer::SortMode::{SortShuffle, SortSurfaceDec, SortSurfaceInc};
 use crate::plater::solution::Solution;
@@ -12,7 +11,7 @@ use crate::plater::solution::Solution;
 // DEFAULT_RESOLUTION is the default bitmap resolution, in pixels per mm.
 const DEFAULT_RESOLUTION: f64 = 1000.0;
 
-pub struct Request {
+pub struct Request<'a> {
     // plate_shape represents the size and shape of the build plate.
     pub(crate) plate_shape: Rc<dyn PlateShape>,
     // single_plate_mode uses a single, expandable plate
@@ -30,11 +29,11 @@ pub struct Request {
     pub(crate) delta_r: f64,
 
     // Parts to place
-    pub(crate) parts: DashMap<String, Rc<Part>>,
+    pub(crate) parts: HashMap<String, &'a Part>,
     resolution: f64, // internal resolution (pixels per mm)
 }
 
-// Don't understand the original version
+// TODO: Don't understand the original version
 fn default_sort_modes() -> Vec<SortMode> {
     // let random_shuffles: usize = 3;
     // let sort_shuffle_as_usize: usize = SortShuffle.into();
@@ -42,7 +41,7 @@ fn default_sort_modes() -> Vec<SortMode> {
     vec![SortSurfaceDec, SortSurfaceInc, SortShuffle]
 }
 
-impl Request {
+impl<'a> Request<'a> {
     pub(crate) fn new(plate_shape: Rc<dyn PlateShape>, resolution: f64) -> Self {
         Request {
             plate_shape,
@@ -59,19 +58,19 @@ impl Request {
     }
 
     // TODO: replace option with explicit error handling (this is weird)
-    fn add_part(&mut self, part: Part) -> Option<()> {
+    fn add_part(&mut self, part: &'a Part) -> Option<()> {
         let x = self.parts.get(part.id.as_str());
         if x.is_some() {
             return None;
         }
 
         let part_id = part.id.clone();
-        self.parts.insert(part_id, Rc::new(part));
+        self.parts.insert(part_id, part);
         Some(())
     }
 
     // Replace with explicit error handling
-    fn process(self) -> Option<Solution> {
+    fn process(&'a self) -> Option<Solution<'a>> {
         let mut placers = vec![];
         let sort_modes = Vec::clone(&self.sort_modes);
 
@@ -79,7 +78,7 @@ impl Request {
             for rotate_offset in 0..2 {
                 for rotate_direction in 0..2 {
                     for gravity_mode in GRAVITY_MODE_LIST {
-                        let mut placer = Placer::new(&self);
+                        let mut placer = Placer::new(self);
                         placer.sort_parts(sort_mode);
                         placer.set_gravity_mode(gravity_mode);
                         placer.set_rotate_direction(rotate_direction);
@@ -93,7 +92,7 @@ impl Request {
 
         // // TODO: multi thread later
         let mut solutions = vec![];
-        for mut placer in placers {
+        for placer in &mut placers {
             let solution = placer.place();
             solutions.push(solution);
         }
