@@ -1,15 +1,69 @@
 use std::rc::Rc;
 use crate::plater::bitmap::Bitmap;
 
-pub trait PlateShape {
+pub trait PlateShape: Clone {
     fn width(&self) -> f64;
     fn height(&self) -> f64;
     fn string(&self) -> String;
     fn mask_bitmap(&self, bitmap: &mut Bitmap, precision: f64);
-    fn expand(&self, size: f64) -> Rc<dyn PlateShape>;
+    fn expand(&self, size: f64) -> Self;
+}
+
+#[derive(Clone)]
+enum Shape {
+    Rectangle(PlateRectangle),
+    Circle(PlateCircle)
+}
+
+impl Shape {
+    fn new_rectangle(width: f64, height: f64, resolution: f64) -> Self {
+        Shape::Rectangle(PlateRectangle::new(width, height, resolution))
+    }
+
+    fn new_circle(diameter: f64, resolution: f64) -> Self {
+        Shape::Circle(PlateCircle::new(diameter, resolution))
+    }
+}
+
+impl PlateShape for Shape {
+    fn width(&self) -> f64 {
+        match self {
+            Shape::Rectangle(r) => { PlateShape::width(r) },
+            Shape::Circle(c) => { PlateShape::width(c) }
+        }
+    }
+
+    fn height(&self) -> f64 {
+        match self {
+            Shape::Rectangle(r) => { PlateShape::height(r) },
+            Shape::Circle(c) => { PlateShape::height(c) }
+        }
+    }
+
+    fn string(&self) -> String {
+        match self {
+            Shape::Rectangle(r) => { PlateShape::string(r) },
+            Shape::Circle(c) => { PlateShape::string(c) }
+        }
+    }
+
+    fn mask_bitmap(&self, bitmap: &mut Bitmap, precision: f64) {
+        match self {
+            Shape::Rectangle(r) => { PlateShape::mask_bitmap(r, bitmap, precision) },
+            Shape::Circle(c) => { PlateShape::mask_bitmap(c, bitmap, precision) }
+        }
+    }
+
+    fn expand(&self, size: f64) -> Self {
+        match self {
+            Shape::Rectangle(r) => { Shape::Rectangle(PlateShape::expand(r, size)) },
+            Shape::Circle(c) => { Shape::Circle(PlateShape::expand(c, size)) }
+        }
+    }
 }
 
 // PlateRectangle represents a rectangular build plate.
+#[derive(Clone)]
 pub struct PlateRectangle {
     resolution: f64,
     width: f64,
@@ -43,15 +97,15 @@ impl PlateShape for PlateRectangle {
         // no-op for rectangular piece
     }
 
-    fn expand(&self, size: f64) -> Rc<dyn PlateShape> {
-        Rc::new(PlateRectangle::new(
+    fn expand(&self, size: f64) -> Self {
+        PlateRectangle::new(
             self.width + size,
             self.height + size,
             self.resolution,
-        ))
+        )
     }
 }
-
+#[derive(Clone)]
 struct PlateCircle {
     resolution: f64,
     diameter: f64,
@@ -97,7 +151,7 @@ impl PlateShape for PlateCircle {
 
     // Expand returns a new PlateCircle with the diameter
     // of the receiver increased by size.
-    fn expand(&self, size: f64) -> Rc<dyn PlateShape> {
-        Rc::new(PlateCircle::new(self.diameter + size, self.resolution))
+    fn expand(&self, size: f64) -> Self {
+        PlateCircle::new(self.diameter + size, self.resolution)
     }
 }

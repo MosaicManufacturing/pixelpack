@@ -20,7 +20,7 @@ pub struct Plate<'a> {
 }
 
 impl<'a> Plate<'a>{
-    pub(crate) fn new(shape: &dyn PlateShape, precision: f64) -> Self {
+    pub(crate) fn new<Shape: PlateShape>(shape: &Shape, precision: f64) -> Self {
         let width = shape.width();
         let height = shape.height();
 

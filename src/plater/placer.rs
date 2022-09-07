@@ -57,7 +57,7 @@ impl From<GravityMode> for usize {
 
 type PlateId = usize;
 
-pub struct Placer<'a> {
+pub struct Placer<'a, Shape: PlateShape> {
     rotate_offset: i32,
     rotate_direction: i32, // 0 = CCW, 1 = CW, TODO: make an enum
     cache: HashMap<PlateId, HashMap<String, bool>>,
@@ -68,11 +68,11 @@ pub struct Placer<'a> {
     // input data
     locked_parts: Vec<PlacedPart<'a>>,
     unlocked_parts: Vec<PlacedPart<'a>>,
-    request: &'a Request<'a>
+    request: &'a Request<'a, Shape>
 }
 
-impl<'a> Placer<'a> {
-    pub(crate) fn new(request: &'a Request<'a>) -> Self {
+impl<'a, Shape: PlateShape> Placer<'a, Shape> {
+    pub(crate) fn new(request: &'a Request<'a, Shape>) -> Self {
         let mut p = Placer {
             rotate_offset: 0,
             rotate_direction: 0,
@@ -144,7 +144,7 @@ impl<'a> Placer<'a> {
         self.rotate_offset = offset;
     }
 
-    fn make_plate(&mut self, shape: &dyn PlateShape) -> Plate<'a> {
+    fn make_plate(&mut self, shape: &Shape) -> Plate<'a> {
         let mut plate = Plate::new(shape, self.request.precision);
 
         let n = self.locked_parts.len();
@@ -239,8 +239,8 @@ impl<'a> Placer<'a> {
     fn place_single_plate(&mut self) -> Solution<'a> {
 
         // TODO: TRY TO OPTIMIZE AWAY THE RC CLONE // PASS HEIGHT, WIDTH INSTEAD OF CLONING
-        let mut shape = Rc::clone(&self.request.plate_shape);
-        let mut plate = self.make_plate(shape.as_ref());
+        let mut shape = Clone::clone(*&self.request.plate_shape);
+        let mut plate = self.make_plate(&shape);
 
         self.locked_parts.clear();
         let mut all_placed = false;
@@ -281,7 +281,7 @@ impl<'a> Placer<'a> {
 
                 // So, parts_to_handle contains all Parts that were originally in self.unlocked_parts
                 std::mem::swap(&mut unlocked_parts, &mut reclaimed_unlocked_parts);
-                plate = self.make_plate(shape.as_ref());
+                plate = self.make_plate(&shape);
             }
         }
 
@@ -296,8 +296,8 @@ impl<'a> Placer<'a> {
         let mut solution = Solution::new();
 
         {
-            let plate_shape = Rc::clone(&self.request.plate_shape);
-            let mut plate = self.make_plate(plate_shape.as_ref());
+            let plate_shape = Clone::clone(self.request.plate_shape);
+            let mut plate = self.make_plate(&plate_shape);
             solution.add_plate(plate);
         }
 
@@ -315,8 +315,8 @@ impl<'a> Placer<'a> {
                     },
                     Err(part) => {
                         if i + 1 == solution.count_plates() {
-                            let shape = Rc::clone(&self.request.plate_shape);
-                            let next_plate = self.make_plate(shape.as_ref());;
+                            let shape = Clone::clone(*&self.request.plate_shape);
+                            let next_plate = self.make_plate(&shape);;
                             solution.add_plate(next_plate);
                         }
                         current_part = part;

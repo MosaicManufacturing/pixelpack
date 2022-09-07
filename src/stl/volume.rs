@@ -8,7 +8,7 @@ pub struct Volume {
 impl Clone for Volume {
     fn clone(&self) -> Self {
         Volume {
-            faces: (&self.faces).iter().map(|x| x.clone()).collect()
+            faces: (&self.faces).iter().map(Clone::clone).collect()
         }
     }
 }

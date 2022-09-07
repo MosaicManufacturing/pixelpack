@@ -11,9 +11,9 @@ use crate::plater::solution::Solution;
 // DEFAULT_RESOLUTION is the default bitmap resolution, in pixels per mm.
 const DEFAULT_RESOLUTION: f64 = 1000.0;
 
-pub struct Request<'a> {
+pub struct Request<'a, Shape: PlateShape> {
     // plate_shape represents the size and shape of the build plate.
-    pub(crate) plate_shape: Rc<dyn PlateShape>,
+    pub(crate) plate_shape: &'a Shape,
     // single_plate_mode uses a single, expandable plate
     pub(crate) single_plate_mode: bool,
     // sort_modes is a list of sort modes to attempt when placing.
@@ -41,8 +41,8 @@ fn default_sort_modes() -> Vec<SortMode> {
     vec![SortSurfaceDec, SortSurfaceInc, SortShuffle]
 }
 
-impl<'a> Request<'a> {
-    pub(crate) fn new(plate_shape: Rc<dyn PlateShape>, resolution: f64) -> Self {
+impl<'a, Shape: PlateShape> Request<'a, Shape> {
+    pub(crate) fn new(plate_shape: &'a Shape, resolution: f64) -> Self {
         Request {
             plate_shape,
             single_plate_mode: false,
