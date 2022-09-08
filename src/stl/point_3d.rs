@@ -36,4 +36,15 @@ impl Point3D {
         Point3D {x, y, z}
     }
 
+    pub fn min(a: &Self, b:&Self ) -> Self {
+        Point3D { x : f64::min(a.x, b.x)
+            ,y : f64::min(a.y, b.y)
+            ,z : f64::min(a.z, b.z)}
+    }
+
+    pub fn max(a: &Self, b:&Self ) -> Self {
+        Point3D { x : f64::max(a.x, b.x)
+            ,y : f64::max(a.y, b.y)
+            ,z : f64::max(a.z, b.z)}
+    }
 }

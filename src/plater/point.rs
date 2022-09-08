@@ -1,16 +1,19 @@
+#[derive(Clone)]
 pub struct Point {
-    x: f64,
-    y: f64,
+    pub(crate) x: f64,
+    pub(crate) y: f64,
 }
 
 impl Point {
     pub(crate) fn new(x: f64, y: f64) -> Self {
         Point { x, y }
     }
-}
 
-impl Clone for Point {
-    fn clone(&self) -> Self {
-        Point::new(self.x, self.y)
+    pub(crate) fn sub(a: &Self, b: &Self) -> Self {
+        Point {x: a.x - b.x, y: a.y - b.y}
+    }
+
+    pub(crate) fn segment_normal(&self) -> Self {
+        Point {x: self.y, y: -self.x }
     }
 }

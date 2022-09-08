@@ -24,32 +24,24 @@ impl Volume {
         self.faces.push(f);
     }
 
-    fn min(&self) -> Point3D {
-        // Memory overhead
-        let (x, y, z) = (self.faces)
+    pub fn min(&self) -> Point3D {
+         (&self.faces)
             .iter()
             .flat_map(|face| &face.v)
-            .map(|x| (x.x, x.y, x.z))
-            .reduce(|(x, y, z), (a, b, c)| {
-                (f64::min(x, a), f64::min(y, b),f64::min(z, c))
-            })
-            .unwrap_or((0.0, 0.0, 0.0));
-
-        Point3D::new(x, y, z)
+            .map(Clone::clone)
+            .reduce(|x, y | Point3D::min(&x, &y))
+            .or_else(|| Some(Point3D::new(0.0, 0.0, 0.0)))
+            .unwrap()
     }
 
-    fn max(&self) -> Point3D {
-        // Memory overhead
-        let (x, y, z) = (self.faces)
+    pub(crate) fn max(&self) -> Point3D {
+        (&self.faces)
             .iter()
             .flat_map(|face| &face.v)
-            .map(|x| (x.x, x.y, x.z))
-            .reduce(|(x, y, z), (a, b, c)| {
-                (f64::max(x, a), f64::max(y, b),f64::max(z, c))
-            })
-            .unwrap_or((0.0, 0.0, 0.0));
-
-        Point3D::new(x, y, z)
+            .map(Clone::clone)
+            .reduce(|x, y | Point3D::max(&x, &y))
+            .or_else(|| Some(Point3D::new(0.0, 0.0, 0.0)))
+            .unwrap()
     }
 
 
