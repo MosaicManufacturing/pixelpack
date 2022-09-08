@@ -9,7 +9,3 @@ pub(crate) mod point;
 pub mod rectangle;
 mod request;
 mod solution;
-
-fn test() -> i32 {
-    1
-}

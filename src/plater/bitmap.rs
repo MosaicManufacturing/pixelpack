@@ -1,6 +1,4 @@
 use std::cmp::{max, min};
-use std::hash::Hash;
-use std::path::PathBuf;
 
 pub struct Bitmap {
     // Image dimensions

@@ -10,10 +10,10 @@ impl Point {
     }
 
     pub(crate) fn sub(a: &Self, b: &Self) -> Self {
-        Point {x: a.x - b.x, y: a.y - b.y}
+        Point { x: a.x - b.x, y: a.y - b.y }
     }
 
     pub(crate) fn segment_normal(&self) -> Self {
-        Point {x: self.y, y: -self.x }
+        Point { x: self.y, y: -self.x }
     }
 }

@@ -1,4 +1,3 @@
-use std::rc::Rc;
 use crate::plater::bitmap::Bitmap;
 
 pub trait PlateShape: Clone {
@@ -12,7 +11,7 @@ pub trait PlateShape: Clone {
 #[derive(Clone)]
 enum Shape {
     Rectangle(PlateRectangle),
-    Circle(PlateCircle)
+    Circle(PlateCircle),
 }
 
 impl Shape {
@@ -28,35 +27,35 @@ impl Shape {
 impl PlateShape for Shape {
     fn width(&self) -> f64 {
         match self {
-            Shape::Rectangle(r) => { PlateShape::width(r) },
+            Shape::Rectangle(r) => { PlateShape::width(r) }
             Shape::Circle(c) => { PlateShape::width(c) }
         }
     }
 
     fn height(&self) -> f64 {
         match self {
-            Shape::Rectangle(r) => { PlateShape::height(r) },
+            Shape::Rectangle(r) => { PlateShape::height(r) }
             Shape::Circle(c) => { PlateShape::height(c) }
         }
     }
 
     fn string(&self) -> String {
         match self {
-            Shape::Rectangle(r) => { PlateShape::string(r) },
+            Shape::Rectangle(r) => { PlateShape::string(r) }
             Shape::Circle(c) => { PlateShape::string(c) }
         }
     }
 
     fn mask_bitmap(&self, bitmap: &mut Bitmap, precision: f64) {
         match self {
-            Shape::Rectangle(r) => { PlateShape::mask_bitmap(r, bitmap, precision) },
+            Shape::Rectangle(r) => { PlateShape::mask_bitmap(r, bitmap, precision) }
             Shape::Circle(c) => { PlateShape::mask_bitmap(c, bitmap, precision) }
         }
     }
 
     fn expand(&self, size: f64) -> Self {
         match self {
-            Shape::Rectangle(r) => { Shape::Rectangle(PlateShape::expand(r, size)) },
+            Shape::Rectangle(r) => { Shape::Rectangle(PlateShape::expand(r, size)) }
             Shape::Circle(c) => { Shape::Circle(PlateShape::expand(c, size)) }
         }
     }
@@ -93,7 +92,7 @@ impl PlateShape for PlateRectangle {
         format!("{} x {} micron", self.width, self.height)
     }
 
-    fn mask_bitmap(&self, _bitmap: &mut Bitmap, precision: f64) {
+    fn mask_bitmap(&self, _bitmap: &mut Bitmap, _precision: f64) {
         // no-op for rectangular piece
     }
 
@@ -105,6 +104,7 @@ impl PlateShape for PlateRectangle {
         )
     }
 }
+
 #[derive(Clone)]
 struct PlateCircle {
     resolution: f64,

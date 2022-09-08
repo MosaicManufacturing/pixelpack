@@ -1,13 +1,12 @@
-use std::borrow::Borrow;
-use std::cell::RefCell;
-use std::rc::Rc;
 use std::sync::atomic::{AtomicUsize, Ordering};
+
 use crate::plater::bitmap::Bitmap;
 use crate::plater::placed_part::PlacedPart;
 use crate::plater::placement::Placement;
 use crate::plater::plate_shape::PlateShape;
 
 static COUNTER: AtomicUsize = AtomicUsize::new(1);
+
 fn generate_unique_plate_id() -> usize { COUNTER.fetch_add(1, Ordering::Relaxed) }
 
 pub struct Plate<'a> {
@@ -19,7 +18,7 @@ pub struct Plate<'a> {
     bitmap: Bitmap,
 }
 
-impl<'a> Plate<'a>{
+impl<'a> Plate<'a> {
     pub(crate) fn new<Shape: PlateShape>(shape: &Shape, precision: f64) -> Self {
         let width = shape.width();
         let height = shape.height();
@@ -70,7 +69,7 @@ impl<'a> Plate<'a>{
 
     fn get_placements(&self) -> Vec<Placement> {
         let mut result = vec![];
-        for part in &self.parts { ;
+        for part in &self.parts {
             result.push(part.get_placement());
         }
 

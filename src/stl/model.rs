@@ -6,7 +6,7 @@ use crate::stl::volume::Volume;
 pub struct Model {
     volumes: Vec<Volume>,
     tree: Option<Box<QuadTree>>,
-    triangles: Vec<Triangle2D>
+    triangles: Vec<Triangle2D>,
 }
 
 impl Model {
@@ -14,7 +14,7 @@ impl Model {
         Model {
             volumes: vec![],
             tree: None,
-            triangles: vec![]
+            triangles: vec![],
         }
     }
 

@@ -1,17 +1,14 @@
-use std::cell::RefCell;
 use std::collections::HashMap;
 use std::f64::consts::PI;
-use std::pin::Pin;
-use std::rc::Rc;
-use crate::plater::placed_part::PlacedPart;
-use crate::plater::request::Request;
-use rand::rngs::StdRng;
-use rand::thread_rng;
+
 use rand::seq::SliceRandom;
-use crate::plater::part::Part;
+use rand::thread_rng;
+
+use crate::plater::placed_part::PlacedPart;
 use crate::plater::placer::GravityMode::{GravityEQ, GravityXY, GravityYX};
 use crate::plater::plate::Plate;
 use crate::plater::plate_shape::PlateShape;
+use crate::plater::request::Request;
 use crate::plater::solution::Solution;
 
 #[derive(Clone, Copy)]
@@ -21,15 +18,15 @@ pub(crate) enum SortMode {
     // SortSurfaceInc sorts parts in ascending order of surface area.
     SortSurfaceInc,
     // SortShuffle sorts parts in random order.
-    SortShuffle
+    SortShuffle,
 }
 
 impl From<SortMode> for usize {
     fn from(x: SortMode) -> Self {
         match x {
-            SortMode::SortSurfaceDec => {0}
-            SortMode::SortSurfaceInc => {1}
-            SortMode::SortShuffle => {2}
+            SortMode::SortSurfaceDec => { 0 }
+            SortMode::SortSurfaceInc => { 1 }
+            SortMode::SortShuffle => { 2 }
         }
     }
 }
@@ -40,17 +37,17 @@ pub(crate) enum GravityMode {
     // GravityXY gives X score a weighting of 10 times the Y score.
     GravityXY,
     // GravityEQ gives X and Y scores equal weighting.
-    GravityEQ
+    GravityEQ,
 }
 
 pub(crate) const GRAVITY_MODE_LIST: [GravityMode; 3] = [GravityYX, GravityXY, GravityEQ];
 
 impl From<GravityMode> for usize {
-    fn from(x:GravityMode) -> Self {
+    fn from(x: GravityMode) -> Self {
         match x {
-            GravityMode::GravityYX => {0},
-            GravityMode::GravityXY => {1},
-            GravityMode::GravityEQ => {2},
+            GravityMode::GravityYX => { 0 }
+            GravityMode::GravityXY => { 1 }
+            GravityMode::GravityEQ => { 2 }
         }
     }
 }
@@ -59,7 +56,8 @@ type PlateId = usize;
 
 pub struct Placer<'a, Shape: PlateShape> {
     rotate_offset: i32,
-    rotate_direction: i32, // 0 = CCW, 1 = CW, TODO: make an enum
+    rotate_direction: i32,
+    // 0 = CCW, 1 = CW, TODO: make an enum
     cache: HashMap<PlateId, HashMap<String, bool>>,
 
     // scoring weights
@@ -68,7 +66,7 @@ pub struct Placer<'a, Shape: PlateShape> {
     // input data
     locked_parts: Vec<PlacedPart<'a>>,
     unlocked_parts: Vec<PlacedPart<'a>>,
-    request: &'a Request<'a, Shape>
+    request: &'a Request<'a, Shape>,
 }
 
 impl<'a, Shape: PlateShape> Placer<'a, Shape> {
@@ -84,10 +82,10 @@ impl<'a, Shape: PlateShape> Placer<'a, Shape> {
             request,
         };
 
-        for (key, value) in &p.request.parts {
+        for (_key, value) in &p.request.parts {
             let part = *value;
             let placed_part =
-                    PlacedPart::new_placed_part(part);
+                PlacedPart::new_placed_part(part);
             if part.locked {
                 p.locked_parts.push(placed_part)
             } else {
@@ -148,7 +146,7 @@ impl<'a, Shape: PlateShape> Placer<'a, Shape> {
         let mut plate = Plate::new(shape, self.request.precision);
 
         let n = self.locked_parts.len();
-        let mut xs = &mut self.locked_parts.drain(0..n);
+        let xs = &mut self.locked_parts.drain(0..n);
         for part in xs {
             plate.place(part);
         }
@@ -158,7 +156,7 @@ impl<'a, Shape: PlateShape> Placer<'a, Shape> {
     // Internal borrow mut
     fn place_unlocked_part<'b>(&mut self, plate: &mut Plate<'b>, mut part: PlacedPart<'b>) -> Result<bool, PlacedPart<'b>> {
         let cache_name;
-            // TODO: optimize string clone
+        // TODO: optimize string clone
         cache_name = String::from(part.get_id());
 
         if self.cache.get(&plate.plate_id).is_none() {
@@ -177,7 +175,7 @@ impl<'a, Shape: PlateShape> Placer<'a, Shape> {
         let mut better_r = 0;
         let mut found = false;
 
-        let mut rs = f64::ceil(PI * 2.0/self.request.delta_r) as usize;
+        let mut rs = f64::ceil(PI * 2.0 / self.request.delta_r) as usize;
 
         // Conditionally reverse iteration direction
         let iter = if self.rotate_direction != 0 {
@@ -214,7 +212,6 @@ impl<'a, Shape: PlateShape> Placer<'a, Shape> {
                     y += delta;
                 }
                 x += delta
-
             }
 
             return if found {
@@ -229,11 +226,10 @@ impl<'a, Shape: PlateShape> Placer<'a, Shape> {
                     .unwrap()
                     .insert(String::from(cache_name), true);
                 Err(part)
-
-            }
+            };
         }
         // TODO: verify correctness
-         Err(part)
+        Err(part)
     }
 
     fn place_single_plate(&mut self) -> Solution<'a> {
@@ -308,20 +304,19 @@ impl<'a, Shape: PlateShape> Placer<'a, Shape> {
             let mut i = 0;
             let mut current_part = part;
             while solution.count_plates() < i {
-                let res =  self.place_unlocked_part(solution.get_plate_mut(i).unwrap(), current_part);
+                let res = self.place_unlocked_part(solution.get_plate_mut(i).unwrap(), current_part);
                 match res {
                     Ok(_) => {
                         break;
-                    },
+                    }
                     Err(part) => {
                         if i + 1 == solution.count_plates() {
                             let shape = Clone::clone(*&self.request.plate_shape);
-                            let next_plate = self.make_plate(&shape);;
+                            let next_plate = self.make_plate(&shape);
                             solution.add_plate(next_plate);
                         }
                         current_part = part;
                     }
-
                 }
                 i += 1;
             }

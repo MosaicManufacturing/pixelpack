@@ -9,7 +9,7 @@ pub struct QuadTree {
     quad2: Option<Box<QuadTree>>,
     quad3: Option<Box<QuadTree>>,
     quad4: Option<Box<QuadTree>>,
-    black: bool
+    black: bool,
 }
 
 impl QuadTree {
@@ -23,12 +23,12 @@ impl QuadTree {
             quad2: None,
             quad3: None,
             quad4: None,
-            black: false
+            black: false,
         };
 
         if depth > 0 {
-            let xm = (x1 + x2)/2.0;
-            let ym = (y1 + y2)/2.0;
+            let xm = (x1 + x2) / 2.0;
+            let ym = (y1 + y2) / 2.0;
             q.quad1 = Some(Box::new(QuadTree::new(x1, y1, xm, ym, depth - 1)));
             q.quad2 = Some(Box::new(QuadTree::new(xm, y1, x2, ym, depth - 1)));
             q.quad3 = Some(Box::new(QuadTree::new(x1, ym, xm, y2, depth - 1)));
@@ -74,12 +74,6 @@ impl QuadTree {
             if let Some(x) = self.quad4.as_mut() {
                 x.add(triangle);
             }
-
-
         }
-
-
-
-
     }
 }

@@ -1,11 +1,10 @@
-use std::borrow::Borrow;
-use crate::plater::part::Part;
-use crate::plater::plate_shape::PlateShape;
 use std::collections::HashMap;
 use std::f64::consts::PI;
-use std::rc::Rc;
+
+use crate::plater::part::Part;
 use crate::plater::placer::{GRAVITY_MODE_LIST, Placer, SortMode};
 use crate::plater::placer::SortMode::{SortShuffle, SortSurfaceDec, SortSurfaceInc};
+use crate::plater::plate_shape::PlateShape;
 use crate::plater::solution::Solution;
 
 // DEFAULT_RESOLUTION is the default bitmap resolution, in pixels per mm.
@@ -21,7 +20,8 @@ pub struct Request<'a, Shape: PlateShape> {
     // max_threads is the maximum number of goroutines to use when placing.
     // Set this to 0 or a negative value for no limit.
     max_threads: usize,
-    pub(crate) precision: f64, // precision
+    pub(crate) precision: f64,
+    // precision
     spacing: f64,   // part spacing
 
     // brute-force deltas
@@ -51,9 +51,9 @@ impl<'a, Shape: PlateShape> Request<'a, Shape> {
             precision: 0.5 * resolution,
             spacing: 1.5 * resolution,
             delta: 1.0 * resolution,
-            delta_r: PI/2.0,
+            delta_r: PI / 2.0,
             parts: Default::default(),
-            resolution
+            resolution,
         }
     }
 
@@ -104,9 +104,6 @@ impl<'a, Shape: PlateShape> Request<'a, Shape> {
         let best_solution = &solutions[0];
         None
     }
-
-
-
 }
 
 

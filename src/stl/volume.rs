@@ -2,7 +2,7 @@ use crate::stl::face::Face;
 use crate::stl::point_3d::Point3D;
 
 pub struct Volume {
-    faces: Vec<Face>
+    faces: Vec<Face>,
 }
 
 impl Clone for Volume {
@@ -25,11 +25,11 @@ impl Volume {
     }
 
     pub fn min(&self) -> Point3D {
-         (&self.faces)
+        (&self.faces)
             .iter()
             .flat_map(|face| &face.v)
             .map(Clone::clone)
-            .reduce(|x, y | Point3D::min(&x, &y))
+            .reduce(|x, y| Point3D::min(&x, &y))
             .or_else(|| Some(Point3D::new(0.0, 0.0, 0.0)))
             .unwrap()
     }
@@ -39,11 +39,9 @@ impl Volume {
             .iter()
             .flat_map(|face| &face.v)
             .map(Clone::clone)
-            .reduce(|x, y | Point3D::max(&x, &y))
+            .reduce(|x, y| Point3D::max(&x, &y))
             .or_else(|| Some(Point3D::new(0.0, 0.0, 0.0)))
             .unwrap()
     }
-
-
 }
 

@@ -1,8 +1,10 @@
-use crate::plater::bitmap::Bitmap;
 use std::f64::consts::PI;
 
+use crate::plater::bitmap::Bitmap;
+
 pub struct Part {
-    pub(crate) locked: bool, // if true, part cannot be moved or rotated
+    pub(crate) locked: bool,
+    // if true, part cannot be moved or rotated
     pub(crate) id: String,
     pub(crate) precision: f64,
     pub(crate) delta_r: f64,
@@ -10,7 +12,8 @@ pub struct Part {
     height: f64,
     center_x: f64,
     center_y: f64,
-    surface: f64, // average bitmap size
+    surface: f64,
+    // average bitmap size
     pub(crate) bitmaps: Vec<Option<Bitmap>>,
 }
 

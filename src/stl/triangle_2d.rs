@@ -1,20 +1,6 @@
-// struct Triangle2D {
-//     box: i32,
-//     // a   plater.Point
-//     // b   plater.Point
-//     // c   plater.Point
-//     // ab  plater.Point
-//     // bc  plater.Point
-//     // ca  plater.Point
-//     // nAB plater.Point
-//     // nBC plater.Point
-//     // nCA plater.Point
-// }
-
 use crate::plater;
-use crate::plater::rectangle::Rectangle;
 use crate::plater::point::Point;
-use crate::stl::point_3d::Point3D;
+use crate::plater::rectangle::Rectangle;
 use crate::stl::util::get_side;
 
 #[derive(Clone)]
@@ -28,11 +14,11 @@ pub struct Triangle2D {
     ca: Point,
     nAB: Point,
     nBC: Point,
-    nCA: Point
+    nCA: Point,
 }
 
 impl Triangle2D {
-    fn triangle_from_points(a: Point, b: Point, c: Point ) -> Self {
+    fn triangle_from_points(a: Point, b: Point, c: Point) -> Self {
         let ab = Point::sub(&b, &a);
         let bc = Point::sub(&c, &b);
         let ca = Point::sub(&a, &c);
@@ -45,18 +31,27 @@ impl Triangle2D {
             f64::max(a.x, f64::max(b.x, c.x)),
             f64::max(a.y, f64::max(b.y, c.y)),
             f64::max(a.x, f64::max(b.x, c.x)),
-            f64::max(a.y, f64::max(b.y, c.y))
+            f64::max(a.y, f64::max(b.y, c.y)),
         );
 
         Triangle2D {
-            a, b, c, ab, bc, ca, nAB, nBC, nCA, t_box
+            a,
+            b,
+            c,
+            ab,
+            bc,
+            ca,
+            nAB,
+            nBC,
+            nCA,
+            t_box,
         }
     }
 
     pub(crate) fn contains(&self, x: f64, y: f64) -> bool {
-        let a = plater::point::Point::new(x-self.a.x, y-self.a.y);
-        let b = plater::point::Point::new(x-self.b.x, y-self.b.y);
-        let c = plater::point::Point::new(x-self.c.x, y-self.c.y);
+        let a = plater::point::Point::new(x - self.a.x, y - self.a.y);
+        let b = plater::point::Point::new(x - self.b.x, y - self.b.y);
+        let c = plater::point::Point::new(x - self.c.x, y - self.c.y);
 
         let side_a = get_side(&a, &self.nAB, &self.ab);
         let side_b = get_side(&b, &self.nBC, &self.bc);
@@ -72,6 +67,4 @@ impl Triangle2D {
             self.contains(rect.x2, rect.y1) &&
             self.contains(rect.x2, rect.y2)
     }
-
-
 }
