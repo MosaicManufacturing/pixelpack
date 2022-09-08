@@ -47,7 +47,7 @@ impl<'a> PlacedPart<'a> {
     }
 
     pub(crate) fn get_bitmap(&self) -> Option<&Bitmap> {
-        return self.part.get_bitmap(self.rotation as usize);
+        self.part.get_bitmap(self.rotation as usize)
     }
 
     fn get_center_x(&self) -> f64 {

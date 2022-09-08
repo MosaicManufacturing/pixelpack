@@ -3,12 +3,11 @@ use crate::plater::point::Point;
 pub fn get_side(pt: &Point, n: &Point, s: &Point) -> bool {
     let scalar_n = n.x * pt.x + n.y * pt.y;
     if scalar_n == 0.0 {
-        return s.x * pt.x + s.y * pt.y > 0.0;
+        s.x * pt.x + s.y * pt.y > 0.0
+    } else {
+        scalar_n < 0.0
     }
-
-    return scalar_n < 0.0;
 }
-
 
 // func formatPointForASCII(x, y, z float64) string {
 // 	if x == -0 {

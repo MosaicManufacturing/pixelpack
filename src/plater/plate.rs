@@ -29,7 +29,7 @@ impl<'a> Plate<'a> {
             width,
             height,
             parts: vec![],
-            bitmap: Bitmap::new(((width / precision) as i32), (height / precision) as i32),
+            bitmap: Bitmap::new((width / precision) as i32, (height / precision) as i32),
         }
     }
 
@@ -58,8 +58,8 @@ impl<'a> Plate<'a> {
 
         !part_bmp.overlaps(
             &self.bitmap,
-            ((x / self.precision) as i32),
-            ((y / self.precision) as i32),
+            (x / self.precision) as i32,
+            (y / self.precision) as i32,
         )
     }
 

@@ -10,7 +10,7 @@ pub struct Placement {
 impl Clone for Placement {
     fn clone(&self) -> Self {
         Placement {
-            id: (&self).id.to_owned(),
+            id: self.id.to_owned(),
             center: Point::clone(&self.center),
             rotation: self.rotation,
         }

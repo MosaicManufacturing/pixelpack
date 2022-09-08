@@ -70,12 +70,12 @@ impl Bitmap {
     }
 
     fn at(&self, x: i32, y: i32) -> u8 {
-        *&self.data[self.index(x, y)]
+        self.data[self.index(x, y)]
     }
 
     pub(crate) fn to_ppm(&self) -> String {
         let EOL = '\n';
-        let mut ppm = String::with_capacity(*&self.data.len());
+        let mut ppm = String::with_capacity(self.data.len());
 
         ppm.push_str("P2");
         ppm.push(EOL);
@@ -88,7 +88,7 @@ impl Bitmap {
 
         let last_row_index = (self.width - 1) as usize;
         let casted_width = self.width as usize;
-        for (index, byte) in (&self.data).into_iter().enumerate() {
+        for (index, byte) in (&self.data).iter().enumerate() {
             let color = match *byte {
                 0 => '6',
                 1 => '4',
@@ -137,7 +137,7 @@ impl Bitmap {
     }
 
     fn dilate(&mut self, distance: i32) {
-        let old = Bitmap::clone(&self);
+        let old = Bitmap::clone(self);
         let casted_width = self.width as usize;
         let casted_height = self.height as usize;
 
@@ -171,7 +171,7 @@ impl Bitmap {
     pub(crate) fn overlaps(&self, other: &Bitmap, off_x: i32, off_y: i32) -> bool {
         for x in 0..self.width {
             for y in 0..self.height {
-                if *&self.at(x, y) != 0 && other.get_point(x + off_x, y + off_y) != 0 {
+                if self.at(x, y) != 0 && other.get_point(x + off_x, y + off_y) != 0 {
                     return true;
                 }
             }
@@ -223,8 +223,8 @@ impl Bitmap {
         let width = x_max - x_min;
         let height = y_max - y_min;
 
-        let old_center_x = *&self.center_x;
-        let old_center_y = *&self.center_y;
+        let old_center_x = self.center_x;
+        let old_center_y = self.center_y;
         let center_x = (width / 2) as f64;
         let center_y = (height / 2) as f64;
 
@@ -239,7 +239,7 @@ impl Bitmap {
                 rotated.set_point(
                     x,
                     y,
-                    *&self.get_point(
+                    self.get_point(
                         f64::round(X + old_center_x) as i32,
                         f64::round(Y + old_center_y) as i32,
                     ),

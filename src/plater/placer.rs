@@ -82,7 +82,7 @@ impl<'a, Shape: PlateShape> Placer<'a, Shape> {
             request,
         };
 
-        for (_key, value) in &p.request.parts {
+        for value in request.parts.values() {
             let part = *value;
             let placed_part =
                 PlacedPart::new_placed_part(part);
@@ -155,9 +155,7 @@ impl<'a, Shape: PlateShape> Placer<'a, Shape> {
 
     // Internal borrow mut
     fn place_unlocked_part<'b>(&mut self, plate: &mut Plate<'b>, mut part: PlacedPart<'b>) -> Result<bool, PlacedPart<'b>> {
-        let cache_name;
-        // TODO: optimize string clone
-        cache_name = String::from(part.get_id());
+        let cache_name = String::from(part.get_id());
 
         if self.cache.get(&plate.plate_id).is_none() {
             self.cache.insert(plate.plate_id, HashMap::new());
@@ -165,7 +163,7 @@ impl<'a, Shape: PlateShape> Placer<'a, Shape> {
 
         let k = self.cache.get(&plate.plate_id).unwrap().get(cache_name.as_str());
         // If already seen, don't recompute
-        if let Some(_) = k {
+        if k.is_some() {
             return Ok(false);
         }
 
@@ -175,7 +173,7 @@ impl<'a, Shape: PlateShape> Placer<'a, Shape> {
         let mut better_r = 0;
         let mut found = false;
 
-        let mut rs = f64::ceil(PI * 2.0 / self.request.delta_r) as usize;
+        let rs = f64::ceil(PI * 2.0 / self.request.delta_r) as usize;
 
         // Conditionally reverse iteration direction
         let iter = if self.rotate_direction != 0 {
@@ -224,7 +222,7 @@ impl<'a, Shape: PlateShape> Placer<'a, Shape> {
                     .cache
                     .get_mut(&plate.plate_id)
                     .unwrap()
-                    .insert(String::from(cache_name), true);
+                    .insert(cache_name, true);
                 Err(part)
             };
         }
@@ -235,7 +233,7 @@ impl<'a, Shape: PlateShape> Placer<'a, Shape> {
     fn place_single_plate(&mut self) -> Solution<'a> {
 
         // TODO: TRY TO OPTIMIZE AWAY THE RC CLONE // PASS HEIGHT, WIDTH INSTEAD OF CLONING
-        let mut shape = Clone::clone(*&self.request.plate_shape);
+        let mut shape = Clone::clone(self.request.plate_shape);
         let mut plate = self.make_plate(&shape);
 
         self.locked_parts.clear();
@@ -293,7 +291,7 @@ impl<'a, Shape: PlateShape> Placer<'a, Shape> {
 
         {
             let plate_shape = Clone::clone(self.request.plate_shape);
-            let mut plate = self.make_plate(&plate_shape);
+            let plate = self.make_plate(&plate_shape);
             solution.add_plate(plate);
         }
 
@@ -311,7 +309,7 @@ impl<'a, Shape: PlateShape> Placer<'a, Shape> {
                     }
                     Err(part) => {
                         if i + 1 == solution.count_plates() {
-                            let shape = Clone::clone(*&self.request.plate_shape);
+                            let shape = Clone::clone(self.request.plate_shape);
                             let next_plate = self.make_plate(&shape);
                             solution.add_plate(next_plate);
                         }
