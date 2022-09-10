@@ -246,7 +246,7 @@ impl<'a, Shape: PlateShape> Placer<'a, Shape> {
             self.reset_cache();
 
             let mut reclaimed_unlocked_parts = vec![];
-            let n = (&self.unlocked_parts).len();
+            let n = unlocked_parts.len();
             for part in unlocked_parts.drain(0..n) {
                 match self.place_unlocked_part(&mut plate, part) {
                     Ok(flag) => {
