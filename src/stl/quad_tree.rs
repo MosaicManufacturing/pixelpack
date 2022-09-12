@@ -101,23 +101,19 @@ impl QuadTree {
             || self.quad4.as_ref().unwrap().test(x, y);
     }
 
-    fn get(&self, x: f64, y:f64) -> Vec<Triangle2D> {
-        if !self.r.contains(x ,y) {
+    fn get(&self, x: f64, y: f64) -> Vec<Triangle2D> {
+        if !self.r.contains(x, y) {
             return vec![];
         }
 
         if self.depth == 0 {
-            return self.triangles
-                .iter()
-                .map(Triangle2D::clone)
-                .collect();
+            return self.triangles.iter().map(Triangle2D::clone).collect();
         }
 
         return [&self.quad1, &self.quad2, &self.quad3, &self.quad4]
             .iter()
             .filter_map(|x| x.as_ref())
             .flat_map(|z| z.get(x, y))
-            .collect()
-
+            .collect();
     }
 }

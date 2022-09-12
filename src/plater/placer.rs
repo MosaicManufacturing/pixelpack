@@ -24,9 +24,9 @@ pub(crate) enum SortMode {
 impl From<SortMode> for usize {
     fn from(x: SortMode) -> Self {
         match x {
-            SortMode::SortSurfaceDec => { 0 }
-            SortMode::SortSurfaceInc => { 1 }
-            SortMode::SortShuffle => { 2 }
+            SortMode::SortSurfaceDec => 0,
+            SortMode::SortSurfaceInc => 1,
+            SortMode::SortShuffle => 2,
         }
     }
 }
@@ -45,9 +45,9 @@ pub(crate) const GRAVITY_MODE_LIST: [GravityMode; 3] = [GravityYX, GravityXY, Gr
 impl From<GravityMode> for usize {
     fn from(x: GravityMode) -> Self {
         match x {
-            GravityMode::GravityYX => { 0 }
-            GravityMode::GravityXY => { 1 }
-            GravityMode::GravityEQ => { 2 }
+            GravityMode::GravityYX => 0,
+            GravityMode::GravityXY => 1,
+            GravityMode::GravityEQ => 2,
         }
     }
 }
@@ -84,8 +84,7 @@ impl<'a, Shape: PlateShape> Placer<'a, Shape> {
 
         for value in request.parts.values() {
             let part = *value;
-            let placed_part =
-                PlacedPart::new_placed_part(part);
+            let placed_part = PlacedPart::new_placed_part(part);
             if part.locked {
                 p.locked_parts.push(placed_part)
             } else {
@@ -102,13 +101,11 @@ impl<'a, Shape: PlateShape> Placer<'a, Shape> {
 
     pub(crate) fn sort_parts(&mut self, sort_mode: SortMode) {
         match sort_mode {
-            SortMode::SortSurfaceDec => {
-                self.unlocked_parts.sort_by(|x, y| {
-                    let s1 = x.get_surface();
-                    let s2 = y.get_surface();
-                    f64::partial_cmp(&s1, &s2).unwrap()
-                })
-            }
+            SortMode::SortSurfaceDec => self.unlocked_parts.sort_by(|x, y| {
+                let s1 = x.get_surface();
+                let s2 = y.get_surface();
+                f64::partial_cmp(&s1, &s2).unwrap()
+            }),
             SortMode::SortSurfaceInc => {
                 self.unlocked_parts.sort_by(|x, y| {
                     let s1 = x.get_surface();
@@ -125,9 +122,9 @@ impl<'a, Shape: PlateShape> Placer<'a, Shape> {
 
     pub(crate) fn set_gravity_mode(&mut self, gravity_mode: GravityMode) {
         let (new_x_coef, new_y_coef) = match gravity_mode {
-            GravityMode::GravityYX => { (1.0, 10.0) }
-            GravityMode::GravityXY => { (10.0, 1.0) }
-            GravityMode::GravityEQ => { (1.0, 1.0) }
+            GravityMode::GravityYX => (1.0, 10.0),
+            GravityMode::GravityXY => (10.0, 1.0),
+            GravityMode::GravityEQ => (1.0, 1.0),
         };
 
         self.y_coef = new_x_coef;
@@ -154,14 +151,22 @@ impl<'a, Shape: PlateShape> Placer<'a, Shape> {
     }
 
     // Internal borrow mut
-    fn place_unlocked_part<'b>(&mut self, plate: &mut Plate<'b>, mut part: PlacedPart<'b>) -> Result<bool, PlacedPart<'b>> {
+    fn place_unlocked_part<'b>(
+        &mut self,
+        plate: &mut Plate<'b>,
+        mut part: PlacedPart<'b>,
+    ) -> Result<bool, PlacedPart<'b>> {
         let cache_name = String::from(part.get_id());
 
         if self.cache.get(&plate.plate_id).is_none() {
             self.cache.insert(plate.plate_id, HashMap::new());
         }
 
-        let k = self.cache.get(&plate.plate_id).unwrap().get(cache_name.as_str());
+        let k = self
+            .cache
+            .get(&plate.plate_id)
+            .unwrap()
+            .get(cache_name.as_str());
         // If already seen, don't recompute
         if k.is_some() {
             return Ok(false);
@@ -218,8 +223,7 @@ impl<'a, Shape: PlateShape> Placer<'a, Shape> {
                 plate.place(part);
                 Ok(true)
             } else {
-                self
-                    .cache
+                self.cache
                     .get_mut(&plate.plate_id)
                     .unwrap()
                     .insert(cache_name, true);
@@ -254,9 +258,7 @@ impl<'a, Shape: PlateShape> Placer<'a, Shape> {
                             break;
                         }
                     }
-                    Err(part) => {
-                        reclaimed_unlocked_parts.push(part)
-                    }
+                    Err(part) => reclaimed_unlocked_parts.push(part),
                 }
             }
             if !all_placed {
@@ -301,7 +303,8 @@ impl<'a, Shape: PlateShape> Placer<'a, Shape> {
             let mut i = 0;
             let mut current_part = part;
             while solution.count_plates() < i {
-                let res = self.place_unlocked_part(solution.get_plate_mut(i).unwrap(), current_part);
+                let res =
+                    self.place_unlocked_part(solution.get_plate_mut(i).unwrap(), current_part);
                 match res {
                     Ok(_) => {
                         break;

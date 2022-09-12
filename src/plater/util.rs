@@ -8,6 +8,6 @@ pub(crate) fn apply_rotation_f64(point: (f64, f64), angle: f64) -> (f64, f64) {
 }
 
 pub(crate) fn apply_rotation(point: (f64, f64), angle: f64) -> (i32, i32) {
-    let (x, y) =  util::apply_rotation_f64(point, angle);
+    let (x, y) = util::apply_rotation_f64(point, angle);
     (f64::ceil(x) as i32, f64::ceil(y) as i32)
 }

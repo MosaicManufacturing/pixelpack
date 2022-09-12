@@ -1,10 +1,10 @@
+use rayon::prelude::{IntoParallelIterator, ParallelIterator};
 use std::collections::HashMap;
 use std::f64::consts::PI;
-use rayon::prelude::{IntoParallelIterator, ParallelIterator};
 
 use crate::plater::part::Part;
-use crate::plater::placer::{GRAVITY_MODE_LIST, Placer, SortMode};
 use crate::plater::placer::SortMode::{SortShuffle, SortSurfaceDec, SortSurfaceInc};
+use crate::plater::placer::{Placer, SortMode, GRAVITY_MODE_LIST};
 use crate::plater::plate_shape::PlateShape;
 use crate::plater::solution::Solution;
 
@@ -23,7 +23,7 @@ pub struct Request<'a, Shape: PlateShape> {
     max_threads: usize,
     pub(crate) precision: f64,
     // precision
-    spacing: f64,   // part spacing
+    spacing: f64, // part spacing
 
     // brute-force deltas
     pub(crate) delta: f64,
@@ -90,21 +90,14 @@ impl<'a, Shape: PlateShape> Request<'a, Shape> {
             }
         }
 
-        let mut solutions =
-            (&mut placers)
-                .into_par_iter()
-                .map(Placer::place)
-                .collect::<Vec<_>>();
+        let mut solutions = (&mut placers)
+            .into_par_iter()
+            .map(Placer::place)
+            .collect::<Vec<_>>();
 
-        solutions.sort_by(|x, y| {
-            f64::partial_cmp(&x.score(), &y.score()).unwrap()
-        });
+        solutions.sort_by(|x, y| f64::partial_cmp(&x.score(), &y.score()).unwrap());
 
         let best_solution = &solutions[0];
         None
     }
 }
-
-
-
-

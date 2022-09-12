@@ -7,7 +7,6 @@ pub struct Point3D {
     pub z: f64,
 }
 
-
 impl Point3D {
     pub(crate) fn new(x: f64, y: f64, z: f64) -> Self {
         Point3D { x, y, z }
@@ -19,7 +18,11 @@ impl Point3D {
 
     pub(crate) fn normalize(&self) -> Self {
         let length = self.length();
-        Point3D { x: self.x / length, y: self.y / length, z: self.z / length }
+        Point3D {
+            x: self.x / length,
+            y: self.y / length,
+            z: self.z / length,
+        }
     }
 
     fn dot_product(&self, other: &Self) -> f64 {
@@ -35,20 +38,16 @@ impl Point3D {
 
     pub fn min(a: &Self, b: &Self) -> Self {
         Point3D {
-            x: f64::min(a.x, b.x)
-            ,
-            y: f64::min(a.y, b.y)
-            ,
+            x: f64::min(a.x, b.x),
+            y: f64::min(a.y, b.y),
             z: f64::min(a.z, b.z),
         }
     }
 
     pub fn max(a: &Self, b: &Self) -> Self {
         Point3D {
-            x: f64::max(a.x, b.x)
-            ,
-            y: f64::max(a.y, b.y)
-            ,
+            x: f64::max(a.x, b.x),
+            y: f64::max(a.y, b.y),
             z: f64::max(a.z, b.z),
         }
     }

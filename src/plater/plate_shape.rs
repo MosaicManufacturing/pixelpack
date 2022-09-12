@@ -1,6 +1,6 @@
 use crate::plater::bitmap::Bitmap;
 
-pub trait PlateShape: Clone + Send + Sync{
+pub trait PlateShape: Clone + Send + Sync {
     fn width(&self) -> f64;
     fn height(&self) -> f64;
     fn string(&self) -> String;
@@ -27,36 +27,36 @@ impl Shape {
 impl PlateShape for Shape {
     fn width(&self) -> f64 {
         match self {
-            Shape::Rectangle(r) => { PlateShape::width(r) }
-            Shape::Circle(c) => { PlateShape::width(c) }
+            Shape::Rectangle(r) => PlateShape::width(r),
+            Shape::Circle(c) => PlateShape::width(c),
         }
     }
 
     fn height(&self) -> f64 {
         match self {
-            Shape::Rectangle(r) => { PlateShape::height(r) }
-            Shape::Circle(c) => { PlateShape::height(c) }
+            Shape::Rectangle(r) => PlateShape::height(r),
+            Shape::Circle(c) => PlateShape::height(c),
         }
     }
 
     fn string(&self) -> String {
         match self {
-            Shape::Rectangle(r) => { PlateShape::string(r) }
-            Shape::Circle(c) => { PlateShape::string(c) }
+            Shape::Rectangle(r) => PlateShape::string(r),
+            Shape::Circle(c) => PlateShape::string(c),
         }
     }
 
     fn mask_bitmap(&self, bitmap: &mut Bitmap, precision: f64) {
         match self {
-            Shape::Rectangle(r) => { PlateShape::mask_bitmap(r, bitmap, precision) }
-            Shape::Circle(c) => { PlateShape::mask_bitmap(c, bitmap, precision) }
+            Shape::Rectangle(r) => PlateShape::mask_bitmap(r, bitmap, precision),
+            Shape::Circle(c) => PlateShape::mask_bitmap(c, bitmap, precision),
         }
     }
 
     fn expand(&self, size: f64) -> Self {
         match self {
-            Shape::Rectangle(r) => { Shape::Rectangle(PlateShape::expand(r, size)) }
-            Shape::Circle(c) => { Shape::Circle(PlateShape::expand(c, size)) }
+            Shape::Rectangle(r) => Shape::Rectangle(PlateShape::expand(r, size)),
+            Shape::Circle(c) => Shape::Circle(PlateShape::expand(c, size)),
         }
     }
 }
@@ -97,11 +97,7 @@ impl PlateShape for PlateRectangle {
     }
 
     fn expand(&self, size: f64) -> Self {
-        PlateRectangle::new(
-            self.width + size,
-            self.height + size,
-            self.resolution,
-        )
+        PlateRectangle::new(self.width + size, self.height + size, self.resolution)
     }
 }
 

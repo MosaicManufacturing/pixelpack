@@ -1,5 +1,5 @@
-use std::f64::consts::PI;
 use crate::plater::point::Point;
+use std::f64::consts::PI;
 
 pub fn get_side(pt: &Point, n: &Point, s: &Point) -> bool {
     let scalar_n = n.x * pt.x + n.y * pt.y;
@@ -9,7 +9,6 @@ pub fn get_side(pt: &Point, n: &Point, s: &Point) -> bool {
         scalar_n < 0.0
     }
 }
-
 
 pub fn deg_to_rad(x: f64) -> f64 {
     PI * x / 180.0

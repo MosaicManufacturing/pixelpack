@@ -60,11 +60,10 @@ impl Triangle2D {
         side_a && side_b && side_c
     }
 
-
     pub(crate) fn contains_rect(&self, rect: &plater::rectangle::Rectangle) -> bool {
-        self.contains(rect.x1, rect.y1) &&
-            self.contains(rect.x1, rect.y2) &&
-            self.contains(rect.x2, rect.y1) &&
-            self.contains(rect.x2, rect.y2)
+        self.contains(rect.x1, rect.y1)
+            && self.contains(rect.x1, rect.y2)
+            && self.contains(rect.x2, rect.y1)
+            && self.contains(rect.x2, rect.y2)
     }
 }

@@ -8,16 +8,14 @@ pub struct Volume {
 impl Clone for Volume {
     fn clone(&self) -> Self {
         Volume {
-            faces: (&self.faces).iter().map(Clone::clone).collect()
+            faces: (&self.faces).iter().map(Clone::clone).collect(),
         }
     }
 }
 
 impl Volume {
     fn new() -> Self {
-        Volume {
-            faces: vec![]
-        }
+        Volume { faces: vec![] }
     }
 
     fn add_face(&mut self, f: Face) {
@@ -42,4 +40,3 @@ impl Volume {
         self.reduce_faces_with(|x, y| Point3D::max(&x, &y))
     }
 }
-

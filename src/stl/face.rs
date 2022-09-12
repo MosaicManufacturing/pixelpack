@@ -26,7 +26,6 @@ impl Face {
     }
 }
 
-
 // // Clone returns a deeply-copied Face.
 // func (f Face) Clone() Face {
 // 	return NewFace(f.V[0], f.V[1], f.V[2])

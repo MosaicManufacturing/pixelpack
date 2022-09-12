@@ -7,7 +7,9 @@ use crate::plater::plate_shape::PlateShape;
 
 static COUNTER: AtomicUsize = AtomicUsize::new(1);
 
-fn generate_unique_plate_id() -> usize { COUNTER.fetch_add(1, Ordering::Relaxed) }
+fn generate_unique_plate_id() -> usize {
+    COUNTER.fetch_add(1, Ordering::Relaxed)
+}
 
 pub struct Plate<'a> {
     pub(crate) plate_id: usize,
