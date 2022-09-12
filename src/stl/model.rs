@@ -173,9 +173,11 @@ impl Model {
         self.translate(-x, -y, -z)
     }
 
-    fn put_face_on_plate(&self, orientation: Orientation) -> Self {
+
+    // TODO: based on usage, it looks like we dont actually need to clone data
+    fn put_face_on_plate(self, orientation: Orientation) -> Self {
         match orientation {
-            Orientation::Bottom => self.clone(),
+            Orientation::Bottom => self,
             Orientation::Top => self.rotate_x(deg_to_rad(180.0)),
             Orientation::Front => self.rotate_x(deg_to_rad(90.0)),
             Orientation::Back => self.rotate_x(deg_to_rad(270.0)),
