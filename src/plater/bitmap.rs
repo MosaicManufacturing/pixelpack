@@ -1,5 +1,6 @@
-use crate::plater::util;
 use std::cmp::{max, min};
+
+use crate::plater::util;
 
 pub struct Bitmap {
     // Image dimensions

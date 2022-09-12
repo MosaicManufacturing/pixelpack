@@ -1,5 +1,6 @@
-use crate::plater::point::Point;
 use std::f64::consts::PI;
+
+use crate::plater::point::Point;
 
 pub fn get_side(pt: &Point, n: &Point, s: &Point) -> bool {
     let scalar_n = n.x * pt.x + n.y * pt.y;
