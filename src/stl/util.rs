@@ -1,3 +1,4 @@
+use std::f64::consts::PI;
 use crate::plater::point::Point;
 
 pub fn get_side(pt: &Point, n: &Point, s: &Point) -> bool {
@@ -7,6 +8,15 @@ pub fn get_side(pt: &Point, n: &Point, s: &Point) -> bool {
     } else {
         scalar_n < 0.0
     }
+}
+
+
+pub fn deg_to_rad(x: f64) -> f64 {
+    PI * x / 180.0
+}
+
+pub fn rad_to_deg(x: f64) -> f64 {
+    180.0 * x / PI
 }
 
 // func formatPointForASCII(x, y, z float64) string {

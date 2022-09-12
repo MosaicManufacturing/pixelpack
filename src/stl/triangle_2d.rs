@@ -18,7 +18,7 @@ pub struct Triangle2D {
 }
 
 impl Triangle2D {
-    fn triangle_from_points(a: Point, b: Point, c: Point) -> Self {
+    pub(crate) fn triangle_from_points(a: Point, b: Point, c: Point) -> Self {
         let ab = Point::sub(&b, &a);
         let bc = Point::sub(&c, &b);
         let ca = Point::sub(&a, &c);

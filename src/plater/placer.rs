@@ -231,8 +231,6 @@ impl<'a, Shape: PlateShape> Placer<'a, Shape> {
     }
 
     fn place_single_plate(&mut self) -> Solution<'a> {
-
-        // TODO: TRY TO OPTIMIZE AWAY THE RC CLONE // PASS HEIGHT, WIDTH INSTEAD OF CLONING
         let mut shape = Clone::clone(self.request.plate_shape);
         let mut plate = self.make_plate(&shape);
 
@@ -245,6 +243,7 @@ impl<'a, Shape: PlateShape> Placer<'a, Shape> {
             all_placed = true;
             self.reset_cache();
 
+            // TODO: optimization, next two line can be moved out of the loop
             let mut reclaimed_unlocked_parts = vec![];
             let n = unlocked_parts.len();
             for part in unlocked_parts.drain(0..n) {

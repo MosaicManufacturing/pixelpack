@@ -1,4 +1,4 @@
-mod bitmap;
+pub(crate) mod bitmap;
 mod part;
 mod placed_part;
 mod placement;
@@ -9,3 +9,4 @@ pub(crate) mod point;
 pub mod rectangle;
 mod request;
 mod solution;
+pub(crate) mod util;

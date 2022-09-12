@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 use std::f64::consts::PI;
+use rayon::prelude::{IntoParallelIterator, ParallelIterator};
 
 use crate::plater::part::Part;
 use crate::plater::placer::{GRAVITY_MODE_LIST, Placer, SortMode};
@@ -89,13 +90,11 @@ impl<'a, Shape: PlateShape> Request<'a, Shape> {
             }
         }
 
-
-        // // TODO: multi thread later
-        let mut solutions = vec![];
-        for placer in &mut placers {
-            let solution = placer.place();
-            solutions.push(solution);
-        }
+        let mut solutions =
+            (&mut placers)
+                .into_par_iter()
+                .map(Placer::place)
+                .collect::<Vec<_>>();
 
         solutions.sort_by(|x, y| {
             f64::partial_cmp(&x.score(), &y.score()).unwrap()

@@ -1,4 +1,5 @@
 use std::cmp::{max, min};
+use crate::plater::util;
 
 pub struct Bitmap {
     // Image dimensions
@@ -136,7 +137,7 @@ impl Bitmap {
         }
     }
 
-    fn dilate(&mut self, distance: i32) {
+    pub(crate) fn dilate(&mut self, distance: i32) {
         let old = Bitmap::clone(self);
         let casted_width = self.width as usize;
         let casted_height = self.height as usize;
@@ -192,27 +193,15 @@ impl Bitmap {
         }
     }
 
-    fn apply_rotation_f64(point: (f64, f64), angle: f64) -> (f64, f64) {
-        let x = f64::ceil(point.0 * f64::cos(angle) - point.1 * f64::sin(angle));
-        let y = f64::ceil(point.0 * f64::sin(angle) + point.1 * f64::cos(angle));
-
-        (x, y)
-    }
-
-    fn apply_rotation(point: (f64, f64), angle: f64) -> (i32, i32) {
-        let (x, y) = Bitmap::apply_rotation_f64(point, angle);
-        (x as i32, y as i32)
-    }
-
     pub(crate) fn rotate(&self, mut r: f64) -> Self {
         r = -r;
 
         let w = self.width as f64;
         let h = self.height as f64;
 
-        let (a_x, a_y) = Bitmap::apply_rotation((w, h), r);
-        let (b_x, b_y) = Bitmap::apply_rotation((0.0, h), r);
-        let (c_x, c_y) = Bitmap::apply_rotation((w, 0.0), r);
+        let (a_x, a_y) = util::apply_rotation((w, h), r);
+        let (b_x, b_y) = util::apply_rotation((0.0, h), r);
+        let (c_x, c_y) = util::apply_rotation((w, 0.0), r);
 
         let x_min = min(min(0, a_x), min(b_x, c_x));
         let x_max = max(max(0, a_x), max(b_x, c_x));
@@ -235,7 +224,7 @@ impl Bitmap {
             for y in 0..height {
                 let c_x = f64::round((x as f64) - center_x);
                 let c_y = f64::round((y as f64) - center_y);
-                let (X, Y) = Bitmap::apply_rotation_f64((c_x, c_y), r);
+                let (X, Y) = util::apply_rotation_f64((c_x, c_y), r);
                 rotated.set_point(
                     x,
                     y,

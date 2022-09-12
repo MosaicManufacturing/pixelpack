@@ -19,7 +19,7 @@ impl Rectangle {
         (self.x1 <= other.x2 && self.x2 >= other.x1) && (self.y1 <= other.y2 && self.y2 >= other.y1)
     }
 
-    fn contains(&self, x: f64, y: f64) -> bool {
+    pub(crate) fn contains(&self, x: f64, y: f64) -> bool {
         (self.x1 <= x && x <= self.x2) && (self.y1 <= y && y <= self.y2)
     }
 }

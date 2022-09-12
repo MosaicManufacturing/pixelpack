@@ -13,7 +13,7 @@ pub struct QuadTree {
 }
 
 impl QuadTree {
-    fn new(x1: f64, y1: f64, x2: f64, y2: f64, depth: usize) -> Self {
+    pub(crate) fn new(x1: f64, y1: f64, x2: f64, y2: f64, depth: usize) -> Self {
         let r = Rectangle::new(x1, y1, x2, y2);
         let mut q = QuadTree {
             triangles: vec![],
@@ -38,7 +38,7 @@ impl QuadTree {
         q
     }
 
-    fn add(&mut self, triangle: Triangle2D) {
+    pub(crate) fn add(&mut self, triangle: Triangle2D) {
         if self.depth == 0 {
             self.triangles.push(triangle);
             return;
@@ -75,5 +75,49 @@ impl QuadTree {
                 x.add(triangle);
             }
         }
+    }
+
+    pub(crate) fn test(&self, x: f64, y: f64) -> bool {
+        if !self.r.contains(x, y) {
+            return false;
+        }
+
+        if self.black {
+            return true;
+        }
+
+        if self.depth == 0 {
+            for t in &self.triangles {
+                if t.contains(x, y) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        return self.quad1.as_ref().unwrap().test(x, y)
+            || self.quad2.as_ref().unwrap().test(x, y)
+            || self.quad3.as_ref().unwrap().test(x, y)
+            || self.quad4.as_ref().unwrap().test(x, y);
+    }
+
+    fn get(&self, x: f64, y:f64) -> Vec<Triangle2D> {
+        if !self.r.contains(x ,y) {
+            return vec![];
+        }
+
+        if self.depth == 0 {
+            return self.triangles
+                .iter()
+                .map(Triangle2D::clone)
+                .collect();
+        }
+
+        return [&self.quad1, &self.quad2, &self.quad3, &self.quad4]
+            .iter()
+            .filter_map(|x| x.as_ref())
+            .flat_map(|z| z.get(x, y))
+            .collect()
+
     }
 }
