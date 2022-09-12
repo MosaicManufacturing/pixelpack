@@ -24,24 +24,22 @@ impl Volume {
         self.faces.push(f);
     }
 
-    pub fn min(&self) -> Point3D {
+    fn reduce_faces_with(&self, f: impl Fn(Point3D, Point3D) -> Point3D) -> Point3D {
         (&self.faces)
             .iter()
             .flat_map(|face| &face.v)
             .map(Clone::clone)
-            .reduce(|x, y| Point3D::min(&x, &y))
+            .reduce(f)
             .or_else(|| Some(Point3D::new(0.0, 0.0, 0.0)))
             .unwrap()
     }
 
+    pub(crate) fn min(&self) -> Point3D {
+        self.reduce_faces_with(|x, y| Point3D::min(&x, &y))
+    }
+
     pub(crate) fn max(&self) -> Point3D {
-        (&self.faces)
-            .iter()
-            .flat_map(|face| &face.v)
-            .map(Clone::clone)
-            .reduce(|x, y| Point3D::max(&x, &y))
-            .or_else(|| Some(Point3D::new(0.0, 0.0, 0.0)))
-            .unwrap()
+        self.reduce_faces_with(|x, y| Point3D::max(&x, &y))
     }
 }
 
