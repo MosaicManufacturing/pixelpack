@@ -14,11 +14,11 @@ impl Clone for Volume {
 }
 
 impl Volume {
-    fn new() -> Self {
+    pub(crate) fn new() -> Self {
         Volume { faces: vec![] }
     }
 
-    fn add_face(&mut self, f: Face) {
+    pub(crate) fn add_face(&mut self, f: Face) {
         self.faces.push(f);
     }
 

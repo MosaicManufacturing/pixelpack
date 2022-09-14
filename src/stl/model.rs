@@ -9,7 +9,7 @@ use crate::stl::util::deg_to_rad;
 use crate::stl::volume::Volume;
 
 pub struct Model {
-    volumes: Vec<Volume>,
+    pub(crate) volumes: Vec<Volume>,
     tree: Option<Box<QuadTree>>,
     // triangles: Vec<Triangle2D>, No need for this right now
 }
@@ -24,7 +24,7 @@ impl Clone for Model {
 }
 
 impl Model {
-    fn new() -> Self {
+    pub(crate) fn new() -> Self {
         Model {
             volumes: vec![],
             tree: None,
