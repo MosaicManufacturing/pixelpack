@@ -18,7 +18,7 @@ pub struct Part {
 }
 
 impl Part {
-    fn new(
+    pub(crate) fn new(
         id: String,
         bitmap: Bitmap,
         center_x: f64,

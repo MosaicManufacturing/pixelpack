@@ -9,7 +9,7 @@ pub trait PlateShape: Clone + Send + Sync {
 }
 
 #[derive(Clone)]
-enum Shape {
+pub enum Shape {
     Rectangle(PlateRectangle),
     Circle(PlateCircle),
 }
@@ -102,7 +102,7 @@ impl PlateShape for PlateRectangle {
 }
 
 #[derive(Clone)]
-struct PlateCircle {
+pub struct PlateCircle {
     resolution: f64,
     diameter: f64,
 }

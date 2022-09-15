@@ -1,12 +1,12 @@
 pub(crate) mod bitmap;
-mod part;
+pub(crate) mod part;
 mod placed_part;
 mod placement;
 mod placer;
 mod plate;
-mod plate_shape;
+pub(crate) mod plate_shape;
 pub(crate) mod point;
 pub mod rectangle;
-mod request;
+pub(crate) mod request;
 mod solution;
 pub(crate) mod util;

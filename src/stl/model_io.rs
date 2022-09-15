@@ -178,8 +178,40 @@ impl Model {
 
         let mut model = Model::new();
         model.volumes.push(volume);
-
         Ok(model)
     }
 
+}
+
+impl Model {
+    fn load_stl_file<P: AsRef<Path>>(filename: P, resolution: f64) -> std::io::Result<Self> {
+        let mut f = File::open(filename.as_ref())?;
+
+        let buf_len = 2048;
+        let mut buf = Vec::with_capacity(buf_len);
+        let n = f.read(&mut buf)?;
+        let bytes = &buf.as_slice()[0..n];
+
+        drop(f);
+
+        let prefix = "solid".as_bytes();
+
+
+
+        if n >= 5 {
+            let x = &bytes[0..5];
+            if x == prefix {
+                return Model::load_stl_file_binary(filename, resolution)
+            }
+        }
+
+        let printable_count = bytes
+            .iter()
+            .filter(|x| **x < 127)
+            .count();
+
+        if (printable_count as f64)/(n as f64) < 0.95
+        {Model::load_stl_file_binary(filename, resolution)}
+        else {Model::load_stl_file_ascii(filename, resolution)  }
+    }
 }
