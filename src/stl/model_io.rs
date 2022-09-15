@@ -184,7 +184,7 @@ impl Model {
 }
 
 impl Model {
-    fn load_stl_file<P: AsRef<Path>>(filename: P, resolution: f64) -> std::io::Result<Self> {
+    pub fn load_stl_file<P: AsRef<Path>>(filename: P, resolution: f64) -> std::io::Result<Self> {
         let mut f = File::open(filename.as_ref())?;
 
         let buf_len = 2048;

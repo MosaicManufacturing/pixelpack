@@ -32,7 +32,7 @@ impl Model {
         }
     }
 
-    fn min(&self) -> Point3D {
+    pub(crate) fn min(&self) -> Point3D {
         (&self.volumes)
             .iter()
             .map(Volume::min)
@@ -41,7 +41,7 @@ impl Model {
             .unwrap()
     }
 
-    fn max(&self) -> Point3D {
+    pub(crate) fn max(&self) -> Point3D {
         (&self.volumes)
             .iter()
             .map(Volume::max)
@@ -80,7 +80,7 @@ impl Model {
         self.tree.as_ref().unwrap().test(x, y)
     }
 
-    fn pixelize(&mut self, precision: f64, dilation: f64) -> Bitmap {
+    pub(crate) fn pixelize(&mut self, precision: f64, dilation: f64) -> Bitmap {
         let min_p = self.min();
         let max_p = self.max();
 
@@ -175,9 +175,9 @@ impl Model {
 
 
     // TODO: based on usage, it looks like we dont actually need to clone data
-    fn put_face_on_plate(self, orientation: Orientation) -> Self {
+    pub(crate) fn put_face_on_plate(&self, orientation: Orientation) -> Self {
         match orientation {
-            Orientation::Bottom => self,
+            Orientation::Bottom => self.clone(),
             Orientation::Top => self.rotate_x(deg_to_rad(180.0)),
             Orientation::Front => self.rotate_x(deg_to_rad(90.0)),
             Orientation::Back => self.rotate_x(deg_to_rad(270.0)),

@@ -1,5 +1,7 @@
 use std::collections::HashMap;
-use crate::plater;
+use std::ops::DerefMut;
+use std::pin::Pin;
+use crate::{plater, stl};
 
 
 // type Request struct {
@@ -11,9 +13,22 @@ use crate::plater;
 struct Request<'a> {
     request: plater::request::Request<'a, plater::plate_shape::Shape>,
     resolution: f64,
+    parts: Vec<stl::part::Part>
     // parts: HashMap<>
-
 }
+
+
+// impl<'a> Request<'a>  {
+//
+//     fn new() -> Self {
+//         let x = Request {}
+//     }
+//
+//     fn help(&mut self) {
+//         let xs = &mut self.parts;
+//         let x = xs.deref_mut();
+//     }
+// }
 
 
 // func NewRequest(plateShape plater.PlateShape, resolution float64) *Request {
