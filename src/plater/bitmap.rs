@@ -68,7 +68,7 @@ impl Bitmap {
     }
 
     fn index(&self, x: i32, y: i32) -> usize {
-        (self.height * y + x) as usize
+        (self.width * y + x) as usize
     }
 
     fn at(&self, x: i32, y: i32) -> u8 {
@@ -139,34 +139,59 @@ impl Bitmap {
     }
 
     pub(crate) fn dilate(&mut self, distance: i32) {
-        let old = Bitmap::clone(self);
-        let casted_width = self.width as usize;
-        let casted_height = self.height as usize;
+        let width = self.width as usize;
+        let height = self.height as usize;
 
-        for _ in 0..distance {
-            for index in 0..old.data.len() {
-                let x = index % casted_width;
-                let y = (index - x) / casted_height;
-
-                if old.at(x as i32, y as i32) == 0 {
-                    let mut score = 0;
-                    for dx in -1..1 {
-                        for dy in -1..1 {
-                            if dx == 0 && dy == 0 {
-                                continue;
+        for _ in 0..(distance as usize) {
+            let old = Bitmap::clone(self);
+            for y in 0..height {
+                for x in 0..width {
+                    if old.at(x as i32, y as i32) == 0 {
+                        let mut score = 0;
+                        for dx in -1..1 {
+                            for dy in -1..1 {
+                                if dx == 0 && dy == 0 {
+                                    continue;
+                                }
+                                if old.get_point((x as i32) + dx, (y as i32) + dy) != 0 {
+                                    score += 1;
+                                };
                             }
-                            if old.get_point((x as i32) + dx, (y as i32) + dy) != 0 {
-                                score += 1;
-                            };
                         }
-                    }
 
-                    if score >= 1 {
-                        self.set_point(x as i32, y as i32, 1);
+                        if score >= 1 {
+                            self.set_point(x as i32, y as i32, 1);
+                        }
                     }
                 }
             }
         }
+
+
+        // for _ in 0..distance {
+        //     for index in 0..old.data.len() {
+        //         let x = index % casted_width;
+        //         let y = (index - x) / casted_height;
+        //
+        //         if old.at(x as i32, y as i32) == 0 {
+        //             let mut score = 0;
+        //             for dx in -1..1 {
+        //                 for dy in -1..1 {
+        //                     if dx == 0 && dy == 0 {
+        //                         continue;
+        //                     }
+        //                     if old.get_point((x as i32) + dx, (y as i32) + dy) != 0 {
+        //                         score += 1;
+        //                     };
+        //                 }
+        //             }
+        //
+        //             if score >= 1 {
+        //                 self.set_point(x as i32, y as i32, 1);
+        //             }
+        //         }
+        //     }
+        // }
     }
 
     // TODO: switch x and y cache

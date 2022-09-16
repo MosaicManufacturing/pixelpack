@@ -31,7 +31,7 @@ impl From<SortMode> for usize {
     }
 }
 
-pub(crate) enum GravityMode {
+pub enum GravityMode {
     // GravityYX gives Y score a weighting of 10 times the X score.
     GravityYX,
     // GravityXY gives X score a weighting of 10 times the Y score.
@@ -79,11 +79,11 @@ impl<'a, Shape: PlateShape> Placer<'a, Shape> {
             y_coef: 0.0,
             locked_parts: vec![],
             unlocked_parts: vec![],
-            request,
+            request
         };
 
-        for value in request.parts.values() {
-            let part = *value;
+
+        for part in request.parts.values() {
             let placed_part = PlacedPart::new_placed_part(part);
             if part.locked {
                 p.locked_parts.push(placed_part)
@@ -156,6 +156,8 @@ impl<'a, Shape: PlateShape> Placer<'a, Shape> {
         plate: &mut Plate<'b>,
         mut part: PlacedPart<'b>,
     ) -> Result<bool, PlacedPart<'b>> {
+
+        // println!("place_unlocked_part");
         let cache_name = String::from(part.get_id());
 
         if self.cache.get(&plate.plate_id).is_none() {
@@ -243,6 +245,7 @@ impl<'a, Shape: PlateShape> Placer<'a, Shape> {
         let mut unlocked_parts = vec![];
 
         std::mem::swap(&mut self.unlocked_parts, &mut unlocked_parts);
+        println!("Going to place single plate");
         while !all_placed {
             all_placed = true;
             self.reset_cache();
@@ -299,10 +302,15 @@ impl<'a, Shape: PlateShape> Placer<'a, Shape> {
         let mut unlocked_parts = vec![];
         std::mem::swap(&mut unlocked_parts, &mut self.unlocked_parts);
 
+
+        println!("Unlocked parts len {}", unlocked_parts.len());
+
+        println!("Multi part");
+
         for part in unlocked_parts {
             let mut i = 0;
             let mut current_part = part;
-            while solution.count_plates() < i {
+            while i < solution.count_plates() {
                 let res =
                     self.place_unlocked_part(solution.get_plate_mut(i).unwrap(), current_part);
                 match res {
@@ -327,6 +335,7 @@ impl<'a, Shape: PlateShape> Placer<'a, Shape> {
     }
 
     pub(crate) fn place(&mut self) -> Solution {
+        println!("Calling place {}", self.request.single_plate_mode);
         if self.request.single_plate_mode {
             self.place_single_plate()
         } else {

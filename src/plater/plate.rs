@@ -43,6 +43,7 @@ impl<'a> Plate<'a> {
             let off_y = placed_part.get_y() / self.precision;
             self.bitmap.write(bitmap, off_x as i32, off_y as i32);
         }
+        // println!("Pushed a part");
         self.parts.push(placed_part);
     }
 
@@ -69,8 +70,9 @@ impl<'a> Plate<'a> {
         (&self.parts).len()
     }
 
-    fn get_placements(&self) -> Vec<Placement> {
+    pub(crate) fn get_placements(&self) -> Vec<Placement> {
         let mut result = vec![];
+        println!("Parts len {}", self.parts.len());
         for part in &self.parts {
             result.push(part.get_placement());
         }

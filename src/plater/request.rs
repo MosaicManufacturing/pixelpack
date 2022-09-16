@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::f64::consts::PI;
 
 use rayon::prelude::{IntoParallelIterator, ParallelIterator};
@@ -10,7 +10,7 @@ use crate::plater::plate_shape::PlateShape;
 use crate::plater::solution::Solution;
 
 // DEFAULT_RESOLUTION is the default bitmap resolution, in pixels per mm.
-const DEFAULT_RESOLUTION: f64 = 1000.0;
+pub const DEFAULT_RESOLUTION: f64 = 1000.0;
 
 pub struct Request<'a, Shape: PlateShape> {
     // plate_shape represents the size and shape of the build plate.
@@ -18,20 +18,20 @@ pub struct Request<'a, Shape: PlateShape> {
     // single_plate_mode uses a single, expandable plate
     pub(crate) single_plate_mode: bool,
     // sort_modes is a list of sort modes to attempt when placing.
-    sort_modes: Vec<SortMode>,
+    pub(crate) sort_modes: Vec<SortMode>,
     // max_threads is the maximum number of goroutines to use when placing.
     // Set this to 0 or a negative value for no limit.
-    max_threads: usize,
+    pub(crate) max_threads: usize,
     pub(crate) precision: f64,
     // precision
-    spacing: f64, // part spacing
+    pub(crate) spacing: f64, // part spacing
 
     // brute-force deltas
     pub(crate) delta: f64,
     pub(crate) delta_r: f64,
 
-    // Parts to place
-    pub(crate) parts: HashMap<String, &'a Part>,
+    // Parts to place (TODO: revice, can this become vec)
+    pub(crate) parts: HashMap<String, Part>,
     resolution: f64, // internal resolution (pixels per mm)
 }
 
@@ -60,7 +60,7 @@ impl<'a, Shape: PlateShape> Request<'a, Shape> {
     }
 
     // TODO: replace option with explicit error handling (this is weird)
-    fn add_part(&mut self, part: &'a Part) -> Option<()> {
+    fn add_part(&mut self, part: Part) -> Option<()> {
         let x = self.parts.get(part.id.as_str());
         if x.is_some() {
             return None;
@@ -72,7 +72,7 @@ impl<'a, Shape: PlateShape> Request<'a, Shape> {
     }
 
     // Replace with explicit error handling
-    fn process(&'a self) -> Option<Solution<'a>> {
+    pub(crate) fn process<T>(&'a self, f: impl Fn(&Solution) -> T) -> T {
         let mut placers = vec![];
         let sort_modes = Vec::clone(&self.sort_modes);
 
@@ -98,7 +98,8 @@ impl<'a, Shape: PlateShape> Request<'a, Shape> {
 
         solutions.sort_by(|x, y| f64::partial_cmp(&x.score(), &y.score()).unwrap());
 
-        let best_solution = &solutions[0];
-        None
+        f(&solutions[0])
+
+        // Some(solutions.swap_remove(0))
     }
 }

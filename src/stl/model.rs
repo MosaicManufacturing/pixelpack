@@ -130,7 +130,7 @@ impl Model {
         cloned
     }
 
-    fn rotate_z(&self, r: f64) -> Self {
+    pub(crate) fn rotate_z(&self, r: f64) -> Self {
         self.clone_model_with_point_transform(|Point3D { x, y, .. }| {
             let (x_, y_) = plater::util::apply_rotation_f64((*x, *y), r);
             *x = x_;
@@ -154,7 +154,7 @@ impl Model {
         })
     }
 
-    fn translate(&self, x1: f64, y1: f64, z1: f64) -> Self {
+    pub(crate) fn translate(&self, x1: f64, y1: f64, z1: f64) -> Self {
         self.clone_model_with_point_transform(|Point3D { x, y, z }| {
             *x += x1;
             *y += y1;
@@ -162,7 +162,7 @@ impl Model {
         })
     }
 
-    fn center(&self) -> Self {
+    pub(crate) fn center(&self) -> Self {
         let min_p = self.min();
         let max_p = self.max();
 
@@ -185,4 +185,13 @@ impl Model {
             Orientation::Right => self.rotate_y(deg_to_rad(-90.0)),
         }
     }
+    //
+    // pub(crate) fn merge()
+
+
+    // func (m *Model) Merge(other *Model) {
+    // 	for _, volume := range other.Volumes {
+    // 		m.Volumes = append(m.Volumes, volume)
+    // 	}
+    // }
 }

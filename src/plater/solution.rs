@@ -29,7 +29,7 @@ impl<'a> Solution<'a> {
     }
 
     fn get_last_plate(&self) -> &Plate {
-        self.get_plate(self.plates.len()).unwrap()
+        self.get_plate(self.plates.len() - 1).unwrap()
     }
 
     pub(crate) fn add_plate(&mut self, plate: Plate<'a>) {

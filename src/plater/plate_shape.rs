@@ -15,11 +15,11 @@ pub enum Shape {
 }
 
 impl Shape {
-    fn new_rectangle(width: f64, height: f64, resolution: f64) -> Self {
+    pub fn new_rectangle(width: f64, height: f64, resolution: f64) -> Self {
         Shape::Rectangle(PlateRectangle::new(width, height, resolution))
     }
 
-    fn new_circle(diameter: f64, resolution: f64) -> Self {
+    pub fn new_circle(diameter: f64, resolution: f64) -> Self {
         Shape::Circle(PlateCircle::new(diameter, resolution))
     }
 }

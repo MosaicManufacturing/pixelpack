@@ -9,13 +9,13 @@ pub(crate) struct Part {
 }
 
 
-fn load_model(filename: String, id: String,
+pub fn load_model(filename: String, id: String,
                   resolution: f64, precision: f64,
                   delta_r: f64, spacing: f64,
                   orientation: Orientation,
-                    plate_width: f64, plate_height: f64, locked: bool) -> Option<(plater::part::Part, i32)> {
+                    plate_width: f64, plate_height: f64, locked: bool) -> Option<(plater::part::Part, Model, i32)> {
 
-        let mut model = Model::load_stl_file_ascii(filename, resolution).ok()?;
+        let mut model = Model::load_stl_file_binary(filename, resolution).ok()?;
 
         let next_model = model.put_face_on_plate(orientation);
         // TODO: Is this correct?, shouldn't we pixelize the rotated model
@@ -30,7 +30,7 @@ fn load_model(filename: String, id: String,
         let res = plater::part::Part::new(id, bitmap, center_x, center_y,
         precision, delta_r, spacing, plate_width, plate_height, locked);
 
-        Some((res.0, res.1 as i32))
+        Some((res.0, next_model, res.1 as i32))
     }
 
 

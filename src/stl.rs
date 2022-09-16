@@ -1,10 +1,10 @@
 mod face;
 pub mod model;
-mod orientation;
+pub(crate) mod orientation;
 mod point_3d;
 mod quad_tree;
 mod triangle_2d;
-mod util;
+pub(crate) mod util;
 mod volume;
 pub mod model_io;
 pub mod request;
