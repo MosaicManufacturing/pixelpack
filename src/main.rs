@@ -46,7 +46,7 @@ fn parse_format(s: &str) -> Option<Format> {
 
 fn main() {
     let args = cmd::request::CliOpts::parse();
-    let xs = (0..10)
+    let xs = (0..50)
         .into_iter()
         .flat_map(|_| ["Gimbal_snowflake_small_and_flat.STL".into()])
         .collect();

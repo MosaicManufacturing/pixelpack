@@ -93,7 +93,9 @@ impl<'a, Shape: PlateShape> Request<'a, Shape> {
 
         let mut solutions = (&mut placers)
             .into_par_iter()
-            .map(Placer::place)
+            .map(|placer| {
+                placer.place()
+            })
             .collect::<Vec<_>>();
 
         solutions.sort_by(|x, y| f64::partial_cmp(&x.score(), &y.score()).unwrap());
