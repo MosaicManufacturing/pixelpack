@@ -133,8 +133,8 @@ impl PlateShape for PlateCircle {
         // fill all pixels outside plate radius so parts cannot be placed there
         let radius = self.diameter / 2.0;
 
-        for x in 0..bitmap.width {
-            for y in 0..bitmap.height {
+        for y in 0..bitmap.height {
+            for x in 0..bitmap.width {
                 let dx = (x as f64 - bitmap.center_x) * precision;
                 let dy = (y as f64 - bitmap.center_y) * precision;
 

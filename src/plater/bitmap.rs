@@ -204,8 +204,8 @@ impl Bitmap {
 
     // TODO: switch x and y cache
     pub(crate) fn overlaps(&self, other: &Bitmap, off_x: i32, off_y: i32) -> bool {
-        for x in 0..self.width {
-            for y in 0..self.height {
+        for y in 0..self.height {
+            for x in 0..self.width {
                 if self.at(x, y) != 0 && other.get_point(x + off_x, y + off_y) != 0 {
                     return true;
                 }
@@ -217,8 +217,8 @@ impl Bitmap {
 
     // TODO: switch x and y cache
     pub(crate) fn write(&mut self, other: &Bitmap, off_x: i32, off_y: i32) {
-        for x in 0..other.width {
-            for y in 0..other.height {
+        for y in 0..other.height {
+            for x in 0..other.width {
                 let pixel = other.at(x, y);
                 if pixel != 0 {
                     self.set_point(x + off_x, y + off_y, pixel);
@@ -254,8 +254,8 @@ impl Bitmap {
         let mut rotated = Bitmap::new(width, height);
 
         // Removed casts for c_x & c_y
-        for x in 0..width {
-            for y in 0..height {
+        for y in 0..height {
+            for x in 0..width {
                 let c_x = f64::round((x as f64) - center_x);
                 let c_y = f64::round((y as f64) - center_y);
                 let (X, Y) = util::apply_rotation_f64((c_x, c_y), r);
@@ -278,8 +278,8 @@ impl Bitmap {
         let (mut max_x, mut max_y) = (0, 0);
 
         // // swap x, y order
-        for x in 0..self.width {
-            for y in 0..self.height {
+        for y in 0..self.height {
+            for x in 0..self.width {
                 if self.at(x, y) != 0 {
                     if !found {
                         found = true;
@@ -312,8 +312,8 @@ impl Bitmap {
         trimmed.center_y = self.center_y - min_y as f64;
 
         // switch x, y order
-        for x in 0..delta_x {
-            for y in 0..delta_y {
+        for y in 0..delta_y {
+            for x in 0..delta_x {
                 trimmed.set_point(x, y, self.get_point(x + min_x, y + min_y));
             }
         }
@@ -330,8 +330,8 @@ impl Bitmap {
         expanded.center_y = self.center_y + dy as f64;
 
         // Switch x y order
-        for x in 0..self.width {
-            for y in 0..self.height {
+        for y in 0..self.height {
+            for x in 0..self.width {
                 expanded.set_point(x + dx, y + dy, self.get_point(x, y));
             }
         }

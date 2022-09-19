@@ -203,6 +203,8 @@ impl<'a, Shape: PlateShape> Placer<'a, Shape> {
 
                     let score = gy * self.y_coef + gx * self.x_coef;
 
+
+                    // TODO: optimization, it looks like we just test all points increasing along y, why not perform binary search instead
                     if !found || score < better_score {
                         part.set_offset(x, y);
                         if plate.can_place(&part) {

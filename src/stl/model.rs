@@ -95,8 +95,9 @@ impl Model {
 
         let mut bitmap = Bitmap::new(width, height);
 
-        for x in 0..width {
-            for y in 0..height {
+
+        for y in 0..height {
+            for x in 0..width {
                 let X = (x + 1) as f64 * precision - dilation + min_p.x;
                 let Y = (y + 1) as f64 * precision - dilation + min_p.y;
 
