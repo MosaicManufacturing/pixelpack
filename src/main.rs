@@ -3,6 +3,7 @@ extern crate core;
 use std::f32::consts::E;
 use std::path::PathBuf;
 use std::str::FromStr;
+use std::time::Instant;
 use clap::builder::ValueParserFactory;
 
 use clap::{ArgEnum, Parser, PossibleValue, value_parser};
@@ -45,13 +46,17 @@ fn parse_format(s: &str) -> Option<Format> {
 
 fn main() {
     let args = cmd::request::CliOpts::parse();
-    let xs = (0..5)
+    let xs = (0..200)
         .into_iter()
         .flat_map(|_| ["Gimbal_snowflake_small_and_flat.STL".into()])
         .collect();
     println!("Going to start run");
+
+
+    let t1 = Instant::now();
     let x = cmd::request::run(&args, xs).unwrap();
 
+    println!("{} ms", t1.elapsed().as_millis());
 }
 
 // fn main() -> std::io::Result<()> {

@@ -35,6 +35,11 @@ impl Clone for Bitmap {
 }
 
 impl Bitmap {
+    pub fn initialize_data(&mut self, other: &Self) {
+        self.data.copy_from_slice(other.data.as_slice());
+    }
+
+
     pub(crate) fn new(width: i32, height: i32) -> Self {
         Bitmap {
             width,
@@ -142,18 +147,21 @@ impl Bitmap {
         let width = self.width as usize;
         let height = self.height as usize;
 
+        let mut old_version = Bitmap::clone(self);
+
         for _ in 0..(distance as usize) {
-            let old = Bitmap::clone(self);
+            // This is equivalent to cloning self, but reusing an allocation
+            old_version.initialize_data(self);
             for y in 0..height {
                 for x in 0..width {
-                    if old.at(x as i32, y as i32) == 0 {
+                    if old_version.at(x as i32, y as i32) == 0 {
                         let mut score = 0;
                         for dx in -1..1 {
                             for dy in -1..1 {
                                 if dx == 0 && dy == 0 {
                                     continue;
                                 }
-                                if old.get_point((x as i32) + dx, (y as i32) + dy) != 0 {
+                                if old_version.get_point((x as i32) + dx, (y as i32) + dy) != 0 {
                                     score += 1;
                                 };
                             }

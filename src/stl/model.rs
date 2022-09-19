@@ -121,13 +121,51 @@ impl Model {
 
     fn clone_model_with_point_transform(&self, transform_point: impl Fn(&mut Point3D)) -> Self {
         let mut cloned = self.clone();
-        cloned
+        cloned.model_point_transform(transform_point)
+        // cloned
+        //     .volumes
+        //     .iter_mut()
+        //     .flat_map(|x| &mut x.faces)
+        //     .flat_map(|face| &mut face.v)
+        //     .for_each(transform_point);
+        // cloned
+    }
+
+    fn model_point_transform(mut self, transform_point: impl Fn(&mut Point3D)) -> Self {
+        self
             .volumes
             .iter_mut()
             .flat_map(|x| &mut x.faces)
             .flat_map(|face| &mut face.v)
             .for_each(transform_point);
-        cloned
+        self
+    }
+
+    pub(crate) fn translate_consume(self, x1: f64, y1: f64, z1: f64) -> Self {
+        self.model_point_transform (|Point3D { x, y, z }| {
+            *x += x1;
+            *y += y1;
+            *z += z1;
+        })
+    }
+
+    pub(crate) fn rotate_z_consume(self, r: f64) -> Self {
+        self.model_point_transform(|Point3D { x, y, .. }| {
+            let (x_, y_) = plater::util::apply_rotation_f64((*x, *y), r);
+            *x = x_;
+            *y = y_;
+        })
+    }
+
+    pub(crate) fn center_consume(self) -> Self {
+        let min_p = self.min();
+        let max_p = self.max();
+
+        let x = (min_p.x + max_p.x) / 2.0;
+        let y = (min_p.y + max_p.y) / 2.0;
+        let z = min_p.z;
+
+        self.translate_consume(-x, -y, -z)
     }
 
     pub(crate) fn rotate_z(&self, r: f64) -> Self {

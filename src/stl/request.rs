@@ -2,6 +2,7 @@ use std::collections::HashMap;
 use std::ops::DerefMut;
 use std::pin::Pin;
 use itertools::Itertools;
+use rayon::prelude::{IntoParallelRefIterator, ParallelIterator};
 use crate::{Model, plater, stl};
 use crate::plater::part::Part;
 use crate::plater::plate_shape::PlateShape;
@@ -81,21 +82,27 @@ impl<'a> Request<'a>  {
 
         println!("placement length {}", placements.len());
 
-        placements
+        println!("Placements: {}", placements.len());
+        println!("Sets: {}", self.models.len());
+
+       let x =  placements
             .iter()
             .map(|x| {
                 let id = x.id.as_str();
                 let model = self.models.get(id).unwrap();
                 model
-                    .center()
-                    .rotate_z(x.rotation)
-                    .translate(x.center.x, x.center.y, 0.0)
+                    .clone()
+                    .center_consume()
+                    .rotate_z_consume(x.rotation)
+                    .translate_consume(x.center.x, x.center.y, 0.0)
             }).reduce(|mut x, mut y| {
             let mut m = Model::new();
             m.volumes.append(&mut x.volumes);
             m.volumes.append(&mut y.volumes);
             m
-        })
+        });
+
+        x
     }
 
     pub(crate) fn write_stl(&self, p: &plater::plate::Plate, filename: String) -> Option<std::io::Result<()>> {
