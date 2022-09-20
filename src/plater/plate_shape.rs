@@ -97,7 +97,7 @@ impl PlateShape for PlateRectangle {
     }
 
     fn expand(&self, size: f64) -> Self {
-        PlateRectangle::new(self.width + size, self.height + size, self.resolution)
+        PlateRectangle::new(self.width/self.resolution + size, self.height/self.resolution + size, self.resolution)
     }
 }
 
@@ -148,6 +148,6 @@ impl PlateShape for PlateCircle {
     // Expand returns a new PlateCircle with the diameter
     // of the receiver increased by size.
     fn expand(&self, size: f64) -> Self {
-        PlateCircle::new(self.diameter + size, self.resolution)
+        PlateCircle::new(self.diameter/self.resolution + size, self.resolution)
     }
 }

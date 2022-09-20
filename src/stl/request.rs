@@ -61,7 +61,7 @@ impl<'a> Request<'a>  {
         self.request.plate_shape.width(), self.request.plate_shape.height(),
         locked)?;
 
-
+        println!("Loaded null");
 
         if loaded == 0 {
             return None;

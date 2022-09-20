@@ -155,7 +155,7 @@ impl<'a, Shape: PlateShape> Placer<'a, Shape> {
         &mut self,
         plate: &mut Plate<'b>,
         mut part: PlacedPart<'b>,
-    ) -> Result<bool, PlacedPart<'b>> {
+    ) ->  Option<PlacedPart<'b>> {
 
         // println!("place_unlocked_part");
         let cache_name = String::from(part.get_id());
@@ -171,7 +171,7 @@ impl<'a, Shape: PlateShape> Placer<'a, Shape> {
             .get(cache_name.as_str());
         // If already seen, don't recompute
         if k.is_some() {
-            return Ok(false);
+            return None;
         }
 
         let mut better_x = 0.0;
@@ -225,17 +225,17 @@ impl<'a, Shape: PlateShape> Placer<'a, Shape> {
                 part.set_rotation(better_r as i32);
                 part.set_offset(better_x, better_y);
                 plate.place(part);
-                Ok(true)
+                None
             } else {
                 self.cache
                     .get_mut(&plate.plate_id)
                     .unwrap()
                     .insert(cache_name, true);
-                Err(part)
+                Some(part)
             };
         }
         // TODO: verify correctness
-        Err(part)
+        Some(part)
     }
 
     fn place_single_plate(&mut self) -> Solution<'a> {
@@ -243,32 +243,42 @@ impl<'a, Shape: PlateShape> Placer<'a, Shape> {
         let mut plate = self.make_plate(&shape);
 
         self.locked_parts.clear();
-        let mut all_placed = false;
+        let mut all_placed_so_far = false;
         let mut unlocked_parts = vec![];
 
         std::mem::swap(&mut self.unlocked_parts, &mut unlocked_parts);
         println!("Going to place single plate");
-        while !all_placed {
-            all_placed = true;
+
+
+        println!("There are {}", unlocked_parts.len());
+        while !all_placed_so_far {
+            println!("There are inner {} {}", unlocked_parts.len(), shape.width());
+            all_placed_so_far = true;
             self.reset_cache();
 
             // TODO: optimization, next two line can be moved out of the loop
             let mut reclaimed_unlocked_parts = vec![];
             let n = unlocked_parts.len();
             for part in unlocked_parts.drain(0..n) {
-                match self.place_unlocked_part(&mut plate, part) {
-                    Ok(flag) => {
-                        if !flag {
-                            all_placed = false;
-                            break;
-                        }
+                if all_placed_so_far {
+                    match self.place_unlocked_part(&mut plate, part) {
+                        None => {} //Everything is fine}
+                        Some(part) => { // Could not place the part
+                            println!("Could not place");
+                            reclaimed_unlocked_parts.push(part);
+                            all_placed_so_far = false;
+                        },
                     }
-                    Err(part) => reclaimed_unlocked_parts.push(part),
+                } else {
+                    reclaimed_unlocked_parts.push(part);
                 }
+
             }
-            if !all_placed {
+            if !all_placed_so_far {
                 let EXPAND_MM = 100.0;
+                println!("Shape {}", shape.width());
                 shape = shape.expand(EXPAND_MM);
+                println!("Shape {}", shape.width());
 
                 let n = (&plate.parts).len();
                 for part in &mut plate.parts.drain(0..n) {
@@ -316,10 +326,10 @@ impl<'a, Shape: PlateShape> Placer<'a, Shape> {
                 let res =
                     self.place_unlocked_part(solution.get_plate_mut(i).unwrap(), current_part);
                 match res {
-                    Ok(_) => {
+                    None => {
                         break;
                     }
-                    Err(part) => {
+                    Some(part) => {
                         if i + 1 == solution.count_plates() {
                             let shape = Clone::clone(self.request.plate_shape);
                             let next_plate = self.make_plate(&shape);

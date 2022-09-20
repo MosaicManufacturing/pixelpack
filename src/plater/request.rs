@@ -47,7 +47,7 @@ impl<'a, Shape: PlateShape> Request<'a, Shape> {
     pub(crate) fn new(plate_shape: &'a Shape, resolution: f64) -> Self {
         Request {
             plate_shape,
-            single_plate_mode: false,
+            single_plate_mode: true,
             sort_modes: default_sort_modes(),
             max_threads: 1,
             precision: 0.5 * resolution,

@@ -45,6 +45,10 @@ fn parse_format(s: &str) -> Option<Format> {
 }
 
 fn main() {
+    //
+    // rayon::ThreadPoolBuilder::new().num_threads(1).build_global().unwrap();
+    //
+
     let args = cmd::request::CliOpts::parse();
     let xs = (0..50)
         .into_iter()
