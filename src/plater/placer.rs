@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 use std::f64::consts::PI;
+use itertools::Either;
 
 use rand::seq::SliceRandom;
 use rand::thread_rng;
@@ -251,14 +252,16 @@ impl<'a, Shape: PlateShape> Placer<'a, Shape> {
 
 
         println!("There are {}", unlocked_parts.len());
+
+        // TODO: optimization, next two line can be moved out of the loop
+        let mut reclaimed_unlocked_parts = vec![];
+        let n = unlocked_parts.len();
+
         while !all_placed_so_far {
             println!("There are inner {} {}", unlocked_parts.len(), shape.width());
             all_placed_so_far = true;
             self.reset_cache();
 
-            // TODO: optimization, next two line can be moved out of the loop
-            let mut reclaimed_unlocked_parts = vec![];
-            let n = unlocked_parts.len();
             for part in unlocked_parts.drain(0..n) {
                 if all_placed_so_far {
                     match self.place_unlocked_part(&mut plate, part) {
@@ -272,8 +275,8 @@ impl<'a, Shape: PlateShape> Placer<'a, Shape> {
                 } else {
                     reclaimed_unlocked_parts.push(part);
                 }
-
             }
+
             if !all_placed_so_far {
                 let EXPAND_MM = 100.0;
                 println!("Shape {}", shape.width());
