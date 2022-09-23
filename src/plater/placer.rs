@@ -194,6 +194,10 @@ impl<'a, Shape: PlateShape> Placer<'a, Shape> {
             let vr = (r + self.rotate_offset as usize) % rs;
             part.set_rotation(vr as i32);
 
+            if part.get_bitmap().is_none() {
+                continue;
+            }
+
             let delta = self.request.delta;
             let mut x = 0.0;
             while x < plate.width {
