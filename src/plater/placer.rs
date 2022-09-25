@@ -140,17 +140,6 @@ impl<'a, Shape: PlateShape> Placer<'a, Shape> {
         self.rotate_offset = offset;
     }
 
-    fn make_plate(&mut self, shape: &Shape) -> Plate<'a> {
-        let mut plate = Plate::new(shape, self.request.precision);
-
-        let n = self.locked_parts.len();
-        let xs = &mut self.locked_parts.drain(0..n);
-        for part in xs {
-            plate.place(part);
-        }
-        plate
-    }
-
     // Internal borrow mut
     fn place_unlocked_part<'b>(
         &mut self,
@@ -245,9 +234,20 @@ impl<'a, Shape: PlateShape> Placer<'a, Shape> {
 
     fn place_single_plate(&mut self) -> Solution<'a> {
         let mut shape = Clone::clone(self.request.plate_shape);
-        let mut plate = self.make_plate(&shape);
 
-        self.locked_parts.clear();
+
+        // let locked_parts: Vec<_> = (&self.locked_parts)
+        //     .iter()
+        //     .map(|part| Clone::clone(part))
+        //     .collect();
+        //
+        //
+        // Vec::clone()
+
+        let mut plate = Plate::make_plate_with_placed_parts(&shape, self.request.precision, Vec::clone(&self.locked_parts));
+        // self.locked_parts.clear();
+
+
         let mut all_placed_so_far = false;
         let mut unlocked_parts = vec![];
 
@@ -287,9 +287,14 @@ impl<'a, Shape: PlateShape> Placer<'a, Shape> {
                 shape = shape.expand(EXPAND_MM);
                 println!("Shape {}", shape.width());
 
+
+
                 let n = (&plate.parts).len();
                 for part in &mut plate.parts.drain(0..n) {
-                    reclaimed_unlocked_parts.push(part)
+                    // We don't bother reclaiming locked parts as they were cloned before insertion
+                    if !part.part.locked {
+                        reclaimed_unlocked_parts.push(part)
+                    }
                 }
                 // If we reach here, we have drained all elements out of unlocked_parts so it is EMPTY
 
@@ -298,7 +303,7 @@ impl<'a, Shape: PlateShape> Placer<'a, Shape> {
 
                 // So, parts_to_handle contains all Parts that were originally in self.unlocked_parts
                 std::mem::swap(&mut unlocked_parts, &mut reclaimed_unlocked_parts);
-                plate = self.make_plate(&shape);
+                plate = Plate::make_plate_with_placed_parts(&shape, self.request.precision, Vec::clone(&self.locked_parts));
             }
         }
 
@@ -314,7 +319,7 @@ impl<'a, Shape: PlateShape> Placer<'a, Shape> {
 
         {
             let plate_shape = Clone::clone(self.request.plate_shape);
-            let plate = self.make_plate(&plate_shape);
+            let plate = Plate::make_plate_with_placed_parts(&plate_shape, self.request.precision, Vec::clone(&self.locked_parts));;
             solution.add_plate(plate);
         }
 
@@ -339,7 +344,9 @@ impl<'a, Shape: PlateShape> Placer<'a, Shape> {
                     Some(part) => {
                         if i + 1 == solution.count_plates() {
                             let shape = Clone::clone(self.request.plate_shape);
-                            let next_plate = self.make_plate(&shape);
+
+                            // Multi plates and ownership of locked parts
+                            let next_plate = Plate::make_plate_with_placed_parts(&shape, self.request.precision, Vec::clone(&self.locked_parts));
                             solution.add_plate(next_plate);
                         }
                         current_part = part;

@@ -3,8 +3,9 @@ use crate::plater::part::Part;
 use crate::plater::placement::Placement;
 use crate::plater::point::Point;
 
+#[derive(Clone)]
 pub struct PlacedPart<'a> {
-    part: &'a Part,
+    pub(crate) part: &'a Part,
     x: f64,
     y: f64,
     rotation: i32,

@@ -35,6 +35,15 @@ impl<'a> Plate<'a> {
         }
     }
 
+    pub fn make_plate_with_placed_parts<Shape: PlateShape>(shape: &Shape, precision: f64, placed_parts: Vec<PlacedPart<'a>>) -> Self {
+        let mut plate = Self::new(shape, precision);
+        for part in placed_parts {
+            plate.place(part);
+        }
+
+        plate
+    }
+
     pub(crate) fn place(&mut self, placed_part: PlacedPart<'a>) {
         {
             // let borrowed_placed_part = (*placed_part).borrow_mut();
@@ -43,7 +52,7 @@ impl<'a> Plate<'a> {
             let off_y = placed_part.get_y() / self.precision;
             self.bitmap.write(bitmap, off_x as i32, off_y as i32);
         }
-        // println!("Pushed a part");
+
         self.parts.push(placed_part);
     }
 
