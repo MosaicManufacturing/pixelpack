@@ -1,8 +1,7 @@
 use std::cmp::{max, min};
-
 use crate::plater::util;
 
-pub struct Bitmap {
+pub(crate) struct Bitmap {
     // Image dimensions
     pub(crate) width: i32,
     pub(crate) height: i32,
@@ -35,7 +34,12 @@ impl Clone for Bitmap {
 }
 
 impl Bitmap {
-    pub fn initialize_data(&mut self, other: &Self) {
+    pub(crate) fn get_dims(&self) -> (i32, i32) {
+        (self.width, self.height)
+    }
+
+
+    pub(crate) fn initialize_data(&mut self, other: &Self) {
         self.data.copy_from_slice(other.data.as_slice());
     }
 

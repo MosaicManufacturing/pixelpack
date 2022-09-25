@@ -1,6 +1,6 @@
 use crate::stl::point_3d::Point3D;
 
-pub struct Face {
+pub(crate) struct Face {
     pub(crate) v: [Point3D; 3],
 }
 

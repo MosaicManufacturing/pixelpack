@@ -54,7 +54,7 @@ impl From<GravityMode> for usize {
 
 type PlateId = usize;
 
-pub struct Placer<'a, Shape: PlateShape> {
+pub(crate) struct Placer<'a, Shape: PlateShape> {
     rotate_offset: i32,
     rotate_direction: i32,
     // 0 = CCW, 1 = CW, TODO: make an enum

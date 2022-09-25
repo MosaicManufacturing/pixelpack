@@ -1,7 +1,7 @@
 use crate::stl::face::Face;
 use crate::stl::point_3d::Point3D;
 
-pub struct Volume {
+pub(crate) struct Volume {
     pub(crate) faces: Vec<Face>,
 }
 

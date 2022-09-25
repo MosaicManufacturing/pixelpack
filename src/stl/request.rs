@@ -15,7 +15,7 @@ use crate::stl::part::load_model;
 //     parts      map[string]*Part
 // }
 
-pub struct Request<'a> {
+pub(crate) struct Request<'a> {
     pub(crate) request: plater::request::Request<'a, plater::plate_shape::Shape>,
     resolution: f64,
     models: HashMap<String, Model>,

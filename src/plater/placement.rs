@@ -1,6 +1,6 @@
 use crate::plater::point::Point;
 
-pub struct Placement {
+pub(crate) struct Placement {
     pub(crate) id: String,
     pub(crate) center: Point,
     pub(crate) rotation: f64,

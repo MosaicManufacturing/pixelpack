@@ -1,7 +1,7 @@
 use crate::plater::placed_part::PlacedPart;
 use crate::plater::plate::Plate;
 
-pub struct Solution<'a> {
+pub(crate) struct Solution<'a> {
     plates: Vec<Plate<'a>>,
 }
 

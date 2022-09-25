@@ -4,7 +4,7 @@ use crate::plater::placement::Placement;
 use crate::plater::point::Point;
 
 #[derive(Clone)]
-pub struct PlacedPart<'a> {
+pub(crate) struct PlacedPart<'a> {
     pub(crate) part: &'a Part,
     x: f64,
     y: f64,

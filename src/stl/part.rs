@@ -9,7 +9,7 @@ pub(crate) struct Part {
 }
 
 
-pub fn load_model(filename: String, id: String,
+pub(crate) fn load_model(filename: String, id: String,
                   resolution: f64, precision: f64,
                   delta_r: f64, spacing: f64,
                   orientation: Orientation,

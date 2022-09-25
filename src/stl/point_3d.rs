@@ -1,7 +1,7 @@
 // Maybe revisit to make this more explicit
 
 #[derive(Clone, Copy)]
-pub struct Point3D {
+pub(crate) struct Point3D {
     pub x: f64,
     pub y: f64,
     pub z: f64,

@@ -2,7 +2,7 @@ use std::f64::consts::PI;
 
 use crate::plater::bitmap::Bitmap;
 
-pub struct Part {
+pub(crate) struct Part {
     pub(crate) locked: bool,
     // if true, part cannot be moved or rotated
     pub(crate) id: String,
@@ -43,6 +43,8 @@ impl Part {
             })
             .collect();
 
+        let (width, height) = bitmap.get_dims();
+
         let mut p = Part {
             precision,
             delta_r,
@@ -51,8 +53,8 @@ impl Part {
             bitmaps,
             center_y,
             center_x,
-            width: bitmap.width as f64 + 2.0 * spacing,
-            height: bitmap.height as f64 + 2.0 * spacing,
+            width: width as f64 + 2.0 * spacing,
+            height: height as f64 + 2.0 * spacing,
             surface: 0.0,
         };
 
@@ -94,6 +96,8 @@ impl Part {
 
     fn get_density(&self, index: usize) -> f64 {
         let bmp = self.get_bitmap(index).unwrap();
-        (bmp.pixels as f64) / (bmp.width * bmp.height) as f64
+        let (width, height) = bmp.get_dims();
+
+        (bmp.pixels as f64) / (width * height) as f64
     }
 }

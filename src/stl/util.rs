@@ -2,7 +2,7 @@ use std::f64::consts::PI;
 
 use crate::plater::point::Point;
 
-pub fn get_side(pt: &Point, n: &Point, s: &Point) -> bool {
+pub(crate) fn get_side(pt: &Point, n: &Point, s: &Point) -> bool {
     let scalar_n = n.x * pt.x + n.y * pt.y;
     if scalar_n == 0.0 {
         s.x * pt.x + s.y * pt.y > 0.0

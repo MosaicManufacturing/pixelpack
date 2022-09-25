@@ -12,7 +12,7 @@ use crate::plater::solution::Solution;
 // DEFAULT_RESOLUTION is the default bitmap resolution, in pixels per mm.
 pub const DEFAULT_RESOLUTION: f64 = 1000.0;
 
-pub struct Request<'a, Shape: PlateShape> {
+pub(crate) struct Request<'a, Shape: PlateShape> {
     // plate_shape represents the size and shape of the build plate.
     pub(crate) plate_shape: &'a Shape,
     // single_plate_mode uses a single, expandable plate

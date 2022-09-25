@@ -4,7 +4,7 @@ use crate::plater::rectangle::Rectangle;
 use crate::stl::util::get_side;
 
 #[derive(Clone)]
-pub struct Triangle2D {
+pub(crate) struct Triangle2D {
     pub(crate) t_box: Rectangle,
     a: Point,
     b: Point,

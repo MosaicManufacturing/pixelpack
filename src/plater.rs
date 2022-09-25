@@ -6,7 +6,7 @@ pub(crate) mod placer;
 pub(crate) mod plate;
 pub(crate) mod plate_shape;
 pub(crate) mod point;
-pub mod rectangle;
+pub(crate) mod rectangle;
 pub(crate) mod request;
 pub(crate) mod solution;
 pub(crate) mod util;

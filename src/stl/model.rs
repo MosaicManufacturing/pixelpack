@@ -8,7 +8,7 @@ use crate::stl::triangle_2d::Triangle2D;
 use crate::stl::util::deg_to_rad;
 use crate::stl::volume::Volume;
 
-pub struct Model {
+pub(crate) struct Model {
     pub(crate) volumes: Vec<Volume>,
     tree: Option<Box<QuadTree>>,
     // triangles: Vec<Triangle2D>, No need for this right now
@@ -17,7 +17,7 @@ pub struct Model {
 impl Clone for Model {
     fn clone(&self) -> Self {
         Model {
-            volumes: self.volumes.iter().map(|x| x.clone()).collect(),
+            volumes: self.volumes.iter().cloned().collect(),
             tree: None,
         }
     }

@@ -1,7 +1,7 @@
 use crate::plater::rectangle::Rectangle;
 use crate::stl::triangle_2d::Triangle2D;
 
-pub struct QuadTree {
+pub(crate) struct QuadTree {
     triangles: Vec<Triangle2D>,
     depth: usize,
     r: Rectangle,
