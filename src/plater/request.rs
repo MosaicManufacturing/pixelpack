@@ -5,7 +5,7 @@ use rayon::prelude::{IntoParallelIterator, ParallelIterator};
 
 use crate::plater::part::Part;
 use crate::plater::placer::{GRAVITY_MODE_LIST, Placer, SortMode};
-use crate::plater::placer::SortMode::{SortShuffle, SortSurfaceDec, SortSurfaceInc};
+use crate::plater::placer::SortMode::{Shuffle, SurfaceDec, SurfaceInc};
 use crate::plater::plate_shape::PlateShape;
 use crate::plater::solution::Solution;
 
@@ -40,7 +40,7 @@ fn default_sort_modes() -> Vec<SortMode> {
     // let random_shuffles: usize = 3;
     // let sort_shuffle_as_usize: usize = SortShuffle.into();
     // let last_sort: usize = sort_shuffle_as_usize + random_shuffles - 1;
-    vec![SortSurfaceDec, SortSurfaceInc, SortShuffle]
+    vec![SurfaceDec, SurfaceInc, Shuffle]
 }
 
 impl<'a, Shape: PlateShape> Request<'a, Shape> {

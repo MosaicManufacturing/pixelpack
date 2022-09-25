@@ -4,7 +4,6 @@ use std::path::PathBuf;
 use std::time::Instant;
 
 use clap::{Parser};
-use clap::builder::ValueParserFactory;
 
 use crate::Format::{ASCII, Binary};
 use crate::stl::model::Model;

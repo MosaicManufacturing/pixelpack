@@ -5,7 +5,7 @@ use clap::{Parser};
 use crate::{plater, stl};
 use crate::plater::placer::SortMode;
 
-use crate::plater::plate_shape::{PlateShape, Shape};
+use crate::plater::plate_shape::{Shape};
 use crate::plater::solution::Solution;
 
 #[derive(Parser, Debug)]
@@ -57,16 +57,16 @@ fn get_plate_shape(opts: &CliOpts, resolution: f64) -> Shape {
     Shape::new_rectangle(opts.width as f64, opts.height as f64, resolution)
 }
 
-fn get_sort_modes(multiple_sort: bool, random_iterations: i32) -> Vec<plater::placer::SortMode> {
+fn get_sort_modes(multiple_sort: bool, random_iterations: i32) -> Vec<SortMode> {
     if multiple_sort {
         let last_sort = 1 + random_iterations;
         let mut modes = vec![];
 
         for i in 0..last_sort {
             let x = match i {
-                0 => SortMode::SortSurfaceDec,
-                1 => SortMode::SortSurfaceInc,
-                2 => SortMode::SortShuffle,
+                0 => SortMode::SurfaceDec,
+                1 => SortMode::SurfaceInc,
+                2 => SortMode::Shuffle,
 
                 // TODO: figure this out
                 _ => todo!()
@@ -76,7 +76,7 @@ fn get_sort_modes(multiple_sort: bool, random_iterations: i32) -> Vec<plater::pl
         }
         modes
     } else {
-        vec![SortMode::SortSurfaceDec]
+        vec![SortMode::SurfaceDec]
     }
 }
 

@@ -14,19 +14,19 @@ use crate::plater::solution::Solution;
 #[derive(Clone, Copy)]
 pub(crate) enum SortMode {
     // SortSurfaceDec sorts parts in descending order of surface area.
-    SortSurfaceDec,
+    SurfaceDec,
     // SortSurfaceInc sorts parts in ascending order of surface area.
-    SortSurfaceInc,
+    SurfaceInc,
     // SortShuffle sorts parts in random order.
-    SortShuffle,
+    Shuffle,
 }
 
 impl From<SortMode> for usize {
     fn from(x: SortMode) -> Self {
         match x {
-            SortMode::SortSurfaceDec => 0,
-            SortMode::SortSurfaceInc => 1,
-            SortMode::SortShuffle => 2,
+            SortMode::SurfaceDec => 0,
+            SortMode::SurfaceInc => 1,
+            SortMode::Shuffle => 2,
         }
     }
 }
@@ -101,19 +101,19 @@ impl<'a, Shape: PlateShape> Placer<'a, Shape> {
 
     pub(crate) fn sort_parts(&mut self, sort_mode: SortMode) {
         match sort_mode {
-            SortMode::SortSurfaceDec => self.unlocked_parts.sort_by(|x, y| {
+            SortMode::SurfaceDec => self.unlocked_parts.sort_by(|x, y| {
                 let s1 = x.get_surface();
                 let s2 = y.get_surface();
                 f64::partial_cmp(&s1, &s2).unwrap()
             }),
-            SortMode::SortSurfaceInc => {
+            SortMode::SurfaceInc => {
                 self.unlocked_parts.sort_by(|x, y| {
                     let s1 = x.get_surface();
                     let s2 = y.get_surface();
                     f64::partial_cmp(&s2, &s1).unwrap()
                 });
             }
-            SortMode::SortShuffle => {
+            SortMode::Shuffle => {
                 let mut rng = thread_rng();
                 self.unlocked_parts.shuffle(&mut rng)
             }
