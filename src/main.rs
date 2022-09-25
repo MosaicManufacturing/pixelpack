@@ -1,11 +1,9 @@
 extern crate core;
 
-use std::f32::consts::E;
 use std::path::PathBuf;
-use std::str::FromStr;
 use std::time::Instant;
 
-use clap::{ArgEnum, Parser, PossibleValue, value_parser};
+use clap::{Parser};
 use clap::builder::ValueParserFactory;
 
 use crate::Format::{ASCII, Binary};
@@ -59,7 +57,7 @@ fn main() {
 
 
     let t1 = Instant::now();
-    let x = cmd::request::run(&args, xs).unwrap();
+    cmd::request::run(&args, xs).unwrap();
 
     println!("{} ms", t1.elapsed().as_millis());
 }

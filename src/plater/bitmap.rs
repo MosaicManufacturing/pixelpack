@@ -90,7 +90,7 @@ impl Bitmap {
         ppm.push(EOL);
         ppm.push_str(format!("{} {}", self.width, self.height).as_str());
         ppm.push(EOL);
-        ppm.push_str("6");
+        ppm.push('6');
         ppm.push(EOL);
 
         let last_row_index = (self.width - 1) as usize;

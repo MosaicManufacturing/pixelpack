@@ -121,7 +121,7 @@ impl Model {
     }
 
     fn clone_model_with_point_transform(&self, transform_point: impl Fn(&mut Point3D)) -> Self {
-        let mut cloned = self.clone();
+        let cloned = self.clone();
         cloned.model_point_transform(transform_point)
         // cloned
         //     .volumes

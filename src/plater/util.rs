@@ -1,4 +1,3 @@
-use crate::plater::bitmap::Bitmap;
 use crate::plater::util;
 
 pub(crate) fn apply_rotation_f64(point: (f64, f64), angle: f64) -> (f64, f64) {

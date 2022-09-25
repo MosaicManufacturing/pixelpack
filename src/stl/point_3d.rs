@@ -1,7 +1,5 @@
 // Maybe revisit to make this more explicit
 
-use std::io::Write;
-
 #[derive(Clone, Copy)]
 pub struct Point3D {
     pub x: f64,

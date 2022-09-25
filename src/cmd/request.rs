@@ -1,10 +1,10 @@
 use std::path::PathBuf;
 
-use clap::{ArgEnum, Parser, PossibleValue, value_parser};
+use clap::{Parser};
 
 use crate::{plater, stl};
 use crate::plater::placer::SortMode;
-use crate::plater::plate::Plate;
+
 use crate::plater::plate_shape::{PlateShape, Shape};
 use crate::plater::solution::Solution;
 
@@ -54,7 +54,7 @@ fn get_plate_shape(opts: &CliOpts, resolution: f64) -> Shape {
         return Shape::new_circle(opts.diameter as f64, resolution)
     }
 
-    return Shape::new_rectangle(opts.width as f64, opts.height as f64, resolution)
+    Shape::new_rectangle(opts.width as f64, opts.height as f64, resolution)
 }
 
 fn get_sort_modes(multiple_sort: bool, random_iterations: i32) -> Vec<plater::placer::SortMode> {

@@ -1,7 +1,6 @@
 use std::collections::HashMap;
 use std::f64::consts::PI;
 
-use itertools::Either;
 use rand::seq::SliceRandom;
 use rand::thread_rng;
 
@@ -319,7 +318,7 @@ impl<'a, Shape: PlateShape> Placer<'a, Shape> {
 
         {
             let plate_shape = Clone::clone(self.request.plate_shape);
-            let plate = Plate::make_plate_with_placed_parts(&plate_shape, self.request.precision, Vec::clone(&self.locked_parts));;
+            let plate = Plate::make_plate_with_placed_parts(&plate_shape, self.request.precision, Vec::clone(&self.locked_parts));
             solution.add_plate(plate);
         }
 

@@ -1,12 +1,9 @@
 use std::collections::HashMap;
-use std::ops::DerefMut;
-use std::pin::Pin;
 
-use itertools::Itertools;
-use rayon::prelude::{IntoParallelRefIterator, ParallelIterator};
+use rayon::prelude::{ParallelIterator};
 
-use crate::{Model, plater, stl};
-use crate::plater::part::Part;
+use crate::{Model, plater};
+
 use crate::plater::plate_shape::PlateShape;
 use crate::plater::solution::Solution;
 use crate::stl::orientation::Orientation;
@@ -39,7 +36,7 @@ impl<'a> Request<'a>  {
     }
 
     pub fn add_model(&mut self, filename: String, orientation: Orientation, locked: bool) -> Option<()> {
-        if filename == "" {
+        if filename.is_empty() {
             return None;
         }
 

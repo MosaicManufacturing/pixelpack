@@ -36,7 +36,7 @@ impl<'a> PlacedPart<'a> {
     }
 
     fn get_part(&self) -> &Part {
-        &self.part
+        self.part
     }
 
     pub(crate) fn get_x(&self) -> f64 {
