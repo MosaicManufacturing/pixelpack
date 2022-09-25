@@ -1,15 +1,16 @@
 use std::collections::HashMap;
 use std::ops::DerefMut;
 use std::pin::Pin;
+
 use itertools::Itertools;
 use rayon::prelude::{IntoParallelRefIterator, ParallelIterator};
+
 use crate::{Model, plater, stl};
 use crate::plater::part::Part;
 use crate::plater::plate_shape::PlateShape;
 use crate::plater::solution::Solution;
 use crate::stl::orientation::Orientation;
 use crate::stl::part::load_model;
-
 
 // type Request struct {
 //     Request    *plater.Request

@@ -4,9 +4,10 @@ use std::f32::consts::E;
 use std::path::PathBuf;
 use std::str::FromStr;
 use std::time::Instant;
-use clap::builder::ValueParserFactory;
 
 use clap::{ArgEnum, Parser, PossibleValue, value_parser};
+use clap::builder::ValueParserFactory;
+
 use crate::Format::{ASCII, Binary};
 use crate::stl::model::Model;
 

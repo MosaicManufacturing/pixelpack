@@ -1,5 +1,7 @@
 use std::path::PathBuf;
+
 use clap::{ArgEnum, Parser, PossibleValue, value_parser};
+
 use crate::{plater, stl};
 use crate::plater::placer::SortMode;
 use crate::plater::plate::Plate;

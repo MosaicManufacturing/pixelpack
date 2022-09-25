@@ -2,13 +2,14 @@ use std::borrow::Borrow;
 use std::fs::File;
 use std::io::{BufRead, BufReader, BufWriter, Read, Write};
 use std::path::Path;
+
 use byteorder::{BigEndian, LittleEndian, ReadBytesExt, WriteBytesExt};
 use itertools::Itertools;
+
 use crate::stl::face::Face;
 use crate::stl::model::Model;
 use crate::stl::point_3d::Point3D;
 use crate::stl::volume::Volume;
-
 
 // Writing to a file
 impl Model {
@@ -190,7 +191,7 @@ impl Model {
         let mut f = File::open(filename.as_ref())?;
 
         let buf_len = 2048;
-        let mut buf = Vec::with_capacity(buf_len);
+        let mut buf = vec![0; buf_len];
         let n = f.read(&mut buf)?;
         let bytes = &buf.as_slice()[0..n];
 

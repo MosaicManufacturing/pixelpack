@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 use std::f64::consts::PI;
-use itertools::Either;
 
+use itertools::Either;
 use rand::seq::SliceRandom;
 use rand::thread_rng;
 
