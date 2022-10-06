@@ -45,6 +45,7 @@ impl Bitmap {
 
 
     pub(crate) fn new(width: i32, height: i32) -> Self {
+        println!("DIMS {} {}", width, height);
         Bitmap {
             width,
             height,
@@ -58,7 +59,7 @@ impl Bitmap {
     }
 
     // TODO: replace option with result
-    fn new_bitmap_with_data(width: i32, height: i32, pixels: Vec<u8>) -> Option<Self> {
+    pub fn new_bitmap_with_data(width: i32, height: i32, pixels: &[u8]) -> Option<Self> {
         if pixels.len() != (width * height) as usize {
             return None;
         }
@@ -68,7 +69,7 @@ impl Bitmap {
             height,
             center_x: (width as f64) / 2.0,
             center_y: (height as f64) / 2.0,
-            data: pixels,
+            data: pixels.to_vec(),
             s_x: 0,
             s_y: 0,
             pixels: 0,
@@ -208,13 +209,46 @@ impl Bitmap {
 
     // TODO: switch x and y cache
     pub(crate) fn overlaps(&self, other: &Bitmap, off_x: i32, off_y: i32) -> bool {
-        for y in 0..self.height {
-            for x in 0..self.width {
-                if self.at(x, y) != 0 && other.get_point(x + off_x, y + off_y) != 0 {
+        let common_width = min(self.width, other.width - off_x) as usize;
+        let common_height = min(self.height, other.height - off_y) as usize;
+
+
+        let model_data = self.data.as_slice();
+        let plate_data = other.data.as_slice();
+
+
+        for i in 0..common_height {
+            let model_base_i = (self.width as usize * i);
+            let model_slice = &(&model_data)[model_base_i..model_base_i + common_width];
+            let base_i = ((i as i32 + off_y) * other.width + off_x) as usize;
+            let plate_slice = &(&plate_data)[base_i..base_i + common_width];
+
+
+            for (q, w) in model_slice.iter().zip(plate_slice.iter()) {
+                if *q != 0 && *w != 0 {
                     return true;
                 }
             }
+
+
+            // for j in 0..common_width {
+            //     unsafe {
+            //         if *model_slice.get_unchecked(j) != 0
+            //             && *plate_slice.get_unchecked(j) != 0 {
+            //             return true;
+            //         }
+            //     }
+            // }
         }
+
+        // for y in 0..self.height {
+        //     for x in 0..self.width {
+        //         if self.at(x, y) != 0 && other.get_point(x + off_x, y + off_y) != 0 {
+        //             return true;
+        //         }
+        //
+        //     }
+        // }
 
         false
     }

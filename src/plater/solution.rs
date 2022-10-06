@@ -37,6 +37,10 @@ impl<'a> Solution<'a> {
         self.plates.get(n)
     }
 
+    pub(crate) fn get_plates(&self) -> &[Plate] {
+        self.plates.as_slice()
+    }
+
     pub(crate) fn get_plate_mut<'b>(&'b mut self, n: usize) -> Option<&'b mut Plate<'a>> {
         self.plates.get_mut(n)
     }

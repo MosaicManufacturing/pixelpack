@@ -11,6 +11,7 @@ use crate::stl::model::Model;
 mod plater;
 mod stl;
 mod cmd;
+mod wasm;
 
 #[derive(Copy, Clone)]
 enum Format {
@@ -48,9 +49,9 @@ fn main() {
     //
 
     let args = cmd::request::CliOpts::parse();
-    let xs = (0..50)
+    let xs = (0..5)
         .into_iter()
-        .flat_map(|_| ["Gimbal_snowflake_small_and_flat.STL".into()])
+        .flat_map(|_| ["Gimbal_snowflake_small_and_flat.STL".into(), "cube.stl".into()])
         .collect();
     println!("Going to start run");
 

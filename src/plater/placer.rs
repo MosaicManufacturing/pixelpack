@@ -12,7 +12,7 @@ use crate::plater::request::Request;
 use crate::plater::solution::Solution;
 
 #[derive(Clone, Copy)]
-pub(crate) enum SortMode {
+pub enum SortMode {
     // SortSurfaceDec sorts parts in descending order of surface area.
     SurfaceDec,
     // SortSurfaceInc sorts parts in ascending order of surface area.
@@ -127,7 +127,7 @@ impl<'a, Shape: PlateShape> Placer<'a, Shape> {
             GravityMode::GravityEQ => (1.0, 1.0),
         };
 
-        self.y_coef = new_x_coef;
+        self.x_coef = new_x_coef;
         self.y_coef = new_y_coef;
     }
 
@@ -177,7 +177,6 @@ impl<'a, Shape: PlateShape> Placer<'a, Shape> {
         } else {
             itertools::Either::Right(0..rs)
         };
-
         for r in iter {
             let vr = (r + self.rotate_offset as usize) % rs;
             part.set_rotation(vr as i32);
@@ -260,11 +259,13 @@ impl<'a, Shape: PlateShape> Placer<'a, Shape> {
         let mut reclaimed_unlocked_parts = vec![];
         let n = unlocked_parts.len();
 
+
         while !all_placed_so_far {
             println!("There are inner {} {}", unlocked_parts.len(), shape.width());
             all_placed_so_far = true;
             self.reset_cache();
 
+            unlocked_parts.sort_by(|x, y| x.part.id.cmp(&y.part.id));
             for part in unlocked_parts.drain(0..n) {
                 if all_placed_so_far {
                     match self.place_unlocked_part(&mut plate, part) {

@@ -36,7 +36,7 @@ pub(crate) struct Request<'a, Shape: PlateShape> {
 }
 
 // TODO: Don't understand the original version
-fn default_sort_modes() -> Vec<SortMode> {
+pub fn default_sort_modes() -> Vec<SortMode> {
     // let random_shuffles: usize = 3;
     // let sort_shuffle_as_usize: usize = SortShuffle.into();
     // let last_sort: usize = sort_shuffle_as_usize + random_shuffles - 1;
@@ -60,7 +60,7 @@ impl<'a, Shape: PlateShape> Request<'a, Shape> {
     }
 
     // TODO: replace option with explicit error handling (this is weird)
-    fn add_part(&mut self, part: Part) -> Option<()> {
+    pub fn add_part(&mut self, part: Part) -> Option<()> {
         let x = self.parts.get(part.id.as_str());
         if x.is_some() {
             return None;
