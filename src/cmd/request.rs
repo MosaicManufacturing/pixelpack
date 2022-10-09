@@ -1,6 +1,7 @@
 use std::path::PathBuf;
 
 use clap::{Parser};
+use rayon::prelude::{IntoParallelRefIterator, ParallelIterator};
 
 use crate::{plater, stl};
 use crate::plater::placer::SortMode;
@@ -29,7 +30,6 @@ pub struct CliOpts {
 
 
 
-
     #[clap(short, long, value_parser)]
     multiple_sort: bool,
 
@@ -42,7 +42,7 @@ pub struct CliOpts {
     #[clap(long, value_parser, default_value_t = false)]
     ppm: bool,
     #[clap(short, long, value_parser, default_value_t = 1)]
-    threads: i32,
+    pub threads: i32,
     #[clap(short, long, value_parser, default_value_t = false)]
     csv: bool,
     #[clap(short, long, multiple_values = true)]
@@ -97,10 +97,14 @@ pub fn run(opts: &CliOpts, filenames: Vec<String>) -> Option<()> {
         request.request.max_threads = opts.threads as usize;
     }
 
-    for filename in filenames {
-        println!("Adding file {}", filename);
-        request.add_model(filename, stl::orientation::Orientation::Bottom, false).unwrap();
-    }
+    filenames
+        .iter()
+        .for_each(|filename| {
+            println!("Adding file {}", filename);
+            request.add_model(filename.to_owned(),
+                              stl::orientation::Orientation::Bottom,
+                              false).unwrap();
+        });
 
     let write_solution = |sol: &Solution| -> Option<()> {
         let count = sol.count_plates();

@@ -1,5 +1,8 @@
 use std::collections::{HashMap};
 use std::f64::consts::PI;
+use std::sync::atomic::AtomicBool;
+use std::sync::atomic::Ordering::SeqCst;
+use std::sync::Mutex;
 
 use rayon::prelude::{IntoParallelIterator, ParallelIterator};
 
@@ -94,6 +97,7 @@ impl<'a, Shape: PlateShape> Request<'a, Shape> {
         let mut solutions = (&mut placers)
             .into_par_iter()
             .map(|placer| {
+                println!("Starting");
                 placer.place()
             })
             .collect::<Vec<_>>();

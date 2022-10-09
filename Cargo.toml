@@ -11,3 +11,7 @@ rand = "0.8.5"
 itertools = "0.10.3"
 rayon = "1.5.3"
 byteorder = "1"
+
+[profile.release]
+lto = true
+codegen-units = 1

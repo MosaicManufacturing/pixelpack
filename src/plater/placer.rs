@@ -8,7 +8,7 @@ use crate::plater::placed_part::PlacedPart;
 use crate::plater::placer::GravityMode::{GravityEQ, GravityXY, GravityYX};
 use crate::plater::plate::Plate;
 use crate::plater::plate_shape::PlateShape;
-use crate::plater::request::Request;
+use crate::plater::request::{Request};
 use crate::plater::solution::Solution;
 
 #[derive(Clone, Copy)]
@@ -177,6 +177,7 @@ impl<'a, Shape: PlateShape> Placer<'a, Shape> {
         } else {
             itertools::Either::Right(0..rs)
         };
+        // let iter = 0..1;
         for r in iter {
             let vr = (r + self.rotate_offset as usize) % rs;
             part.set_rotation(vr as i32);
@@ -230,21 +231,42 @@ impl<'a, Shape: PlateShape> Placer<'a, Shape> {
         Some(part)
     }
 
+    fn place_once(&mut self) -> Solution<'a> {
+        let mut shape = Clone::clone(self.request.plate_shape);
+        let mut plate = Plate::make_plate_with_placed_parts(&shape, self.request.precision, &mut self.locked_parts);
+        let mut unlocked_parts = vec![];
+
+        std::mem::swap(&mut self.unlocked_parts, &mut unlocked_parts);
+
+        self.reset_cache();
+        while !unlocked_parts.is_empty() {
+            // println!("UNLOCKED PARTS LEN {}", unlocked_parts.len());
+            // println!("PLATE LEN {}", plate.parts.len());
+            let part = unlocked_parts.pop().unwrap();
+            match self.place_unlocked_part(&mut plate, part) {
+                None => {},
+                Some(part) => {
+                    self.cache.clear();
+                    unlocked_parts.push(part);
+                    let EXPAND_MM = 100.0;
+                    shape = shape.expand(EXPAND_MM);
+                    plate = plate.make_from(&shape, self.request.precision);
+                }
+            }
+        }
+        // println!("UNLOCKED PARTS LEN {}", unlocked_parts.len());
+        // println!("PLATE LEN {}", plate.parts.len());
+
+        self.unlocked_parts.clear();
+        let mut solution = Solution::new();
+        solution.add_plate(plate);
+        solution
+    }
+
     fn place_single_plate(&mut self) -> Solution<'a> {
         let mut shape = Clone::clone(self.request.plate_shape);
 
-
-        // let locked_parts: Vec<_> = (&self.locked_parts)
-        //     .iter()
-        //     .map(|part| Clone::clone(part))
-        //     .collect();
-        //
-        //
-        // Vec::clone()
-
-        let mut plate = Plate::make_plate_with_placed_parts(&shape, self.request.precision, Vec::clone(&self.locked_parts));
-        // self.locked_parts.clear();
-
+        let mut plate = Plate::make_plate_with_placed_parts(&shape, self.request.precision, &mut self.locked_parts);
 
         let mut all_placed_so_far = false;
         let mut unlocked_parts = vec![];
@@ -255,8 +277,7 @@ impl<'a, Shape: PlateShape> Placer<'a, Shape> {
 
         println!("There are {}", unlocked_parts.len());
 
-        // TODO: optimization, next two line can be moved out of the loop
-        let mut reclaimed_unlocked_parts = vec![];
+        let mut reclaimed_unlocked_parts = Vec::with_capacity(unlocked_parts.len());
         let n = unlocked_parts.len();
 
 
@@ -289,11 +310,15 @@ impl<'a, Shape: PlateShape> Placer<'a, Shape> {
 
 
 
+                // We removed all of the locked parts with std::mem::swap, so self.locked_parts is currently empty
                 let n = (&plate.parts).len();
                 for part in &mut plate.parts.drain(0..n) {
                     // We don't bother reclaiming locked parts as they were cloned before insertion
                     if !part.part.locked {
                         reclaimed_unlocked_parts.push(part)
+                    }
+                    else {
+                        self.locked_parts.push(part);
                     }
                 }
                 // If we reach here, we have drained all elements out of unlocked_parts so it is EMPTY
@@ -303,7 +328,7 @@ impl<'a, Shape: PlateShape> Placer<'a, Shape> {
 
                 // So, parts_to_handle contains all Parts that were originally in self.unlocked_parts
                 std::mem::swap(&mut unlocked_parts, &mut reclaimed_unlocked_parts);
-                plate = Plate::make_plate_with_placed_parts(&shape, self.request.precision, Vec::clone(&self.locked_parts));
+                plate = Plate::make_plate_with_placed_parts(&shape, self.request.precision, &mut self.locked_parts);
             }
         }
 
@@ -317,11 +342,12 @@ impl<'a, Shape: PlateShape> Placer<'a, Shape> {
     fn place_multi_plate(&mut self) -> Solution {
         let mut solution = Solution::new();
 
-        {
-            let plate_shape = Clone::clone(self.request.plate_shape);
-            let plate = Plate::make_plate_with_placed_parts(&plate_shape, self.request.precision, Vec::clone(&self.locked_parts));
-            solution.add_plate(plate);
-        }
+
+
+        let plate_shape = Clone::clone(self.request.plate_shape);
+        let plate = Plate::make_plate_with_placed_parts(&plate_shape, self.request.precision, &mut Vec::clone(&self.locked_parts));
+        solution.add_plate(plate);
+
 
         let mut unlocked_parts = vec![];
         std::mem::swap(&mut unlocked_parts, &mut self.unlocked_parts);
@@ -346,7 +372,7 @@ impl<'a, Shape: PlateShape> Placer<'a, Shape> {
                             let shape = Clone::clone(self.request.plate_shape);
 
                             // Multi plates and ownership of locked parts
-                            let next_plate = Plate::make_plate_with_placed_parts(&shape, self.request.precision, Vec::clone(&self.locked_parts));
+                            let next_plate = Plate::make_plate_with_placed_parts(&shape, self.request.precision, &mut Vec::clone(&self.locked_parts));
                             solution.add_plate(next_plate);
                         }
                         current_part = part;
@@ -361,9 +387,10 @@ impl<'a, Shape: PlateShape> Placer<'a, Shape> {
     }
 
     pub(crate) fn place(&mut self) -> Solution {
-        println!("Calling place {}", self.request.single_plate_mode);
+        // println!("Calling place {}", self.request.single_plate_mode);
         if self.request.single_plate_mode {
             self.place_single_plate()
+            // self.place_once()
         } else {
             self.place_multi_plate()
         }

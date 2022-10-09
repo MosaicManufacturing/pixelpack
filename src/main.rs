@@ -22,16 +22,7 @@ enum Format {
 #[derive(Parser, Debug)]
 struct Args {
     #[clap(short, long, value_parser)]
-    source: PathBuf,
-
-    #[clap(short, long, value_parser)]
-    input_format: String,
-
-    #[clap(short, long, value_parser)]
-    dest: PathBuf,
-
-    #[clap(short, long, value_parser)]
-    output_format: String,
+    number: usize,
 }
 
 fn parse_format(s: &str) -> Option<Format> {
@@ -48,10 +39,14 @@ fn main() {
     // rayon::ThreadPoolBuilder::new().num_threads(1).build_global().unwrap();
     //
 
+
+
+
+    //  "cube.stl".into()
     let args = cmd::request::CliOpts::parse();
-    let xs = (0..5)
+    let xs = (0..args.threads)
         .into_iter()
-        .flat_map(|_| ["Gimbal_snowflake_small_and_flat.STL".into(), "cube.stl".into()])
+        .flat_map(|_| ["Gimbal_snowflake_small_and_flat.STL".into(), ])
         .collect();
     println!("Going to start run");
 

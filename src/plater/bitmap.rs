@@ -45,7 +45,7 @@ impl Bitmap {
 
 
     pub(crate) fn new(width: i32, height: i32) -> Self {
-        println!("DIMS {} {}", width, height);
+        // println!("DIMS {} {}", width, height);
         Bitmap {
             width,
             height,
@@ -207,6 +207,83 @@ impl Bitmap {
         // }
     }
 
+    // This only copies if other is fully contained in self
+    pub(crate) fn copy_from(&mut self,
+                            other: &Self,
+                            off_x: i32,
+                            off_y: i32) -> Option<()> {
+        if !(other.width <= self.width && other.height <= self.height) {
+            return None
+        }
+
+        let src = other.data.as_slice();
+        let dest = self.data.as_mut_slice();
+
+        for i in 0..(other.height as usize) {
+            let src_base_i = (other.width * i as i32) as usize;
+            let src_slice = &(&src)[src_base_i..src_base_i + other.width as usize];
+
+            let dest_base_i = (off_x + (self.width * (i as i32 + off_y))) as usize;
+            let dest_slice = &mut(dest)[dest_base_i..dest_base_i + other.width as usize];
+
+            dest_slice.copy_from_slice(src_slice);
+        }
+
+
+        Some(())
+    }
+
+
+    // This only copies if other is fully contained in self
+    pub(crate) fn copy_from_with_update(&mut self,
+                            other: &Self,
+                            off_x: i32,
+                            off_y: i32) -> Option<()> {
+
+        let common_width = min(self.width  - off_x, other.width) as usize;
+        let common_height = min(self.height  - off_y, other.height) as usize;
+
+        let src = other.data.as_slice();
+        let dest = self.data.as_mut_slice();
+
+        for i in 0..common_height {
+            let src_base_i = (other.width * i as i32) as usize;
+            let src_slice = &(&src)[src_base_i..src_base_i + common_width];
+
+            let dest_base_i = (off_x + (self.width * (i as i32 + off_y))) as usize;
+            let dest_slice = &mut(dest)[dest_base_i..dest_base_i + common_width];
+
+            let y = off_y * self.width;
+            assert_eq!(dest_slice.len(), src_slice.len());
+            for (i, (old_pixel, new_pixel)) in
+                dest_slice.iter().zip(src_slice.iter()).enumerate() {
+
+                if *new_pixel == 0 {
+                    continue;
+                }
+
+                if *old_pixel == *new_pixel {
+                    continue;
+                }
+                // *old_pixel = *new_pixel;
+                //
+                // let (dx, dy, dp) = match *new_pixel {
+                //     0 => (-(off_x + i as i32),  -y, -1),
+                //     _ => (off_x + i as i32,  y, 1)
+                // };
+
+                self.s_x += off_x as i64 + i as i64;
+                self.s_y += off_y as i64 + i as i64;
+                self.pixels += 1;
+            }
+
+            dest_slice.copy_from_slice(src_slice);
+        }
+
+
+        Some(())
+    }
+
     // TODO: switch x and y cache
     pub(crate) fn overlaps(&self, other: &Bitmap, off_x: i32, off_y: i32) -> bool {
         let common_width = min(self.width, other.width - off_x) as usize;
@@ -229,16 +306,6 @@ impl Bitmap {
                     return true;
                 }
             }
-
-
-            // for j in 0..common_width {
-            //     unsafe {
-            //         if *model_slice.get_unchecked(j) != 0
-            //             && *plate_slice.get_unchecked(j) != 0 {
-            //             return true;
-            //         }
-            //     }
-            // }
         }
 
         // for y in 0..self.height {
@@ -255,6 +322,21 @@ impl Bitmap {
 
     // TODO: switch x and y cache
     pub(crate) fn write(&mut self, other: &Bitmap, off_x: i32, off_y: i32) {
+
+
+
+        // self.copy_from(other, off_x, off_y, |src, dest| {
+        //     for (old_pixel, new_pixel) in src.iter().zip(dest.iter()) {
+        //         if *old_pixel == *new_pixel {
+        //             continue;
+        //         }
+        //
+        //
+        //     }
+        // });
+
+
+
         for y in 0..other.height {
             for x in 0..other.width {
                 let pixel = other.at(x, y);

@@ -35,9 +35,51 @@ impl<'a> Plate<'a> {
         }
     }
 
-    pub fn make_plate_with_placed_parts<Shape: PlateShape>(shape: &Shape, precision: f64, placed_parts: Vec<PlacedPart<'a>>) -> Self {
+
+    // pub(crate) fn make_from<Shape: PlateShape>(mut self, shape: &Shape) -> Self {
+    //     let width = shape.width();
+    //     let height = shape.height();
+    //
+    //
+    //     // Bitmap to write data to
+    //     let mut temp = Bitmap::new((width / self.precision) as i32, (height / self.precision) as i32);;
+    //
+    //     self.width = width;
+    //     self.height = height;
+    //
+    //     temp.copy_from(&self.bitmap, 0, 0);
+    //     std::mem::swap(&mut temp, &mut self.bitmap);
+    //
+    //
+    //
+    //     self
+    // }
+
+    pub(crate) fn make_from<Shape: PlateShape>(mut self, shape: &Shape, precision: f64) -> Self {
+        let width = shape.width();
+        let height = shape.height();
+
+        self.width = width;
+        self.height = height;
+        self.bitmap = Bitmap::new((width / precision) as i32, (height / precision) as i32);
+
+        let mut new_parts = Vec::with_capacity(self.parts.len());
+        std::mem::swap(&mut new_parts, &mut self.parts);
+
+        for part in new_parts {
+            self.place(part);
+        }
+
+        self
+    }
+
+
+
+    pub fn make_plate_with_placed_parts<Shape: PlateShape>(shape: &Shape, precision: f64, placed_parts: &mut Vec<PlacedPart<'a>>) -> Self {
         let mut plate = Self::new(shape, precision);
-        for part in placed_parts {
+
+        let n = placed_parts.len();
+        for part in placed_parts.drain(0..n) {
             plate.place(part);
         }
 
@@ -50,7 +92,9 @@ impl<'a> Plate<'a> {
             let bitmap = placed_part.get_bitmap().unwrap();
             let off_x = placed_part.get_x() / self.precision;
             let off_y = placed_part.get_y() / self.precision;
-            self.bitmap.write(bitmap, off_x as i32, off_y as i32);
+
+            self.bitmap.copy_from_with_update(bitmap, off_x as i32, off_y as i32);
+            // self.bitmap.write(bitmap, off_x as i32, off_y as i32);
         }
 
         self.parts.push(placed_part);

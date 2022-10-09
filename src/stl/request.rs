@@ -85,14 +85,14 @@ impl<'a> Request<'a>  {
 
        let x =  placements
             .iter()
-            .map(|x| {
-                let id = x.id.as_str();
+            .map(|placement| {
+                let id = placement.id.as_str();
                 let model = self.models.get(id).unwrap();
                 model
                     .clone()
                     .center_consume()
-                    .rotate_z_consume(x.rotation)
-                    .translate_consume(x.center.x, x.center.y, 0.0)
+                    .rotate_z_consume(placement.rotation)
+                    .translate_consume(placement.center.x, placement.center.y, 0.0)
             }).reduce(|mut x, mut y| {
             let mut m = Model::new();
             m.volumes.append(&mut x.volumes);
