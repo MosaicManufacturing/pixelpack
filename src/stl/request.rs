@@ -2,11 +2,11 @@ use std::collections::HashMap;
 
 use rayon::prelude::ParallelIterator;
 
-use crate::{Model, plater};
 use crate::plater::plate_shape::PlateShape;
 use crate::plater::solution::Solution;
 use crate::stl::orientation::Orientation;
 use crate::stl::part::load_model;
+use crate::{plater, Model};
 
 // type Request struct {
 //     Request    *plater.Request
@@ -22,19 +22,26 @@ pub(crate) struct Request<'a> {
     // parts: HashMap<>
 }
 
-
-impl<'a> Request<'a>  {
-
+impl<'a> Request<'a> {
     pub fn process<T>(&self, f: impl Fn(&Solution) -> T) -> T {
         self.request.process(f)
     }
 
     pub fn new(plate_shape: &'a plater::plate_shape::Shape, resolution: f64) -> Self {
         let request = plater::request::Request::new(plate_shape, resolution);
-        Request { request , resolution, models: Default::default() }
+        Request {
+            request,
+            resolution,
+            models: Default::default(),
+        }
     }
 
-    pub fn add_model(&mut self, filename: String, orientation: Orientation, locked: bool) -> Option<()> {
+    pub fn add_model(
+        &mut self,
+        filename: String,
+        orientation: Orientation,
+        locked: bool,
+    ) -> Option<()> {
         if filename.is_empty() {
             return None;
         }
@@ -53,10 +60,18 @@ impl<'a> Request<'a>  {
         let n = filename.to_owned();
         println!("Going to load {}", &n);
 
-        let (part, model, loaded) = load_model(filename, id.to_owned(), self.resolution, self.request.precision,
-                   self.request.delta_r, self.request.spacing, orientation,
-        self.request.plate_shape.width(), self.request.plate_shape.height(),
-        locked)?;
+        let (part, model, loaded) = load_model(
+            filename,
+            id.to_owned(),
+            self.resolution,
+            self.request.precision,
+            self.request.delta_r,
+            self.request.spacing,
+            orientation,
+            self.request.plate_shape.width(),
+            self.request.plate_shape.height(),
+            locked,
+        )?;
 
         println!("Loaded null");
 
@@ -69,8 +84,6 @@ impl<'a> Request<'a>  {
         self.models.insert(id.to_owned(), model);
         self.request.parts.insert(id, part);
 
-
-
         Some(())
     }
 
@@ -82,7 +95,7 @@ impl<'a> Request<'a>  {
         println!("Placements: {}", placements.len());
         println!("Sets: {}", self.models.len());
 
-       let x =  placements
+        let x = placements
             .iter()
             .map(|placement| {
                 let id = placement.id.as_str();
@@ -92,24 +105,25 @@ impl<'a> Request<'a>  {
                     .center_consume()
                     .rotate_z_consume(placement.rotation)
                     .translate_consume(placement.center.x, placement.center.y, 0.0)
-            }).reduce(|mut x, mut y| {
-            let mut m = Model::new();
-            m.volumes.append(&mut x.volumes);
-            m.volumes.append(&mut y.volumes);
-            m
-        });
+            })
+            .reduce(|mut x, mut y| {
+                let mut m = Model::new();
+                m.volumes.append(&mut x.volumes);
+                m.volumes.append(&mut y.volumes);
+                m
+            });
 
         x
     }
 
-    pub(crate) fn write_stl(&self, p: &plater::plate::Plate, filename: String) -> Option<std::io::Result<()>> {
+    pub(crate) fn write_stl(
+        &self,
+        p: &plater::plate::Plate,
+        filename: String,
+    ) -> Option<std::io::Result<()>> {
         println!("Going to make model");
         let model = self.create_model(p)?;
         println!("Created model");
         Some(model.save_to_file_binary(filename, self.resolution))
     }
-
-
-
-
 }

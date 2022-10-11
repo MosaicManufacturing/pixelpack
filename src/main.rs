@@ -5,18 +5,18 @@ use std::time::Instant;
 
 use clap::Parser;
 
-use crate::Format::{ASCII, Binary};
 use crate::stl::model::Model;
+use crate::Format::{Binary, ASCII};
 
+mod cmd;
 mod plater;
 mod stl;
-mod cmd;
 mod wasm;
 
 #[derive(Copy, Clone)]
 enum Format {
     Binary,
-    ASCII
+    ASCII,
 }
 
 #[derive(Parser, Debug)]
@@ -26,11 +26,11 @@ struct Args {
 }
 
 fn parse_format(s: &str) -> Option<Format> {
-    let s= s.to_ascii_lowercase();
+    let s = s.to_ascii_lowercase();
     match s.as_str() {
         "ascii" => Some(ASCII),
         "binary" => Some(Binary),
-        _ => None
+        _ => None,
     }
 }
 
@@ -39,17 +39,13 @@ fn main() {
     // rayon::ThreadPoolBuilder::new().num_threads(1).build_global().unwrap();
     //
 
-
-
-
     //  "cube.stl".into()
     let args = cmd::request::CliOpts::parse();
     let xs = (0..args.threads)
         .into_iter()
-        .flat_map(|_| ["Gimbal_snowflake_small_and_flat.STL".into(), ])
+        .flat_map(|_| ["Gimbal_snowflake_small_and_flat.STL".into()])
         .collect();
     println!("Going to start run");
-
 
     let t1 = Instant::now();
     cmd::request::run(&args, xs).unwrap();

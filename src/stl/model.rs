@@ -17,7 +17,7 @@ pub(crate) struct Model {
 impl Clone for Model {
     fn clone(&self) -> Self {
         Model {
-            volumes:  Vec::clone(&self.volumes),
+            volumes: Vec::clone(&self.volumes),
             tree: None,
         }
     }
@@ -96,7 +96,6 @@ impl Model {
         println!("Width {} Height {}", width, height);
         let mut bitmap = Bitmap::new(width, height);
 
-
         for y in 0..height {
             for x in 0..width {
                 let X = (x + 1) as f64 * precision - dilation + min_p.x;
@@ -134,8 +133,7 @@ impl Model {
     }
 
     fn model_point_transform(mut self, transform_point: impl Fn(&mut Point3D)) -> Self {
-        self
-            .volumes
+        self.volumes
             .iter_mut()
             .flat_map(|x| &mut x.faces)
             .flat_map(|face| &mut face.v)
@@ -144,7 +142,7 @@ impl Model {
     }
 
     pub(crate) fn translate_consume(self, x1: f64, y1: f64, z1: f64) -> Self {
-        self.model_point_transform (|Point3D { x, y, z }| {
+        self.model_point_transform(|Point3D { x, y, z }| {
             *x += x1;
             *y += y1;
             *z += z1;
@@ -213,7 +211,6 @@ impl Model {
         self.translate(-x, -y, -z)
     }
 
-
     // TODO: based on usage, it looks like we dont actually need to clone data
     pub(crate) fn put_face_on_plate(&self, orientation: Orientation) -> Self {
         match orientation {
@@ -227,7 +224,6 @@ impl Model {
     }
     //
     // pub(crate) fn merge()
-
 
     // func (m *Model) Merge(other *Model) {
     // 	for _, volume := range other.Volumes {

@@ -39,11 +39,9 @@ impl Bitmap {
         (self.width, self.height)
     }
 
-
     pub(crate) fn initialize_data(&mut self, other: &Self) {
         self.data.copy_from_slice(other.data.as_slice());
     }
-
 
     pub(crate) fn new(width: i32, height: i32) -> Self {
         // println!("DIMS {} {}", width, height);
@@ -181,7 +179,6 @@ impl Bitmap {
             }
         }
 
-
         // for _ in 0..distance {
         //     for index in 0..old.data.len() {
         //         let x = index % casted_width;
@@ -209,12 +206,9 @@ impl Bitmap {
     }
 
     // This only copies if other is fully contained in self
-    pub(crate) fn copy_from(&mut self,
-                            other: &Self,
-                            off_x: i32,
-                            off_y: i32) -> Option<()> {
+    pub(crate) fn copy_from(&mut self, other: &Self, off_x: i32, off_y: i32) -> Option<()> {
         if !(other.width <= self.width && other.height <= self.height) {
-            return None
+            return None;
         }
 
         let src = other.data.as_slice();
@@ -225,24 +219,23 @@ impl Bitmap {
             let src_slice = &(src)[src_base_i..src_base_i + other.width as usize];
 
             let dest_base_i = (off_x + (self.width * (i as i32 + off_y))) as usize;
-            let dest_slice = &mut(dest)[dest_base_i..dest_base_i + other.width as usize];
+            let dest_slice = &mut (dest)[dest_base_i..dest_base_i + other.width as usize];
 
             dest_slice.copy_from_slice(src_slice);
         }
 
-
         Some(())
     }
 
-
     // This only copies if other is fully contained in self
-    pub(crate) fn copy_from_with_update(&mut self,
-                            other: &Self,
-                            off_x: i32,
-                            off_y: i32) -> Option<()> {
-
-        let common_width = min(self.width  - off_x, other.width) as usize;
-        let common_height = min(self.height  - off_y, other.height) as usize;
+    pub(crate) fn copy_from_with_update(
+        &mut self,
+        other: &Self,
+        off_x: i32,
+        off_y: i32,
+    ) -> Option<()> {
+        let common_width = min(self.width - off_x, other.width) as usize;
+        let common_height = min(self.height - off_y, other.height) as usize;
 
         let src = other.data.as_slice();
         let dest = self.data.as_mut_slice();
@@ -252,13 +245,11 @@ impl Bitmap {
             let src_slice = &(&src)[src_base_i..src_base_i + common_width];
 
             let dest_base_i = (off_x + (self.width * (i as i32 + off_y))) as usize;
-            let dest_slice = &mut(dest)[dest_base_i..dest_base_i + common_width];
+            let dest_slice = &mut (dest)[dest_base_i..dest_base_i + common_width];
 
             let y = off_y * self.width;
             assert_eq!(dest_slice.len(), src_slice.len());
-            for (i, (old_pixel, new_pixel)) in
-                dest_slice.iter().zip(src_slice.iter()).enumerate() {
-
+            for (i, (old_pixel, new_pixel)) in dest_slice.iter().zip(src_slice.iter()).enumerate() {
                 if *new_pixel == 0 {
                     continue;
                 }
@@ -281,7 +272,6 @@ impl Bitmap {
             dest_slice.copy_from_slice(src_slice);
         }
 
-
         Some(())
     }
 
@@ -290,17 +280,14 @@ impl Bitmap {
         let common_width = min(self.width, other.width - off_x) as usize;
         let common_height = min(self.height, other.height - off_y) as usize;
 
-
         let model_data = self.data.as_slice();
         let plate_data = other.data.as_slice();
-
 
         for i in 0..common_height {
             let model_base_i = (self.width as usize * i);
             let model_slice = &(model_data)[model_base_i..model_base_i + common_width];
             let base_i = ((i as i32 + off_y) * other.width + off_x) as usize;
             let plate_slice = &(plate_data)[base_i..base_i + common_width];
-
 
             for (q, w) in model_slice.iter().zip(plate_slice.iter()) {
                 if *q != 0 && *w != 0 {
@@ -323,9 +310,6 @@ impl Bitmap {
 
     // TODO: switch x and y cache
     pub(crate) fn write(&mut self, other: &Bitmap, off_x: i32, off_y: i32) {
-
-
-
         // self.copy_from(other, off_x, off_y, |src, dest| {
         //     for (old_pixel, new_pixel) in src.iter().zip(dest.iter()) {
         //         if *old_pixel == *new_pixel {
@@ -335,8 +319,6 @@ impl Bitmap {
         //
         //     }
         // });
-
-
 
         for y in 0..other.height {
             for x in 0..other.width {

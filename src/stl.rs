@@ -1,11 +1,11 @@
 mod face;
 pub mod model;
+pub mod model_io;
 pub(crate) mod orientation;
+mod part;
 mod point_3d;
 mod quad_tree;
+pub mod request;
 mod triangle_2d;
 pub(crate) mod util;
 mod volume;
-pub mod model_io;
-pub mod request;
-mod part;

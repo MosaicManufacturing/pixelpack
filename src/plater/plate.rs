@@ -35,7 +35,6 @@ impl<'a> Plate<'a> {
         }
     }
 
-
     // pub(crate) fn make_from<Shape: PlateShape>(mut self, shape: &Shape) -> Self {
     //     let width = shape.width();
     //     let height = shape.height();
@@ -73,9 +72,11 @@ impl<'a> Plate<'a> {
         self
     }
 
-
-
-    pub fn make_plate_with_placed_parts<Shape: PlateShape>(shape: &Shape, precision: f64, placed_parts: &mut Vec<PlacedPart<'a>>) -> Self {
+    pub fn make_plate_with_placed_parts<Shape: PlateShape>(
+        shape: &Shape,
+        precision: f64,
+        placed_parts: &mut Vec<PlacedPart<'a>>,
+    ) -> Self {
         let mut plate = Self::new(shape, precision);
 
         let n = placed_parts.len();
@@ -93,7 +94,8 @@ impl<'a> Plate<'a> {
             let off_x = placed_part.get_x() / self.precision;
             let off_y = placed_part.get_y() / self.precision;
 
-            self.bitmap.copy_from_with_update(bitmap, off_x as i32, off_y as i32);
+            self.bitmap
+                .copy_from_with_update(bitmap, off_x as i32, off_y as i32);
             // self.bitmap.write(bitmap, off_x as i32, off_y as i32);
         }
 

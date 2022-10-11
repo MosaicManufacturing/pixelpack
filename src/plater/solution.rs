@@ -10,7 +10,6 @@ impl<'a> Solution<'a> {
         Solution { plates: vec![] }
     }
 
-
     pub(crate) fn reclaim_placed_parts(self) -> Vec<PlacedPart<'a>> {
         let mut result = vec![];
         for plate in self.plates {

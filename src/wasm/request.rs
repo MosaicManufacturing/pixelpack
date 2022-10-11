@@ -16,7 +16,7 @@ struct RequestOptions {
     delta: f64,
     rotation_interval: f64,
     multiple_sort: bool,
-    random_iterations: i32
+    random_iterations: i32,
 }
 
 struct ModelOptions {
@@ -27,13 +27,13 @@ struct ModelOptions {
     center_x: f64,
     center_y: f64,
     spacing: f64,
-    rotation_interval: i32
+    rotation_interval: i32,
 }
 
 struct ModelResult {
     offset_x: f64,
     offset_y: f64,
-    rotation: f64
+    rotation: f64,
 }
 
 fn get_plate_shape(opts: &RequestOptions, resolution: f64) -> Shape {
@@ -50,8 +50,7 @@ fn handle_request(opts: RequestOptions, models: Vec<ModelOptions>, bitmaps: Vec<
 
     let mut model_opts_map = HashMap::new();
 
-
-    let plate_shape =  get_plate_shape(&opts, resolution);
+    let plate_shape = get_plate_shape(&opts, resolution);
     let mut request = plater::request::Request::new(&plate_shape, resolution);
 
     if opts.precision > 0.0 {
@@ -71,7 +70,8 @@ fn handle_request(opts: RequestOptions, models: Vec<ModelOptions>, bitmaps: Vec<
 
     for (i, model) in models.iter().enumerate() {
         model_opts_map.insert(model.id.to_string(), model);
-        let bmp = Bitmap::new_bitmap_with_data(opts.width, opts.height, bitmaps[i].as_slice()).unwrap();
+        let bmp =
+            Bitmap::new_bitmap_with_data(opts.width, opts.height, bitmaps[i].as_slice()).unwrap();
 
         let delta_r = if model.rotation_interval > 0 {
             deg_to_rad(model.rotation_interval as f64)
@@ -85,9 +85,18 @@ fn handle_request(opts: RequestOptions, models: Vec<ModelOptions>, bitmaps: Vec<
             request.spacing
         };
 
-        let (part, loaded) = plater::part::Part::new(model.id.to_owned(), bmp
-                                           ,model.center_x, model.center_y, request.precision, delta_r, spacing,
-            opts.width as f64, opts.height as f64, model.locked);
+        let (part, loaded) = plater::part::Part::new(
+            model.id.to_owned(),
+            bmp,
+            model.center_x,
+            model.center_y,
+            request.precision,
+            delta_r,
+            spacing,
+            opts.width as f64,
+            opts.height as f64,
+            model.locked,
+        );
 
         if loaded == 0 {
             unreachable!()
@@ -96,19 +105,20 @@ fn handle_request(opts: RequestOptions, models: Vec<ModelOptions>, bitmaps: Vec<
         request.add_part(part).unwrap();
     }
 
-
-
-    let result= request.process(|sol| {
+    let result = request.process(|sol| {
         let mut result = HashMap::new();
         for plate in sol.get_plates() {
             for placement in plate.get_placements() {
                 let id = placement.id.to_owned();
                 let model_opts = model_opts_map.get(&id).unwrap();
-                result.insert(placement.id.to_owned(), ModelResult {
-                    offset_x: placement.center.x - model_opts.center_x,
-                    offset_y: placement.center.y - model_opts.center_y,
-                    rotation: placement.rotation
-                });
+                result.insert(
+                    placement.id.to_owned(),
+                    ModelResult {
+                        offset_x: placement.center.x - model_opts.center_x,
+                        offset_y: placement.center.y - model_opts.center_y,
+                        rotation: placement.rotation,
+                    },
+                );
             }
         }
 
@@ -116,8 +126,4 @@ fn handle_request(opts: RequestOptions, models: Vec<ModelOptions>, bitmaps: Vec<
     });
 
     todo!()
-
-
-
-
 }

@@ -33,7 +33,11 @@ impl Model {
         writeln!(writer, "endsolid plate")
     }
 
-    pub fn save_to_file_ascii<P: AsRef<Path>>(&self, filename: P, resolution: f64) -> std::io::Result<()> {
+    pub fn save_to_file_ascii<P: AsRef<Path>>(
+        &self,
+        filename: P,
+        resolution: f64,
+    ) -> std::io::Result<()> {
         let file = File::create(filename)?;
         let mut writer = BufWriter::new(file);
         self.write_ascii(&mut writer, resolution)?;
@@ -60,9 +64,9 @@ impl Model {
                 let points = [&normal, &face.v[0], &face.v[1], &face.v[2]];
 
                 for point in points {
-                    let x = (point.x/resolution) as f32;
-                    let y = (point.y/resolution) as f32;
-                    let z = (point.z/resolution) as f32;
+                    let x = (point.x / resolution) as f32;
+                    let y = (point.y / resolution) as f32;
+                    let z = (point.z / resolution) as f32;
 
                     writer.write_f32::<LittleEndian>(x)?;
                     writer.write_f32::<LittleEndian>(y)?;
@@ -76,7 +80,11 @@ impl Model {
         Ok(())
     }
 
-    pub fn save_to_file_binary<P: AsRef<Path>>(&self, filename: P, resolution: f64) -> std::io::Result<()> {
+    pub fn save_to_file_binary<P: AsRef<Path>>(
+        &self,
+        filename: P,
+        resolution: f64,
+    ) -> std::io::Result<()> {
         let file = File::create(filename)?;
         let mut writer = BufWriter::new(file);
         self.write_binary(&mut writer, resolution)?;
@@ -90,7 +98,7 @@ impl Model {
         let x = resolution * reader.read_f32::<LittleEndian>()? as f64;
         let y = resolution * reader.read_f32::<LittleEndian>()? as f64;
         let z = resolution * reader.read_f32::<LittleEndian>()? as f64;
-        Ok(Point3D {x, y, z})
+        Ok(Point3D { x, y, z })
     }
 
     fn load_stl_binary<T: Read>(reader: &mut T, resolution: f64) -> std::io::Result<Self> {
@@ -122,16 +130,21 @@ impl Model {
         Ok(model)
     }
 
-    pub fn load_stl_file_binary<P: AsRef<Path>>(filename: P, resolution: f64) -> std::io::Result<Self> {
+    pub fn load_stl_file_binary<P: AsRef<Path>>(
+        filename: P,
+        resolution: f64,
+    ) -> std::io::Result<Self> {
         let file = File::open(filename)?;
         let mut reader = BufReader::new(file);
         Model::load_stl_binary(&mut reader, resolution)
     }
 }
 
-
 impl Model {
-    pub fn load_stl_file_ascii<P: AsRef<Path>>(filename: P, resolution: f64) -> std::io::Result<Self> {
+    pub fn load_stl_file_ascii<P: AsRef<Path>>(
+        filename: P,
+        resolution: f64,
+    ) -> std::io::Result<Self> {
         let file = File::open(filename)?;
         let mut reader = BufReader::new(file);
         Model::load_stl_ascii(&mut reader, resolution)
@@ -140,7 +153,7 @@ impl Model {
     fn parse_ascii_vertex(line: &str, resolution: f64) -> Option<Point3D> {
         let parts = line.split_whitespace().collect::<Vec<_>>();
         if parts.len() != 4 {
-            return None
+            return None;
         }
 
         let x = resolution * parts[1].parse::<f64>().ok()?;
@@ -159,7 +172,7 @@ impl Model {
             .filter_map(|line| {
                 let trimmed_line = line.trim();
                 if !trimmed_line.starts_with("vertex") {
-                    return None
+                    return None;
                 }
                 Some(Model::parse_ascii_vertex(trimmed_line, resolution))
             })
@@ -167,9 +180,7 @@ impl Model {
 
         for chunk in &lines {
             // If we failed to parse a point, fail here
-            let k: Vec<_> = chunk
-                .map(|x| x.unwrap())
-                .collect();
+            let k: Vec<_> = chunk.map(|x| x.unwrap()).collect();
 
             if k.len() != 3 {
                 todo!()
@@ -182,7 +193,6 @@ impl Model {
         model.volumes.push(volume);
         Ok(model)
     }
-
 }
 
 impl Model {
@@ -198,27 +208,23 @@ impl Model {
 
         let prefix = "solid".as_bytes();
 
-
         println!("{}", n);
-
-
 
         if n >= 5 {
             let x = &bytes[0..5];
             if x == prefix {
-                return Model::load_stl_file_binary(filename, resolution)
+                return Model::load_stl_file_binary(filename, resolution);
             }
         }
 
-        let printable_count = bytes
-            .iter()
-            .filter(|x| **x < 127)
-            .count();
+        let printable_count = bytes.iter().filter(|x| **x < 127).count();
 
         println!("COUNTS {} {}", n, printable_count);
 
-        if (printable_count as f64)/(n as f64) < 0.95
-        {Model::load_stl_file_binary(filename, resolution)}
-        else {Model::load_stl_file_ascii(filename, resolution)  }
+        if (printable_count as f64) / (n as f64) < 0.95 {
+            Model::load_stl_file_binary(filename, resolution)
+        } else {
+            Model::load_stl_file_ascii(filename, resolution)
+        }
     }
 }

@@ -79,9 +79,8 @@ impl<'a, Shape: PlateShape> Placer<'a, Shape> {
             y_coef: 0.0,
             locked_parts: vec![],
             unlocked_parts: vec![],
-            request
+            request,
         };
-
 
         for part in request.parts.values() {
             let placed_part = PlacedPart::new_placed_part(part);
@@ -144,8 +143,7 @@ impl<'a, Shape: PlateShape> Placer<'a, Shape> {
         &mut self,
         plate: &mut Plate<'b>,
         mut part: PlacedPart<'b>,
-    ) ->  Option<PlacedPart<'b>> {
-
+    ) -> Option<PlacedPart<'b>> {
         // println!("place_unlocked_part");
         let cache_name = String::from(part.get_id());
 
@@ -196,7 +194,6 @@ impl<'a, Shape: PlateShape> Placer<'a, Shape> {
 
                     let score = gy * self.y_coef + gx * self.x_coef;
 
-
                     // TODO: optimization, it looks like we just test all points increasing along y, why not perform binary search instead
                     if !found || score < better_score {
                         part.set_offset(x, y);
@@ -233,7 +230,11 @@ impl<'a, Shape: PlateShape> Placer<'a, Shape> {
 
     fn place_once(&mut self) -> Solution<'a> {
         let mut shape = Clone::clone(self.request.plate_shape);
-        let mut plate = Plate::make_plate_with_placed_parts(&shape, self.request.precision, &mut self.locked_parts);
+        let mut plate = Plate::make_plate_with_placed_parts(
+            &shape,
+            self.request.precision,
+            &mut self.locked_parts,
+        );
         let mut unlocked_parts = vec![];
 
         std::mem::swap(&mut self.unlocked_parts, &mut unlocked_parts);
@@ -244,7 +245,7 @@ impl<'a, Shape: PlateShape> Placer<'a, Shape> {
             // println!("PLATE LEN {}", plate.parts.len());
             let part = unlocked_parts.pop().unwrap();
             match self.place_unlocked_part(&mut plate, part) {
-                None => {},
+                None => {}
                 Some(part) => {
                     self.cache.clear();
                     unlocked_parts.push(part);
@@ -265,14 +266,19 @@ impl<'a, Shape: PlateShape> Placer<'a, Shape> {
 
     fn place_single_plate(&mut self) -> Solution<'a> {
         let mut shape = Clone::clone(self.request.plate_shape);
-        let mut plate = Plate::make_plate_with_placed_parts(&shape, self.request.precision, &mut self.locked_parts);
+        let mut plate = Plate::make_plate_with_placed_parts(
+            &shape,
+            self.request.precision,
+            &mut self.locked_parts,
+        );
 
         let mut cur_part;
-        self.unlocked_parts.sort_by(|x, y| x.part.id.cmp(&y.part.id));
+        self.unlocked_parts
+            .sort_by(|x, y| x.part.id.cmp(&y.part.id));
         while !self.unlocked_parts.is_empty() {
             cur_part = self.unlocked_parts.pop().unwrap();
             match self.place_unlocked_part(&mut plate, cur_part) {
-                None => {},
+                None => {}
                 Some(part) => {
                     self.reset_cache();
                     self.unlocked_parts.push(part);
@@ -285,10 +291,15 @@ impl<'a, Shape: PlateShape> Placer<'a, Shape> {
                             self.locked_parts.push(part);
                         }
                     }
-                    self.unlocked_parts.sort_by(|x, y| x.part.id.cmp(&y.part.id));
+                    self.unlocked_parts
+                        .sort_by(|x, y| x.part.id.cmp(&y.part.id));
                     let expand_mm = 100.0;
                     shape = shape.expand(expand_mm);
-                    plate = Plate::make_plate_with_placed_parts(&shape, self.request.precision, &mut self.locked_parts);
+                    plate = Plate::make_plate_with_placed_parts(
+                        &shape,
+                        self.request.precision,
+                        &mut self.locked_parts,
+                    );
                 }
             }
         }
@@ -301,16 +312,16 @@ impl<'a, Shape: PlateShape> Placer<'a, Shape> {
     fn place_multi_plate(&mut self) -> Solution {
         let mut solution = Solution::new();
 
-
-
         let plate_shape = Clone::clone(self.request.plate_shape);
-        let plate = Plate::make_plate_with_placed_parts(&plate_shape, self.request.precision, &mut Vec::clone(&self.locked_parts));
+        let plate = Plate::make_plate_with_placed_parts(
+            &plate_shape,
+            self.request.precision,
+            &mut Vec::clone(&self.locked_parts),
+        );
         solution.add_plate(plate);
-
 
         let mut unlocked_parts = vec![];
         std::mem::swap(&mut unlocked_parts, &mut self.unlocked_parts);
-
 
         println!("Unlocked parts len {}", unlocked_parts.len());
 
@@ -331,7 +342,11 @@ impl<'a, Shape: PlateShape> Placer<'a, Shape> {
                             let shape = Clone::clone(self.request.plate_shape);
 
                             // Multi plates and ownership of locked parts
-                            let next_plate = Plate::make_plate_with_placed_parts(&shape, self.request.precision, &mut Vec::clone(&self.locked_parts));
+                            let next_plate = Plate::make_plate_with_placed_parts(
+                                &shape,
+                                self.request.precision,
+                                &mut Vec::clone(&self.locked_parts),
+                            );
                             solution.add_plate(next_plate);
                         }
                         current_part = part;

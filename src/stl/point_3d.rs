@@ -53,7 +53,11 @@ impl Point3D {
     }
 
     fn vertex(&self, resolution: f64) -> Self {
-        Point3D::new(self.x/resolution, self.y/resolution, self.z/resolution)
+        Point3D::new(
+            self.x / resolution,
+            self.y / resolution,
+            self.z / resolution,
+        )
     }
 
     pub fn format_vertex(&self, resolution: f64) -> String {
@@ -62,8 +66,8 @@ impl Point3D {
     }
 
     pub fn format_ascii_point(&self) -> String {
-        let f = |x| if x == -0.0 {0.0} else {x};
-            // if x == -0.0 {0.0} else {x};
+        let f = |x| if x == -0.0 { 0.0 } else { x };
+        // if x == -0.0 {0.0} else {x};
 
         let x = f(self.x);
         let y = f(self.y);
@@ -71,5 +75,4 @@ impl Point3D {
 
         format!("{:.6} {:.6} {:.6}", x, y, z)
     }
-
 }

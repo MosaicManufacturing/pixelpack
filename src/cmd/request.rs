@@ -3,10 +3,10 @@ use std::path::PathBuf;
 use clap::Parser;
 use rayon::prelude::{IntoParallelRefIterator, ParallelIterator};
 
-use crate::{plater, stl};
 use crate::plater::placer::SortMode;
 use crate::plater::plate_shape::Shape;
 use crate::plater::solution::Solution;
+use crate::{plater, stl};
 
 #[derive(Parser, Debug)]
 pub struct CliOpts {
@@ -27,14 +27,11 @@ pub struct CliOpts {
     #[clap(short, long, value_parser, default_value_t = 90)]
     rotation_interval: i32,
 
-
-
     #[clap(short, long, value_parser)]
     multiple_sort: bool,
 
     #[clap(long, value_parser, default_value_t = 0)]
     random_iterations: i32,
-
 
     #[clap(short, long, value_parser, default_value = "plate_%03d")]
     output_pattern: String,
@@ -50,7 +47,7 @@ pub struct CliOpts {
 
 fn get_plate_shape(opts: &CliOpts, resolution: f64) -> Shape {
     if opts.diameter > 0 {
-        return Shape::new_circle(opts.diameter as f64, resolution)
+        return Shape::new_circle(opts.diameter as f64, resolution);
     }
 
     Shape::new_rectangle(opts.width as f64, opts.height as f64, resolution)
@@ -68,7 +65,7 @@ fn get_sort_modes(multiple_sort: bool, random_iterations: i32) -> Vec<SortMode> 
                 2 => SortMode::Shuffle,
 
                 // TODO: figure this out
-                _ => todo!()
+                _ => todo!(),
             };
 
             modes.push(x);
@@ -96,14 +93,16 @@ pub fn run(opts: &CliOpts, filenames: Vec<String>) -> Option<()> {
         request.request.max_threads = opts.threads as usize;
     }
 
-    filenames
-        .iter()
-        .for_each(|filename| {
-            println!("Adding file {}", filename);
-            request.add_model(filename.to_owned(),
-                              stl::orientation::Orientation::Bottom,
-                              false).unwrap();
-        });
+    filenames.iter().for_each(|filename| {
+        println!("Adding file {}", filename);
+        request
+            .add_model(
+                filename.to_owned(),
+                stl::orientation::Orientation::Bottom,
+                false,
+            )
+            .unwrap();
+    });
 
     let write_solution = |sol: &Solution| -> Option<()> {
         let count = sol.count_plates();
