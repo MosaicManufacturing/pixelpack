@@ -28,7 +28,6 @@ impl Model {
         Model {
             volumes: vec![],
             tree: None,
-            // triangles: vec![],
         }
     }
 
@@ -123,13 +122,6 @@ impl Model {
     fn clone_model_with_point_transform(&self, transform_point: impl Fn(&mut Point3D)) -> Self {
         let cloned = self.clone();
         cloned.model_point_transform(transform_point)
-        // cloned
-        //     .volumes
-        //     .iter_mut()
-        //     .flat_map(|x| &mut x.faces)
-        //     .flat_map(|face| &mut face.v)
-        //     .for_each(transform_point);
-        // cloned
     }
 
     fn model_point_transform(mut self, transform_point: impl Fn(&mut Point3D)) -> Self {
@@ -211,7 +203,6 @@ impl Model {
         self.translate(-x, -y, -z)
     }
 
-    // TODO: based on usage, it looks like we dont actually need to clone data
     pub(crate) fn put_face_on_plate(&self, orientation: Orientation) -> Self {
         match orientation {
             Orientation::Bottom => self.clone(),
@@ -222,12 +213,4 @@ impl Model {
             Orientation::Right => self.rotate_y(deg_to_rad(-90.0)),
         }
     }
-    //
-    // pub(crate) fn merge()
-
-    // func (m *Model) Merge(other *Model) {
-    // 	for _, volume := range other.Volumes {
-    // 		m.Volumes = append(m.Volumes, volume)
-    // 	}
-    // }
 }

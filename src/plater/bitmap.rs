@@ -178,31 +178,6 @@ impl Bitmap {
                 }
             }
         }
-
-        // for _ in 0..distance {
-        //     for index in 0..old.data.len() {
-        //         let x = index % casted_width;
-        //         let y = (index - x) / casted_height;
-        //
-        //         if old.at(x as i32, y as i32) == 0 {
-        //             let mut score = 0;
-        //             for dx in -1..1 {
-        //                 for dy in -1..1 {
-        //                     if dx == 0 && dy == 0 {
-        //                         continue;
-        //                     }
-        //                     if old.get_point((x as i32) + dx, (y as i32) + dy) != 0 {
-        //                         score += 1;
-        //                     };
-        //                 }
-        //             }
-        //
-        //             if score >= 1 {
-        //                 self.set_point(x as i32, y as i32, 1);
-        //             }
-        //         }
-        //     }
-        // }
     }
 
     // This only copies if other is fully contained in self
@@ -348,18 +323,17 @@ impl Bitmap {
 
         let mut rotated = Bitmap::new(width, height);
 
-        // Removed casts for c_x & c_y
         for y in 0..height {
             for x in 0..width {
                 let c_x = f64::round((x as f64) - center_x);
                 let c_y = f64::round((y as f64) - center_y);
-                let (X, Y) = util::apply_rotation_f64((c_x, c_y), r);
+                let (x_1, y_1) = util::apply_rotation_f64((c_x, c_y), r);
                 rotated.set_point(
                     x,
                     y,
                     self.get_point(
-                        f64::round(X + old_center_x) as i32,
-                        f64::round(Y + old_center_y) as i32,
+                        f64::round(x_1 + old_center_x) as i32,
+                        f64::round(y_1 + old_center_y) as i32,
                     ),
                 );
             }
@@ -406,7 +380,6 @@ impl Bitmap {
         trimmed.center_x = self.center_x - min_x as f64;
         trimmed.center_y = self.center_y - min_y as f64;
 
-        // switch x, y order
         for y in 0..delta_y {
             for x in 0..delta_x {
                 trimmed.set_point(x, y, self.get_point(x + min_x, y + min_y));
@@ -424,7 +397,6 @@ impl Bitmap {
         expanded.center_x = self.center_x + dx as f64;
         expanded.center_y = self.center_y + dy as f64;
 
-        // Switch x y order
         for y in 0..self.height {
             for x in 0..self.width {
                 expanded.set_point(x + dx, y + dy, self.get_point(x, y));
