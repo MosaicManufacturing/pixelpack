@@ -72,7 +72,7 @@ impl<'a, Shape: PlateShape> Request<'a, Shape> {
     }
 
     // Replace with explicit error handling
-    pub(crate) fn process<T>(&'a self, f: impl Fn(&Solution) -> T) -> T {
+    pub(crate) fn process<T>(&'a self, on_solution_found: impl Fn(&Solution) -> T) -> T {
         let mut placers = vec![];
         let sort_modes = Vec::clone(&self.sort_modes);
 
@@ -101,8 +101,6 @@ impl<'a, Shape: PlateShape> Request<'a, Shape> {
 
         solutions.sort_by(|x, y| f64::partial_cmp(&x.score(), &y.score()).unwrap());
 
-        f(&solutions[0])
-
-        // Some(solutions.swap_remove(0))
+        on_solution_found(&solutions[0])
     }
 }

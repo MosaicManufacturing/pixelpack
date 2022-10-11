@@ -11,7 +11,6 @@ use crate::stl::volume::Volume;
 pub(crate) struct Model {
     pub(crate) volumes: Vec<Volume>,
     tree: Option<Box<QuadTree>>,
-    // triangles: Vec<Triangle2D>, No need for this right now
 }
 
 impl Clone for Model {

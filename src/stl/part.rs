@@ -2,7 +2,6 @@ use crate::stl::orientation::Orientation;
 use crate::{plater, Model};
 
 pub(crate) struct Part {
-    // move ownership of plater::part::Part out of stl part to plater/part (replace hashmap with vec, ids with indexs), store an id
     part: plater::part::Part,
     filename: String,
     model: Model,

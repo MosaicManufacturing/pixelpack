@@ -6,7 +6,6 @@ pub(crate) struct Placement {
     pub(crate) rotation: f64,
 }
 
-// TODO: replace clone with Rc<Placement> as optimization
 impl Clone for Placement {
     fn clone(&self) -> Self {
         Placement {

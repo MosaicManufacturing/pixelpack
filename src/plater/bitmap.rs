@@ -275,18 +275,7 @@ impl Bitmap {
         false
     }
 
-    // TODO: switch x and y cache
     pub(crate) fn write(&mut self, other: &Bitmap, off_x: i32, off_y: i32) {
-        // self.copy_from(other, off_x, off_y, |src, dest| {
-        //     for (old_pixel, new_pixel) in src.iter().zip(dest.iter()) {
-        //         if *old_pixel == *new_pixel {
-        //             continue;
-        //         }
-        //
-        //
-        //     }
-        // });
-
         for y in 0..other.height {
             for x in 0..other.width {
                 let pixel = other.at(x, y);
@@ -346,7 +335,6 @@ impl Bitmap {
         let (mut min_x, mut min_y) = (0, 0);
         let (mut max_x, mut max_y) = (0, 0);
 
-        // // swap x, y order
         for y in 0..self.height {
             for x in 0..self.width {
                 if self.at(x, y) != 0 {

@@ -71,12 +71,6 @@ impl<'a> Request<'a> {
 
     fn create_model(&self, p: &plater::plate::Plate) -> Option<Model> {
         let placements = p.get_placements();
-
-        println!("placement length {}", placements.len());
-
-        println!("Placements: {}", placements.len());
-        println!("Sets: {}", self.models.len());
-
         let x = placements
             .iter()
             .map(|placement| {

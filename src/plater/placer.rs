@@ -138,13 +138,11 @@ impl<'a, Shape: PlateShape> Placer<'a, Shape> {
         self.rotate_offset = offset;
     }
 
-    // Internal borrow mut
     fn place_unlocked_part<'b>(
         &mut self,
         plate: &mut Plate<'b>,
         mut part: PlacedPart<'b>,
     ) -> Option<PlacedPart<'b>> {
-        // println!("place_unlocked_part");
         let cache_name = String::from(part.get_id());
 
         if self.cache.get(&plate.plate_id).is_none() {
@@ -194,7 +192,6 @@ impl<'a, Shape: PlateShape> Placer<'a, Shape> {
 
                     let score = gy * self.y_coef + gx * self.x_coef;
 
-                    // TODO: optimization, it looks like we just test all points increasing along y, why not perform binary search instead
                     if !found || score < better_score {
                         part.set_offset(x, y);
                         if plate.can_place(&part) {
@@ -224,7 +221,7 @@ impl<'a, Shape: PlateShape> Placer<'a, Shape> {
                 Some(part)
             };
         }
-        // TODO: verify correctness
+
         Some(part)
     }
 
@@ -241,8 +238,6 @@ impl<'a, Shape: PlateShape> Placer<'a, Shape> {
 
         self.reset_cache();
         while !unlocked_parts.is_empty() {
-            // println!("UNLOCKED PARTS LEN {}", unlocked_parts.len());
-            // println!("PLATE LEN {}", plate.parts.len());
             let part = unlocked_parts.pop().unwrap();
             match self.place_unlocked_part(&mut plate, part) {
                 None => {}
@@ -255,8 +250,6 @@ impl<'a, Shape: PlateShape> Placer<'a, Shape> {
                 }
             }
         }
-        // println!("UNLOCKED PARTS LEN {}", unlocked_parts.len());
-        // println!("PLATE LEN {}", plate.parts.len());
 
         self.unlocked_parts.clear();
         let mut solution = Solution::new();
@@ -363,7 +356,6 @@ impl<'a, Shape: PlateShape> Placer<'a, Shape> {
     pub(crate) fn place(&mut self) -> Solution {
         if self.request.single_plate_mode {
             self.place_single_plate()
-            // self.place_once()
         } else {
             self.place_multi_plate()
         }

@@ -35,25 +35,6 @@ impl<'a> Plate<'a> {
         }
     }
 
-    // pub(crate) fn make_from<Shape: PlateShape>(mut self, shape: &Shape) -> Self {
-    //     let width = shape.width();
-    //     let height = shape.height();
-    //
-    //
-    //     // Bitmap to write data to
-    //     let mut temp = Bitmap::new((width / self.precision) as i32, (height / self.precision) as i32);;
-    //
-    //     self.width = width;
-    //     self.height = height;
-    //
-    //     temp.copy_from(&self.bitmap, 0, 0);
-    //     std::mem::swap(&mut temp, &mut self.bitmap);
-    //
-    //
-    //
-    //     self
-    // }
-
     pub(crate) fn make_from<Shape: PlateShape>(mut self, shape: &Shape, precision: f64) -> Self {
         let width = shape.width();
         let height = shape.height();
