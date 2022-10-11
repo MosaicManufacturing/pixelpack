@@ -248,7 +248,6 @@ impl Bitmap {
             let dest_slice = &mut (dest)[dest_base_i..dest_base_i + common_width];
 
             let y = off_y * self.width;
-            assert_eq!(dest_slice.len(), src_slice.len());
             for (i, (old_pixel, new_pixel)) in dest_slice.iter().zip(src_slice.iter()).enumerate() {
                 if *new_pixel == 0 {
                     continue;
@@ -257,15 +256,9 @@ impl Bitmap {
                 if *old_pixel == *new_pixel {
                     continue;
                 }
-                // *old_pixel = *new_pixel;
-                //
-                // let (dx, dy, dp) = match *new_pixel {
-                //     0 => (-(off_x + i as i32),  -y, -1),
-                //     _ => (off_x + i as i32,  y, 1)
-                // };
 
                 self.s_x += off_x as i64 + i as i64;
-                self.s_y += off_y as i64 + i as i64;
+                self.s_y += y as i64;
                 self.pixels += 1;
             }
 
@@ -275,7 +268,6 @@ impl Bitmap {
         Some(())
     }
 
-    // TODO: switch x and y cache
     pub(crate) fn overlaps(&self, other: &Bitmap, off_x: i32, off_y: i32) -> bool {
         let common_width = min(self.width, other.width - off_x) as usize;
         let common_height = min(self.height, other.height - off_y) as usize;
@@ -284,7 +276,7 @@ impl Bitmap {
         let plate_data = other.data.as_slice();
 
         for i in 0..common_height {
-            let model_base_i = (self.width as usize * i);
+            let model_base_i = self.width as usize * i;
             let model_slice = &(model_data)[model_base_i..model_base_i + common_width];
             let base_i = ((i as i32 + off_y) * other.width + off_x) as usize;
             let plate_slice = &(plate_data)[base_i..base_i + common_width];

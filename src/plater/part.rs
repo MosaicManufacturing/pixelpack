@@ -29,7 +29,7 @@ impl Part {
         plate_width: f64,
         plate_height: f64,
         locked: bool,
-    ) -> (Self, usize) {
+    ) -> Option<Self> {
         let mut num_bitmaps = f64::ceil(PI * 2.0 / delta_r) as i32;
         if locked {
             num_bitmaps = 1;
@@ -72,10 +72,11 @@ impl Part {
         }
 
         if correct > 0 {
-            p.surface /= correct as f64
+            p.surface /= correct as f64;
+            Some(p)
+        } else {
+            None
         }
-
-        (p, correct)
     }
 
     pub(crate) fn get_id(&self) -> &str {

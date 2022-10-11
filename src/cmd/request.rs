@@ -1,7 +1,6 @@
 use std::path::PathBuf;
 
 use clap::Parser;
-use rayon::prelude::{IntoParallelRefIterator, ParallelIterator};
 
 use crate::plater::placer::SortMode;
 use crate::plater::plate_shape::Shape;

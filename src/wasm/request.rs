@@ -2,8 +2,7 @@ use std::collections::HashMap;
 
 use crate::plater;
 use crate::plater::bitmap::Bitmap;
-use crate::plater::plate_shape::{PlateCircle, PlateRectangle, Shape};
-use crate::plater::rectangle::Rectangle;
+use crate::plater::plate_shape::Shape;
 use crate::plater::request::default_sort_modes;
 use crate::stl::util::deg_to_rad;
 
@@ -44,7 +43,11 @@ fn get_plate_shape(opts: &RequestOptions, resolution: f64) -> Shape {
     }
 }
 
-fn handle_request(opts: RequestOptions, models: Vec<ModelOptions>, bitmaps: Vec<Vec<u8>>) {
+fn handle_request(
+    opts: RequestOptions,
+    models: Vec<ModelOptions>,
+    bitmaps: Vec<Vec<u8>>,
+) -> Option<()> {
     // Use default
     let resolution = 1000.0;
 
@@ -85,7 +88,7 @@ fn handle_request(opts: RequestOptions, models: Vec<ModelOptions>, bitmaps: Vec<
             request.spacing
         };
 
-        let (part, loaded) = plater::part::Part::new(
+        let part = plater::part::Part::new(
             model.id.to_owned(),
             bmp,
             model.center_x,
@@ -96,16 +99,12 @@ fn handle_request(opts: RequestOptions, models: Vec<ModelOptions>, bitmaps: Vec<
             opts.width as f64,
             opts.height as f64,
             model.locked,
-        );
-
-        if loaded == 0 {
-            unreachable!()
-        }
+        )?;
 
         request.add_part(part).unwrap();
     }
 
-    let result = request.process(|sol| {
+    let _result = request.process(|sol| {
         let mut result = HashMap::new();
         for plate in sol.get_plates() {
             for placement in plate.get_placements() {
@@ -125,5 +124,5 @@ fn handle_request(opts: RequestOptions, models: Vec<ModelOptions>, bitmaps: Vec<
         result
     });
 
-    todo!()
+    Some(())
 }

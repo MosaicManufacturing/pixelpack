@@ -1,37 +1,20 @@
 extern crate core;
 
-use std::path::PathBuf;
 use std::time::Instant;
 
 use clap::Parser;
 
 use crate::stl::model::Model;
-use crate::Format::{Binary, ASCII};
 
 mod cmd;
 mod plater;
 mod stl;
 mod wasm;
 
-#[derive(Copy, Clone)]
-enum Format {
-    Binary,
-    ASCII,
-}
-
 #[derive(Parser, Debug)]
 struct Args {
     #[clap(short, long, value_parser)]
     number: usize,
-}
-
-fn parse_format(s: &str) -> Option<Format> {
-    let s = s.to_ascii_lowercase();
-    match s.as_str() {
-        "ascii" => Some(ASCII),
-        "binary" => Some(Binary),
-        _ => None,
-    }
 }
 
 fn main() {

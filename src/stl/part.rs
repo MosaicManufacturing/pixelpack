@@ -19,7 +19,7 @@ pub(crate) fn load_model(
     plate_width: f64,
     plate_height: f64,
     locked: bool,
-) -> Option<(plater::part::Part, Model, i32)> {
+) -> Option<(plater::part::Part, Model)> {
     let mut model = Model::load_stl_file_binary(filename, resolution).ok()?;
 
     let next_model = model.put_face_on_plate(orientation);
@@ -32,7 +32,7 @@ pub(crate) fn load_model(
     let center_x = (min.x + max.x) / 2.0;
     let center_y = (min.y + max.y) / 2.0;
 
-    let res = plater::part::Part::new(
+    let part = plater::part::Part::new(
         id,
         bitmap,
         center_x,
@@ -43,7 +43,7 @@ pub(crate) fn load_model(
         plate_width,
         plate_height,
         locked,
-    );
+    )?;
 
-    Some((res.0, next_model, res.1 as i32))
+    Some((part, next_model))
 }

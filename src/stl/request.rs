@@ -1,25 +1,15 @@
 use std::collections::HashMap;
 
-use rayon::prelude::ParallelIterator;
-
 use crate::plater::plate_shape::PlateShape;
 use crate::plater::solution::Solution;
 use crate::stl::orientation::Orientation;
 use crate::stl::part::load_model;
 use crate::{plater, Model};
 
-// type Request struct {
-//     Request    *plater.Request
-//     resolution float64
-//     parts      map[string]*Part
-// }
-
 pub(crate) struct Request<'a> {
     pub(crate) request: plater::request::Request<'a, plater::plate_shape::Shape>,
     resolution: f64,
     models: HashMap<String, Model>,
-    // parts: Vec<stl::part::Part>
-    // parts: HashMap<>
 }
 
 impl<'a> Request<'a> {
@@ -60,7 +50,7 @@ impl<'a> Request<'a> {
         let n = filename.to_owned();
         println!("Going to load {}", &n);
 
-        let (part, model, loaded) = load_model(
+        let (part, model) = load_model(
             filename,
             id.to_owned(),
             self.resolution,
@@ -72,14 +62,6 @@ impl<'a> Request<'a> {
             self.request.plate_shape.height(),
             locked,
         )?;
-
-        println!("Loaded null");
-
-        if loaded == 0 {
-            return None;
-        }
-
-        println!("Done loading {}", &n);
 
         self.models.insert(id.to_owned(), model);
         self.request.parts.insert(id, part);
