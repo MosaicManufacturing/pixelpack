@@ -248,8 +248,8 @@ impl<'a, Shape: PlateShape> Placer<'a, Shape> {
                 Some(part) => {
                     self.cache.clear();
                     unlocked_parts.push(part);
-                    let EXPAND_MM = 100.0;
-                    shape = shape.expand(EXPAND_MM);
+                    let expand_mm = 100.0;
+                    shape = shape.expand(expand_mm);
                     plate = plate.make_from(&shape, self.request.precision);
                 }
             }
@@ -286,8 +286,8 @@ impl<'a, Shape: PlateShape> Placer<'a, Shape> {
                         }
                     }
                     self.unlocked_parts.sort_by(|x, y| x.part.id.cmp(&y.part.id));
-                    let EXPAND_MM = 100.0;
-                    shape = shape.expand(EXPAND_MM);
+                    let expand_mm = 100.0;
+                    shape = shape.expand(expand_mm);
                     plate = Plate::make_plate_with_placed_parts(&shape, self.request.precision, &mut self.locked_parts);
                 }
             }
