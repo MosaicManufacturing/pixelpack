@@ -17,7 +17,7 @@ pub(crate) struct Model {
 impl Clone for Model {
     fn clone(&self) -> Self {
         Model {
-            volumes: self.volumes.iter().cloned().collect(),
+            volumes:  Vec::clone(&self.volumes),
             tree: None,
         }
     }
