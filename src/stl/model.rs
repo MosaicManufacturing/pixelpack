@@ -98,14 +98,14 @@ impl Model {
 
         for y in 0..height {
             for x in 0..width {
-                let X = (x + 1) as f64 * precision - dilation + min_p.x;
-                let Y = (y + 1) as f64 * precision - dilation + min_p.y;
+                let x_1 = (x + 1) as f64 * precision - dilation + min_p.x;
+                let y_1 = (y + 1) as f64 * precision - dilation + min_p.y;
 
-                let value = if min_p.x < X
-                    && X < max_p.x
-                    && min_p.y < Y
-                    && Y < max_p.y
-                    && self.contains(X, Y)
+                let value = if min_p.x < x_1
+                    && x_1 < max_p.x
+                    && min_p.y < y_1
+                    && y_1 < max_p.y
+                    && self.contains(x_1, y_1)
                 {
                     2
                 } else {
