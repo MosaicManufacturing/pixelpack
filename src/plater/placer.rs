@@ -265,77 +265,36 @@ impl<'a, Shape: PlateShape> Placer<'a, Shape> {
 
     fn place_single_plate(&mut self) -> Solution<'a> {
         let mut shape = Clone::clone(self.request.plate_shape);
-
         let mut plate = Plate::make_plate_with_placed_parts(&shape, self.request.precision, &mut self.locked_parts);
 
-        let mut all_placed_so_far = false;
-        let mut unlocked_parts = vec![];
-
-        std::mem::swap(&mut self.unlocked_parts, &mut unlocked_parts);
-        println!("Going to place single plate");
-
-
-        println!("There are {}", unlocked_parts.len());
-
-        let mut reclaimed_unlocked_parts = Vec::with_capacity(unlocked_parts.len());
-        let n = unlocked_parts.len();
-
-
-        while !all_placed_so_far {
-            println!("There are inner {} {}", unlocked_parts.len(), shape.width());
-            all_placed_so_far = true;
-            self.reset_cache();
-
-            unlocked_parts.sort_by(|x, y| x.part.id.cmp(&y.part.id));
-            for part in unlocked_parts.drain(0..n) {
-                if all_placed_so_far {
-                    match self.place_unlocked_part(&mut plate, part) {
-                        None => {} //Everything is fine}
-                        Some(part) => { // Could not place the part
-                            println!("Could not place");
-                            reclaimed_unlocked_parts.push(part);
-                            all_placed_so_far = false;
-                        },
+        let mut cur_part;
+        self.unlocked_parts.sort_by(|x, y| x.part.id.cmp(&y.part.id));
+        while !self.unlocked_parts.is_empty() {
+            cur_part = self.unlocked_parts.pop().unwrap();
+            match self.place_unlocked_part(&mut plate, cur_part) {
+                None => {},
+                Some(part) => {
+                    self.reset_cache();
+                    self.unlocked_parts.push(part);
+                    // Reclaim all parts
+                    let n = (&plate.parts).len();
+                    for part in &mut plate.parts.drain(0..n) {
+                        if !part.part.locked {
+                            self.unlocked_parts.push(part)
+                        } else {
+                            self.locked_parts.push(part);
+                        }
                     }
-                } else {
-                    reclaimed_unlocked_parts.push(part);
+                    self.unlocked_parts.sort_by(|x, y| x.part.id.cmp(&y.part.id));
+                    let EXPAND_MM = 100.0;
+                    shape = shape.expand(EXPAND_MM);
+                    plate = Plate::make_plate_with_placed_parts(&shape, self.request.precision, &mut self.locked_parts);
                 }
-            }
-
-            if !all_placed_so_far {
-                let EXPAND_MM = 100.0;
-                println!("Shape {}", shape.width());
-                shape = shape.expand(EXPAND_MM);
-                println!("Shape {}", shape.width());
-
-
-
-                // We removed all of the locked parts with std::mem::swap, so self.locked_parts is currently empty
-                let n = (&plate.parts).len();
-                for part in &mut plate.parts.drain(0..n) {
-                    // We don't bother reclaiming locked parts as they were cloned before insertion
-                    if !part.part.locked {
-                        reclaimed_unlocked_parts.push(part)
-                    }
-                    else {
-                        self.locked_parts.push(part);
-                    }
-                }
-                // If we reach here, we have drained all elements out of unlocked_parts so it is EMPTY
-
-                // reclaimed_unlocked_parts contains all parts that were returned from self.place_unlocked_part and
-                // we reclaimed all consumed parts that were in plate.parts
-
-                // So, parts_to_handle contains all Parts that were originally in self.unlocked_parts
-                std::mem::swap(&mut unlocked_parts, &mut reclaimed_unlocked_parts);
-                plate = Plate::make_plate_with_placed_parts(&shape, self.request.precision, &mut self.locked_parts);
             }
         }
 
-        self.unlocked_parts.clear();
         let mut solution = Solution::new();
         solution.add_plate(plate);
-
         solution
     }
 
@@ -387,7 +346,6 @@ impl<'a, Shape: PlateShape> Placer<'a, Shape> {
     }
 
     pub(crate) fn place(&mut self) -> Solution {
-        // println!("Calling place {}", self.request.single_plate_mode);
         if self.request.single_plate_mode {
             self.place_single_plate()
             // self.place_once()
