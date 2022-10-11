@@ -1,12 +1,11 @@
 use std::path::PathBuf;
 
-use clap::{Parser};
+use clap::Parser;
 use rayon::prelude::{IntoParallelRefIterator, ParallelIterator};
 
 use crate::{plater, stl};
 use crate::plater::placer::SortMode;
-
-use crate::plater::plate_shape::{Shape};
+use crate::plater::plate_shape::Shape;
 use crate::plater::solution::Solution;
 
 #[derive(Parser, Debug)]

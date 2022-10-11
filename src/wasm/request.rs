@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+
 use crate::plater;
 use crate::plater::bitmap::Bitmap;
 use crate::plater::plate_shape::{PlateCircle, PlateRectangle, Shape};

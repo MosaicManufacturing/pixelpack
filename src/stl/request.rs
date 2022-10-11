@@ -1,9 +1,8 @@
 use std::collections::HashMap;
 
-use rayon::prelude::{ParallelIterator};
+use rayon::prelude::ParallelIterator;
 
 use crate::{Model, plater};
-
 use crate::plater::plate_shape::PlateShape;
 use crate::plater::solution::Solution;
 use crate::stl::orientation::Orientation;

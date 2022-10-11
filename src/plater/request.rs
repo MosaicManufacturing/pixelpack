@@ -1,4 +1,4 @@
-use std::collections::{HashMap};
+use std::collections::HashMap;
 use std::f64::consts::PI;
 use std::sync::atomic::AtomicBool;
 use std::sync::atomic::Ordering::SeqCst;

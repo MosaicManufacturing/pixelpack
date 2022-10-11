@@ -3,7 +3,7 @@ extern crate core;
 use std::path::PathBuf;
 use std::time::Instant;
 
-use clap::{Parser};
+use clap::Parser;
 
 use crate::Format::{ASCII, Binary};
 use crate::stl::model::Model;

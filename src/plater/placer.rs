@@ -8,7 +8,7 @@ use crate::plater::placed_part::PlacedPart;
 use crate::plater::placer::GravityMode::{GravityEQ, GravityXY, GravityYX};
 use crate::plater::plate::Plate;
 use crate::plater::plate_shape::PlateShape;
-use crate::plater::request::{Request};
+use crate::plater::request::Request;
 use crate::plater::solution::Solution;
 
 #[derive(Clone, Copy)]

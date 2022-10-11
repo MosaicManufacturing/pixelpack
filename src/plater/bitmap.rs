@@ -1,4 +1,5 @@
 use std::cmp::{max, min};
+
 use crate::plater::util;
 
 pub(crate) struct Bitmap {
