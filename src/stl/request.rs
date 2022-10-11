@@ -30,8 +30,8 @@ impl<'a> Request<'a>  {
         self.request.process(f)
     }
 
-    pub fn new(plateShape: &'a plater::plate_shape::Shape, resolution: f64) -> Self {
-        let request = plater::request::Request::new(plateShape, resolution);
+    pub fn new(plate_shape: &'a plater::plate_shape::Shape, resolution: f64) -> Self {
+        let request = plater::request::Request::new(plate_shape, resolution);
         Request { request , resolution, models: Default::default() }
     }
 

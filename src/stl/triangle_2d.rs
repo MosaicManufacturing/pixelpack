@@ -12,9 +12,9 @@ pub(crate) struct Triangle2D {
     ab: Point,
     bc: Point,
     ca: Point,
-    nAB: Point,
-    nBC: Point,
-    nCA: Point,
+    n_ab: Point,
+    n_bc: Point,
+    n_ca: Point,
 }
 
 impl Triangle2D {
@@ -23,9 +23,9 @@ impl Triangle2D {
         let bc = Point::sub(&c, &b);
         let ca = Point::sub(&a, &c);
 
-        let nAB = ab.segment_normal();
-        let nBC = bc.segment_normal();
-        let nCA = ca.segment_normal();
+        let n_ab = ab.segment_normal();
+        let n_bc = bc.segment_normal();
+        let n_ca = ca.segment_normal();
 
         let t_box = Rectangle::new(
             f64::max(a.x, f64::max(b.x, c.x)),
@@ -41,9 +41,9 @@ impl Triangle2D {
             ab,
             bc,
             ca,
-            nAB,
-            nBC,
-            nCA,
+            n_ab,
+            n_bc,
+            n_ca,
             t_box,
         }
     }
@@ -53,9 +53,9 @@ impl Triangle2D {
         let b = plater::point::Point::new(x - self.b.x, y - self.b.y);
         let c = plater::point::Point::new(x - self.c.x, y - self.c.y);
 
-        let side_a = get_side(&a, &self.nAB, &self.ab);
-        let side_b = get_side(&b, &self.nBC, &self.bc);
-        let side_c = get_side(&c, &self.nCA, &self.ca);
+        let side_a = get_side(&a, &self.n_ab, &self.ab);
+        let side_b = get_side(&b, &self.n_bc, &self.bc);
+        let side_c = get_side(&c, &self.n_ca, &self.ca);
 
         side_a && side_b && side_c
     }
