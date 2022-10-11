@@ -222,7 +222,7 @@ impl Bitmap {
 
         for i in 0..(other.height as usize) {
             let src_base_i = (other.width * i as i32) as usize;
-            let src_slice = &(&src)[src_base_i..src_base_i + other.width as usize];
+            let src_slice = &(src)[src_base_i..src_base_i + other.width as usize];
 
             let dest_base_i = (off_x + (self.width * (i as i32 + off_y))) as usize;
             let dest_slice = &mut(dest)[dest_base_i..dest_base_i + other.width as usize];
@@ -297,9 +297,9 @@ impl Bitmap {
 
         for i in 0..common_height {
             let model_base_i = (self.width as usize * i);
-            let model_slice = &(&model_data)[model_base_i..model_base_i + common_width];
+            let model_slice = &(model_data)[model_base_i..model_base_i + common_width];
             let base_i = ((i as i32 + off_y) * other.width + off_x) as usize;
-            let plate_slice = &(&plate_data)[base_i..base_i + common_width];
+            let plate_slice = &(plate_data)[base_i..base_i + common_width];
 
 
             for (q, w) in model_slice.iter().zip(plate_slice.iter()) {
