@@ -4,8 +4,8 @@ use std::f64::consts::PI;
 use rayon::prelude::{IntoParallelIterator, ParallelIterator};
 
 use crate::plater::part::Part;
+use crate::plater::placer::{GRAVITY_MODE_LIST, Placer, SortMode};
 use crate::plater::placer::SortMode::{Shuffle, SurfaceDec, SurfaceInc};
-use crate::plater::placer::{Placer, SortMode, GRAVITY_MODE_LIST};
 use crate::plater::plate_shape::PlateShape;
 use crate::plater::solution::Solution;
 

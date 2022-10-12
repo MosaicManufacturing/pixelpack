@@ -1,10 +1,10 @@
 use std::collections::HashMap;
 
+use crate::{Model, plater};
 use crate::plater::plate_shape::PlateShape;
 use crate::plater::solution::Solution;
 use crate::stl::orientation::Orientation;
 use crate::stl::part::load_model;
-use crate::{plater, Model};
 
 pub(crate) struct Request<'a> {
     pub(crate) request: plater::request::Request<'a, plater::plate_shape::Shape>,
