@@ -28,8 +28,8 @@ impl Triangle2D {
         let n_ca = ca.segment_normal();
 
         let t_box = Rectangle::new(
-            f64::max(a.x, f64::max(b.x, c.x)),
-            f64::max(a.y, f64::max(b.y, c.y)),
+            f64::min(a.x, f64::min(b.x, c.x)),
+            f64::min(a.y, f64::min(b.y, c.y)),
             f64::max(a.x, f64::max(b.x, c.x)),
             f64::max(a.y, f64::max(b.y, c.y)),
         );
