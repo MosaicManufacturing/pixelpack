@@ -2,10 +2,10 @@ use std::path::PathBuf;
 
 use clap::Parser;
 
-use crate::{plater, stl};
 use crate::plater::placer::SortMode;
 use crate::plater::plate_shape::Shape;
 use crate::plater::solution::Solution;
+use crate::{plater, stl};
 
 #[derive(Parser, Debug)]
 pub struct CliOpts {

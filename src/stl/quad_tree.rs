@@ -59,10 +59,15 @@ impl QuadTree {
 
         // Maybe don't clone and use Rc instead
         if triangle.t_box.overlaps(&self.r) {
-            [&mut self.quad1, &mut self.quad2, &mut self.quad3, &mut self.quad4]
-                .iter_mut()
-                .map(|x|  (*x).as_deref_mut().unwrap())
-                .for_each(|x| x.add(Clone::clone(&triangle)));
+            [
+                &mut self.quad1,
+                &mut self.quad2,
+                &mut self.quad3,
+                &mut self.quad4,
+            ]
+            .iter_mut()
+            .map(|x| (*x).as_deref_mut().unwrap())
+            .for_each(|x| x.add(Clone::clone(&triangle)));
         }
     }
 
