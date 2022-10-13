@@ -1,11 +1,13 @@
 use std::collections::HashMap;
+
 use log::info;
+use serde::{Deserialize, Serialize};
+
 use pixelpack::plater;
+use pixelpack::plater::bitmap::Bitmap;
 use pixelpack::plater::plate_shape::{PlateShape, Shape};
 use pixelpack::plater::request::default_sort_modes;
 use pixelpack::stl::util::deg_to_rad;
-use serde::{Serialize, Deserialize};
-use pixelpack::plater::bitmap::Bitmap;
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct WasmArgs {

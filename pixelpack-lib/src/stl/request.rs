@@ -1,11 +1,11 @@
 use std::collections::HashMap;
 
 use log::info;
+
 use crate::plater;
 use crate::plater::plate_shape::PlateShape;
 use crate::plater::solution::Solution;
 use crate::stl::model::Model;
-
 use crate::stl::orientation::Orientation;
 use crate::stl::part::load_model;
 

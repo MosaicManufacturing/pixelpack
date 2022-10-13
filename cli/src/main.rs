@@ -1,5 +1,3 @@
-mod request;
-
 extern crate core;
 
 use std::time::Instant;
@@ -7,9 +5,12 @@ use std::time::Instant;
 use clap::Parser;
 use log::info;
 use simple_logger::SimpleLogger;
-use crate::request::CliOpts;
 
 use pixelpack::stl::model::Model;
+
+use crate::request::CliOpts;
+
+mod request;
 
 #[derive(Parser, Debug)]
 struct Args {
