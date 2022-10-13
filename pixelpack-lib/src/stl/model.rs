@@ -10,7 +10,7 @@ use crate::stl::triangle_2d::Triangle2D;
 use crate::stl::util::deg_to_rad;
 use crate::stl::volume::Volume;
 
-pub(crate) struct Model {
+pub struct Model {
     pub(crate) volumes: Vec<Volume>,
     tree: Option<Box<QuadTree>>,
 }

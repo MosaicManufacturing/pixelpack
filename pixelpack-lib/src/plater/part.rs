@@ -2,7 +2,7 @@ use std::f64::consts::PI;
 
 use crate::plater::bitmap::Bitmap;
 
-pub(crate) struct Part {
+pub struct Part {
     pub(crate) locked: bool,
     // if true, part cannot be moved or rotated
     pub(crate) id: String,

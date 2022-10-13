@@ -1,6 +1,6 @@
 use crate::plater::bitmap::Bitmap;
 
-pub(crate) trait PlateShape: Clone + Send + Sync {
+pub trait PlateShape: Clone + Send + Sync {
     fn width(&self) -> f64;
     fn height(&self) -> f64;
     fn string(&self) -> String;

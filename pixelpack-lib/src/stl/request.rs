@@ -1,15 +1,16 @@
 use std::collections::HashMap;
 
 use log::info;
-
-use crate::{Model, plater};
+use crate::plater;
 use crate::plater::plate_shape::PlateShape;
 use crate::plater::solution::Solution;
+use crate::stl::model::Model;
+
 use crate::stl::orientation::Orientation;
 use crate::stl::part::load_model;
 
-pub(crate) struct Request<'a> {
-    pub(crate) request: plater::request::Request<'a, plater::plate_shape::Shape>,
+pub struct Request<'a> {
+    pub request: plater::request::Request<'a, plater::plate_shape::Shape>,
     resolution: f64,
     models: HashMap<String, Model>,
 }
@@ -94,7 +95,7 @@ impl<'a> Request<'a> {
         x
     }
 
-    pub(crate) fn write_stl(
+    pub fn write_stl(
         &self,
         p: &plater::plate::Plate,
         filename: String,

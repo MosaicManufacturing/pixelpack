@@ -3,10 +3,10 @@ use std::path::PathBuf;
 use clap::Parser;
 use log::info;
 
-use crate::{plater, stl};
-use crate::plater::placer::SortMode;
-use crate::plater::plate_shape::Shape;
-use crate::plater::solution::Solution;
+use pixelpack::{plater, stl};
+use pixelpack::plater::placer::SortMode;
+use pixelpack::plater::plate_shape::Shape;
+use pixelpack::plater::solution::Solution;
 
 #[derive(Parser, Debug)]
 pub struct CliOpts {
@@ -83,6 +83,7 @@ pub fn run(opts: &CliOpts, filenames: Vec<String>) -> Option<()> {
 
     let mut request = stl::request::Request::new(&plate_shape, resolution);
 
+    // TODO: none of this should be public outside of the package
     request.request.spacing = opts.spacing * resolution;
     request.request.delta = opts.delta * resolution;
     request.request.delta_r = stl::util::deg_to_rad(opts.rotation_interval as f64);

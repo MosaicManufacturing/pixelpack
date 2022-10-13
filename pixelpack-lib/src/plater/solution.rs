@@ -1,7 +1,7 @@
 use crate::plater::placed_part::PlacedPart;
 use crate::plater::plate::Plate;
 
-pub(crate) struct Solution<'a> {
+pub struct Solution<'a> {
     plates: Vec<Plate<'a>>,
 }
 
@@ -28,11 +28,11 @@ impl<'a> Solution<'a> {
             + (1.0 - 1.0 / (1 + self.get_last_plate().count_parts()) as f64);
     }
 
-    pub(crate) fn count_plates(&self) -> usize {
+    pub fn count_plates(&self) -> usize {
         self.plates.len()
     }
 
-    pub(crate) fn get_plate(&self, n: usize) -> Option<&Plate> {
+    pub fn get_plate(&self, n: usize) -> Option<&Plate> {
         self.plates.get(n)
     }
 

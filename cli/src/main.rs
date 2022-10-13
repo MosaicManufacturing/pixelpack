@@ -1,3 +1,5 @@
+mod request;
+
 extern crate core;
 
 use std::time::Instant;
@@ -5,13 +7,9 @@ use std::time::Instant;
 use clap::Parser;
 use log::info;
 use simple_logger::SimpleLogger;
+use crate::request::CliOpts;
 
-use crate::stl::model::Model;
-
-mod cmd;
-mod plater;
-mod stl;
-mod wasm;
+use pixelpack::stl::model::Model;
 
 #[derive(Parser, Debug)]
 struct Args {
@@ -26,7 +24,7 @@ fn main() {
     //
 
     //  "cube.stl".into()
-    let args = cmd::request::CliOpts::parse();
+    let args = request::CliOpts::parse();
     let xs = (0..args.threads)
         .into_iter()
         .flat_map(|_| ["Gimbal_snowflake_small_and_flat.STL".into()])
@@ -34,7 +32,7 @@ fn main() {
     info!("Going to start run");
 
     let t1 = Instant::now();
-    cmd::request::run(&args, xs).unwrap();
+    request::run(&args, xs).unwrap();
 
     info!("{} ms", t1.elapsed().as_millis());
 }

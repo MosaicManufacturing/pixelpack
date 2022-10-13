@@ -1,4 +1,5 @@
-use crate::{Model, plater};
+use crate::plater;
+use crate::stl::model::Model;
 use crate::stl::orientation::Orientation;
 
 pub(crate) struct Part {

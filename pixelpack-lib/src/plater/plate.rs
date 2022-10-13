@@ -13,7 +13,7 @@ fn generate_unique_plate_id() -> usize {
     COUNTER.fetch_add(1, Ordering::Relaxed)
 }
 
-pub(crate) struct Plate<'a> {
+pub struct Plate<'a> {
     pub(crate) plate_id: usize,
     pub(crate) width: f64,
     pub(crate) height: f64,

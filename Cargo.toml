@@ -1,19 +1,8 @@
-[package]
-name = "pixelpack"
-version = "0.1.0"
-edition = "2021"
+[workspace]
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
-[dependencies]
-clap = { version = "3.2.16", features = ["derive"] }
-rand = "0.8.5"
-itertools = "0.10.3"
-rayon = "1.5.3"
-byteorder = "1"
-
-log = "0.4.17"
-simple_logger = "2.3.0"
+members = [
+    "pixelpack-lib", "cli"
+]
 
 [profile.release]
 lto = true

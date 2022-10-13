@@ -13,23 +13,23 @@ use crate::plater::solution::Solution;
 // DEFAULT_RESOLUTION is the default bitmap resolution, in pixels per mm.
 pub const DEFAULT_RESOLUTION: f64 = 1000.0;
 
-pub(crate) struct Request<'a, Shape: PlateShape> {
+pub struct Request<'a, Shape: PlateShape> {
     // plate_shape represents the size and shape of the build plate.
     pub(crate) plate_shape: &'a Shape,
     // single_plate_mode uses a single, expandable plate
     pub(crate) single_plate_mode: bool,
     // sort_modes is a list of sort modes to attempt when placing.
-    pub(crate) sort_modes: Vec<SortMode>,
+    pub sort_modes: Vec<SortMode>,
     // max_threads is the maximum number of goroutines to use when placing.
     // Set this to 0 or a negative value for no limit.
-    pub(crate) max_threads: usize,
-    pub(crate) precision: f64,
+    pub max_threads: usize,
+    pub precision: f64,
     // precision
-    pub(crate) spacing: f64, // part spacing
+    pub spacing: f64, // part spacing
 
     // brute-force deltas
-    pub(crate) delta: f64,
-    pub(crate) delta_r: f64,
+    pub delta: f64,
+    pub delta_r: f64,
 
     // Parts to place (TODO: revice, can this become vec)
     pub(crate) parts: HashMap<String, Part>,
