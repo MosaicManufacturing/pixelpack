@@ -37,8 +37,8 @@ impl Model {
             .iter()
             .map(Volume::min)
             .reduce(|x, y| Point3D::min(&x, &y))
-            .or_else(|| Some(Point3D::new(0.0, 0.0, 0.0)))
-            .unwrap()
+            .unwrap_or_else(|| Point3D::new(0.0, 0.0, 0.0))
+
     }
 
     pub(crate) fn max(&self) -> Point3D {
@@ -46,8 +46,7 @@ impl Model {
             .iter()
             .map(Volume::max)
             .reduce(|x, y| Point3D::max(&x, &y))
-            .or_else(|| Some(Point3D::new(0.0, 0.0, 0.0)))
-            .unwrap()
+            .unwrap_or_else(|| Point3D::new(0.0, 0.0, 0.0))
     }
 
     fn initialize_quad_tree(&mut self) {

@@ -28,8 +28,8 @@ impl Volume {
             .flat_map(|face| &face.v)
             .map(Clone::clone)
             .reduce(f)
-            .or_else(|| Some(Point3D::new(0.0, 0.0, 0.0)))
-            .unwrap()
+            .unwrap_or_else(|| Point3D::new(0.0, 0.0, 0.0))
+
     }
 
     pub(crate) fn min(&self) -> Point3D {
