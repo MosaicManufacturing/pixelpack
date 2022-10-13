@@ -1,3 +1,5 @@
+use log::info;
+
 use crate::plater;
 use crate::plater::bitmap::Bitmap;
 use crate::plater::point::Point;
@@ -91,7 +93,7 @@ impl Model {
         let width = ((x_max - x_min) / precision) as i32;
         let height = ((y_max - y_min) / precision) as i32;
 
-        println!("Width {} Height {}", width, height);
+        info!("Width {} Height {}", width, height);
         let mut bitmap = Bitmap::new(width, height);
 
         for y in 0..height {

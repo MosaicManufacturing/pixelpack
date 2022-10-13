@@ -1,10 +1,12 @@
 use std::collections::HashMap;
 
+use log::info;
+
+use crate::{Model, plater};
 use crate::plater::plate_shape::PlateShape;
 use crate::plater::solution::Solution;
 use crate::stl::orientation::Orientation;
 use crate::stl::part::load_model;
-use crate::{plater, Model};
 
 pub(crate) struct Request<'a> {
     pub(crate) request: plater::request::Request<'a, plater::plate_shape::Shape>,
@@ -48,7 +50,7 @@ impl<'a> Request<'a> {
         }
 
         let n = filename.to_owned();
-        println!("Going to load {}", &n);
+        info!("Going to load {}", &n);
 
         let (part, model) = load_model(
             filename,
@@ -97,9 +99,9 @@ impl<'a> Request<'a> {
         p: &plater::plate::Plate,
         filename: String,
     ) -> Option<std::io::Result<()>> {
-        println!("Going to make model");
+        info!("Going to make model");
         let model = self.create_model(p)?;
-        println!("Created model");
+        info!("Created model");
         Some(model.save_to_file_binary(filename, self.resolution))
     }
 }

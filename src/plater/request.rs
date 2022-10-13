@@ -1,11 +1,12 @@
 use std::collections::HashMap;
 use std::f64::consts::PI;
 
+use log::info;
 use rayon::prelude::{IntoParallelIterator, ParallelIterator};
 
 use crate::plater::part::Part;
+use crate::plater::placer::{GRAVITY_MODE_LIST, Placer, SortMode};
 use crate::plater::placer::SortMode::{Shuffle, SurfaceDec, SurfaceInc};
-use crate::plater::placer::{Placer, SortMode, GRAVITY_MODE_LIST};
 use crate::plater::plate_shape::PlateShape;
 use crate::plater::solution::Solution;
 
@@ -94,7 +95,7 @@ impl<'a, Shape: PlateShape> Request<'a, Shape> {
         let mut solutions = (&mut placers)
             .into_par_iter()
             .map(|placer| {
-                println!("Starting");
+                info!("Starting");
                 placer.place()
             })
             .collect::<Vec<_>>();

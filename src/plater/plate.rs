@@ -1,5 +1,7 @@
 use std::sync::atomic::{AtomicUsize, Ordering};
 
+use log::info;
+
 use crate::plater::bitmap::Bitmap;
 use crate::plater::placed_part::PlacedPart;
 use crate::plater::placement::Placement;
@@ -108,7 +110,7 @@ impl<'a> Plate<'a> {
 
     pub(crate) fn get_placements(&self) -> Vec<Placement> {
         let mut result = vec![];
-        println!("Parts len {}", self.parts.len());
+        info!("Parts len {}", self.parts.len());
         for part in &self.parts {
             result.push(part.get_placement());
         }

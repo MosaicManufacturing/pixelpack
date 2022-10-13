@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 use std::f64::consts::PI;
 
+use log::info;
 use rand::seq::SliceRandom;
 use rand::thread_rng;
 
@@ -316,9 +317,9 @@ impl<'a, Shape: PlateShape> Placer<'a, Shape> {
         let mut unlocked_parts = vec![];
         std::mem::swap(&mut unlocked_parts, &mut self.unlocked_parts);
 
-        println!("Unlocked parts len {}", unlocked_parts.len());
+        info!("Unlocked parts len {}", unlocked_parts.len());
 
-        println!("Multi part");
+        info!("Multi part");
 
         for part in unlocked_parts {
             let mut i = 0;

@@ -3,6 +3,8 @@ extern crate core;
 use std::time::Instant;
 
 use clap::Parser;
+use log::info;
+use simple_logger::SimpleLogger;
 
 use crate::stl::model::Model;
 
@@ -18,6 +20,7 @@ struct Args {
 }
 
 fn main() {
+    SimpleLogger::new().init().unwrap();
     //
     // rayon::ThreadPoolBuilder::new().num_threads(1).build_global().unwrap();
     //
@@ -28,12 +31,12 @@ fn main() {
         .into_iter()
         .flat_map(|_| ["Gimbal_snowflake_small_and_flat.STL".into()])
         .collect();
-    println!("Going to start run");
+    info!("Going to start run");
 
     let t1 = Instant::now();
     cmd::request::run(&args, xs).unwrap();
 
-    println!("{} ms", t1.elapsed().as_millis());
+    info!("{} ms", t1.elapsed().as_millis());
 }
 
 // fn main() -> std::io::Result<()> {

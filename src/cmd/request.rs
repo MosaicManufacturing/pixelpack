@@ -1,11 +1,12 @@
 use std::path::PathBuf;
 
 use clap::Parser;
+use log::info;
 
+use crate::{plater, stl};
 use crate::plater::placer::SortMode;
 use crate::plater::plate_shape::Shape;
 use crate::plater::solution::Solution;
-use crate::{plater, stl};
 
 #[derive(Parser, Debug)]
 pub struct CliOpts {
@@ -76,7 +77,7 @@ fn get_sort_modes(multiple_sort: bool, random_iterations: i32) -> Vec<SortMode> 
 }
 
 pub fn run(opts: &CliOpts, filenames: Vec<String>) -> Option<()> {
-    println!("{:#?}", opts);
+    info!("{:#?}", opts);
     let resolution = plater::request::DEFAULT_RESOLUTION;
     let plate_shape = get_plate_shape(opts, resolution);
 
@@ -93,7 +94,7 @@ pub fn run(opts: &CliOpts, filenames: Vec<String>) -> Option<()> {
     }
 
     filenames.iter().for_each(|filename| {
-        println!("Adding file {}", filename);
+        info!("Adding file {}", filename);
         request
             .add_model(
                 filename.to_owned(),
@@ -106,11 +107,11 @@ pub fn run(opts: &CliOpts, filenames: Vec<String>) -> Option<()> {
     let write_solution = |sol: &Solution| -> Option<()> {
         let count = sol.count_plates();
 
-        println!("solution {}", count);
+        info!("solution {}", count);
 
         for i in 0..count {
             let plate = sol.get_plate(i).unwrap();
-            println!("Got plate");
+            info!("Got plate");
             let out_file = format!("{}_{}.stl", opts.output_pattern, i);
             request.write_stl(plate, out_file)?.ok()?;
         }

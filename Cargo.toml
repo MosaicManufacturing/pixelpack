@@ -12,6 +12,9 @@ itertools = "0.10.3"
 rayon = "1.5.3"
 byteorder = "1"
 
+log = "0.4.17"
+simple_logger = "2.3.0"
+
 [profile.release]
 lto = true
 codegen-units = 1
