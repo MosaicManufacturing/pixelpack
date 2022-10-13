@@ -108,7 +108,7 @@ impl<'a> Plate<'a> {
         (&self.parts).len()
     }
 
-    pub(crate) fn get_placements(&self) -> Vec<Placement> {
+    pub fn get_placements(&self) -> Vec<Placement> {
         let mut result = vec![];
         info!("Parts len {}", self.parts.len());
         for part in &self.parts {

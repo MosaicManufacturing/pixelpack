@@ -36,7 +36,7 @@ impl<'a> Solution<'a> {
         self.plates.get(n)
     }
 
-    pub(crate) fn get_plates(&self) -> &[Plate] {
+    pub fn get_plates(&self) -> &[Plate] {
         self.plates.as_slice()
     }
 

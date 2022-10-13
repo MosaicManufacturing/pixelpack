@@ -1,7 +1,7 @@
-#[derive(Clone)]
-pub(crate) struct Point {
-    pub(crate) x: f64,
-    pub(crate) y: f64,
+#[derive(Clone, Debug)]
+pub struct Point {
+    pub x: f64,
+    pub y: f64,
 }
 
 impl Point {

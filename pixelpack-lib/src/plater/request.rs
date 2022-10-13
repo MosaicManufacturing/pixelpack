@@ -45,7 +45,7 @@ pub fn default_sort_modes() -> Vec<SortMode> {
 }
 
 impl<'a, Shape: PlateShape> Request<'a, Shape> {
-    pub(crate) fn new(plate_shape: &'a Shape, resolution: f64) -> Self {
+    pub fn new(plate_shape: &'a Shape, resolution: f64) -> Self {
         Request {
             plate_shape,
             single_plate_mode: true,
@@ -73,7 +73,7 @@ impl<'a, Shape: PlateShape> Request<'a, Shape> {
     }
 
     // Replace with explicit error handling
-    pub(crate) fn process<T>(&'a self, on_solution_found: impl Fn(&Solution) -> T) -> T {
+    pub fn process<T>(&'a self, on_solution_found: impl Fn(&Solution) -> T) -> T {
         let mut placers = vec![];
         let sort_modes = Vec::clone(&self.sort_modes);
 

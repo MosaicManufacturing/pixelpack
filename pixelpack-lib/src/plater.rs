@@ -1,5 +1,5 @@
-pub(crate) mod bitmap;
-pub(crate) mod part;
+pub mod bitmap;
+pub mod part;
 mod placed_part;
 mod placement;
 pub mod placer;

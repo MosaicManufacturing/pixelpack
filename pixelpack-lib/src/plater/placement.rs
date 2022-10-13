@@ -1,9 +1,10 @@
 use crate::plater::point::Point;
 
-pub(crate) struct Placement {
-    pub(crate) id: String,
-    pub(crate) center: Point,
-    pub(crate) rotation: f64,
+#[derive(Debug)]
+pub struct Placement {
+    pub id: String,
+    pub center: Point,
+    pub rotation: f64,
 }
 
 impl Clone for Placement {
