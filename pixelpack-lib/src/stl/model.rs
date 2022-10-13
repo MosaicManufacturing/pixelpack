@@ -38,7 +38,6 @@ impl Model {
             .map(Volume::min)
             .reduce(|x, y| Point3D::min(&x, &y))
             .unwrap_or_else(|| Point3D::new(0.0, 0.0, 0.0))
-
     }
 
     pub(crate) fn max(&self) -> Point3D {

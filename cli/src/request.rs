@@ -3,10 +3,10 @@ use std::path::PathBuf;
 use clap::Parser;
 use log::info;
 
-use pixelpack::{plater, stl};
 use pixelpack::plater::placer::SortMode;
 use pixelpack::plater::plate_shape::Shape;
 use pixelpack::plater::solution::Solution;
+use pixelpack::{plater, stl};
 
 #[derive(Parser, Debug)]
 pub struct CliOpts {

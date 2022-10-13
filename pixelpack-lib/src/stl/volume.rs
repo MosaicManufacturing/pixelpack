@@ -29,7 +29,6 @@ impl Volume {
             .map(Clone::clone)
             .reduce(f)
             .unwrap_or_else(|| Point3D::new(0.0, 0.0, 0.0))
-
     }
 
     pub(crate) fn min(&self) -> Point3D {
