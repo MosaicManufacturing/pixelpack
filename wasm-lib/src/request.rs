@@ -6,7 +6,7 @@ use serde::{Deserialize, Serialize};
 use pixelpack::plater;
 use pixelpack::plater::bitmap::Bitmap;
 use pixelpack::plater::plate_shape::{PlateShape, Shape};
-use pixelpack::plater::request::default_sort_modes;
+use pixelpack::plater::request::{default_sort_modes, ThreadingMode};
 use pixelpack::stl::util::deg_to_rad;
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -72,7 +72,12 @@ pub fn handle_request(
     let mut model_opts_map = HashMap::new();
 
     let plate_shape = get_plate_shape(&opts, resolution);
-    let mut request = plater::request::Request::new(&plate_shape, resolution);
+    let plate_width = plate_shape.width();
+    let plate_height = plate_shape.height();
+
+    info!("DIMS {} {}", plate_width, plate_height);
+
+    let mut request = plater::request::Request::new(plate_shape, resolution);
 
     if opts.precision > 0.0 {
         request.precision = opts.precision * resolution;
@@ -88,8 +93,6 @@ pub fn handle_request(
 
     request.delta_r = deg_to_rad(opts.rotation_interval);
     request.sort_modes = default_sort_modes();
-
-    info!("DIMS {} {}", plate_shape.width(), plate_shape.height());
 
     for (i, model) in models.iter().enumerate() {
         info!("Adding model {} {}", model.id, bitmaps[i].as_slice().len());
@@ -119,8 +122,8 @@ pub fn handle_request(
             request.precision,
             delta_r,
             spacing,
-            plate_shape.width(),
-            plate_shape.height(),
+            plate_width,
+            plate_height,
             model.locked,
         )?;
 
@@ -131,7 +134,7 @@ pub fn handle_request(
 
     info!("Loaded all parts");
 
-    let result = request.process(|sol| {
+    let result = request.process(ThreadingMode::SingleThreaded, |sol| {
         let mut result = HashMap::new();
 
         for plate in sol.get_plates() {

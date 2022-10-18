@@ -5,6 +5,7 @@ use log::info;
 
 use pixelpack::plater::placer::SortMode;
 use pixelpack::plater::plate_shape::Shape;
+use pixelpack::plater::request::ThreadingMode::MultiThreaded;
 use pixelpack::plater::solution::Solution;
 use pixelpack::{plater, stl};
 
@@ -120,5 +121,5 @@ pub fn run(opts: &CliOpts, filenames: Vec<String>) -> Option<()> {
         Some(())
     };
 
-    request.process(write_solution)
+    request.process(MultiThreaded, write_solution)
 }

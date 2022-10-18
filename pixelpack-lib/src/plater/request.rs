@@ -36,6 +36,11 @@ pub struct Request<Shape: PlateShape> {
     resolution: f64, // internal resolution (pixels per mm)
 }
 
+pub enum ThreadingMode {
+    SingleThreaded,
+    MultiThreaded,
+}
+
 // TODO: Don't understand the original version
 pub fn default_sort_modes() -> Vec<SortMode> {
     // let random_shuffles: usize = 3;
@@ -73,7 +78,7 @@ impl<Shape: PlateShape> Request<Shape> {
     }
 
     // Replace with explicit error handling
-    pub fn process<T>(&self, on_solution_found: impl Fn(&Solution) -> T) -> T {
+    pub fn process<T>(&self, mode: ThreadingMode, on_solution_found: impl Fn(&Solution) -> T) -> T {
         let mut placers = vec![];
         let sort_modes = Vec::clone(&self.sort_modes);
 
@@ -92,16 +97,36 @@ impl<Shape: PlateShape> Request<Shape> {
             }
         }
 
-        let mut solutions = (&mut placers)
+        let place_all_placers = match mode {
+            ThreadingMode::SingleThreaded => Request::place_all_single_threaded,
+            ThreadingMode::MultiThreaded => Request::place_all_multi_threaded,
+        };
+
+        let mut solutions = place_all_placers(&mut placers);
+
+        solutions.sort_by(|x, y| f64::partial_cmp(&x.score(), &y.score()).unwrap());
+        on_solution_found(&solutions[0])
+    }
+
+    fn place_all_single_threaded<'a>(placers: &'a mut [Placer<'a, Shape>]) -> Vec<Solution<'a>> {
+        info!("Starting single threaded place");
+        placers
             .into_iter()
             .map(|placer| {
                 info!("Starting");
                 placer.place()
             })
-            .collect::<Vec<_>>();
+            .collect::<Vec<_>>()
+    }
 
-        solutions.sort_by(|x, y| f64::partial_cmp(&x.score(), &y.score()).unwrap());
-
-        on_solution_found(&solutions[0])
+    fn place_all_multi_threaded<'a>(placers: &'a mut [Placer<'a, Shape>]) -> Vec<Solution<'a>> {
+        info!("Starting multi threaded place");
+        placers
+            .into_par_iter()
+            .map(|placer| {
+                info!("Starting");
+                placer.place()
+            })
+            .collect::<Vec<_>>()
     }
 }
