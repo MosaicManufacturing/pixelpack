@@ -81,7 +81,7 @@ pub fn run(opts: &CliOpts, filenames: Vec<String>) -> Option<()> {
     let resolution = plater::request::DEFAULT_RESOLUTION;
     let plate_shape = get_plate_shape(opts, resolution);
 
-    let mut request = stl::request::Request::new(&plate_shape, resolution);
+    let mut request = stl::request::Request::new(plate_shape, resolution);
 
     // TODO: none of this should be public outside of the package
     request.request.spacing = opts.spacing * resolution;

@@ -9,18 +9,18 @@ use crate::stl::model::Model;
 use crate::stl::orientation::Orientation;
 use crate::stl::part::load_model;
 
-pub struct Request<'a> {
-    pub request: plater::request::Request<'a, plater::plate_shape::Shape>,
+pub struct Request {
+    pub request: plater::request::Request<plater::plate_shape::Shape>,
     resolution: f64,
     models: HashMap<String, Model>,
 }
 
-impl<'a> Request<'a> {
+impl Request {
     pub fn process<T>(&self, f: impl Fn(&Solution) -> T) -> T {
         self.request.process(f)
     }
 
-    pub fn new(plate_shape: &'a plater::plate_shape::Shape, resolution: f64) -> Self {
+    pub fn new(plate_shape: plater::plate_shape::Shape, resolution: f64) -> Self {
         let request = plater::request::Request::new(plate_shape, resolution);
         Request {
             request,

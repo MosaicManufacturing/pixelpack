@@ -13,9 +13,9 @@ use crate::plater::solution::Solution;
 // DEFAULT_RESOLUTION is the default bitmap resolution, in pixels per mm.
 pub const DEFAULT_RESOLUTION: f64 = 1000.0;
 
-pub struct Request<'a, Shape: PlateShape> {
+pub struct Request<Shape: PlateShape> {
     // plate_shape represents the size and shape of the build plate.
-    pub(crate) plate_shape: &'a Shape,
+    pub(crate) plate_shape: Shape,
     // single_plate_mode uses a single, expandable plate
     pub(crate) single_plate_mode: bool,
     // sort_modes is a list of sort modes to attempt when placing.
@@ -44,8 +44,8 @@ pub fn default_sort_modes() -> Vec<SortMode> {
     vec![SurfaceDec, SurfaceInc, Shuffle]
 }
 
-impl<'a, Shape: PlateShape> Request<'a, Shape> {
-    pub fn new(plate_shape: &'a Shape, resolution: f64) -> Self {
+impl<Shape: PlateShape> Request<Shape> {
+    pub fn new(plate_shape: Shape, resolution: f64) -> Self {
         Request {
             plate_shape,
             single_plate_mode: true,
@@ -73,7 +73,7 @@ impl<'a, Shape: PlateShape> Request<'a, Shape> {
     }
 
     // Replace with explicit error handling
-    pub fn process<T>(&'a self, on_solution_found: impl Fn(&Solution) -> T) -> T {
+    pub fn process<T>(&self, on_solution_found: impl Fn(&Solution) -> T) -> T {
         let mut placers = vec![];
         let sort_modes = Vec::clone(&self.sort_modes);
 

@@ -67,11 +67,11 @@ pub(crate) struct Placer<'a, Shape: PlateShape> {
     // input data
     locked_parts: Vec<PlacedPart<'a>>,
     unlocked_parts: Vec<PlacedPart<'a>>,
-    request: &'a Request<'a, Shape>,
+    request: &'a Request<Shape>,
 }
 
 impl<'a, Shape: PlateShape> Placer<'a, Shape> {
-    pub(crate) fn new(request: &'a Request<'a, Shape>) -> Self {
+    pub(crate) fn new(request: &'a Request<Shape>) -> Self {
         let mut p = Placer {
             rotate_offset: 0,
             rotate_direction: 0,
@@ -227,7 +227,7 @@ impl<'a, Shape: PlateShape> Placer<'a, Shape> {
     }
 
     fn place_once(&mut self) -> Solution<'a> {
-        let mut shape = Clone::clone(self.request.plate_shape);
+        let mut shape = Clone::clone(&self.request.plate_shape);
         let mut plate = Plate::make_plate_with_placed_parts(
             &shape,
             self.request.precision,
@@ -259,7 +259,7 @@ impl<'a, Shape: PlateShape> Placer<'a, Shape> {
     }
 
     fn place_single_plate(&mut self) -> Solution<'a> {
-        let mut shape = Clone::clone(self.request.plate_shape);
+        let mut shape = Clone::clone(&self.request.plate_shape);
         let mut plate = Plate::make_plate_with_placed_parts(
             &shape,
             self.request.precision,
@@ -306,7 +306,7 @@ impl<'a, Shape: PlateShape> Placer<'a, Shape> {
     fn place_multi_plate(&mut self) -> Solution {
         let mut solution = Solution::new();
 
-        let plate_shape = Clone::clone(self.request.plate_shape);
+        let plate_shape = Clone::clone(&self.request.plate_shape);
         let plate = Plate::make_plate_with_placed_parts(
             &plate_shape,
             self.request.precision,
@@ -333,7 +333,7 @@ impl<'a, Shape: PlateShape> Placer<'a, Shape> {
                     }
                     Some(part) => {
                         if i + 1 == solution.count_plates() {
-                            let shape = Clone::clone(self.request.plate_shape);
+                            let shape = Clone::clone(&self.request.plate_shape);
 
                             // Multi plates and ownership of locked parts
                             let next_plate = Plate::make_plate_with_placed_parts(
