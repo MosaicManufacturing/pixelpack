@@ -93,7 +93,7 @@ impl<'a, Shape: PlateShape> Request<'a, Shape> {
         }
 
         let mut solutions = (&mut placers)
-            .into_par_iter()
+            .into_iter()
             .map(|placer| {
                 info!("Starting");
                 placer.place()

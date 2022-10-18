@@ -124,19 +124,12 @@ pub fn handle_request(
             model.locked,
         )?;
 
-        // if loaded == 0 {
-        //     let message = format!("Could not load model {} Model ({}, {}) Plate ({}, {})",
-        //                           model.id, model.width,
-        //                           model.height, plate_shape.width(), plate_shape.height());
-        //
-        //     my_log(&message);
-        //     panic!(message);
-        // }
-
         info!("Part loaded");
 
         request.add_part(part).unwrap();
     }
+
+    info!("Loaded all parts");
 
     let result = request.process(|sol| {
         let mut result = HashMap::new();
