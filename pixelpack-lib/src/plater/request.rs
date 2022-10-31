@@ -13,9 +13,9 @@ use crate::plater::solution::Solution;
 // DEFAULT_RESOLUTION is the default bitmap resolution, in pixels per mm.
 pub const DEFAULT_RESOLUTION: f64 = 1000.0;
 
-pub struct Request<Shape: PlateShape> {
+pub struct Request<S: PlateShape> {
     // plate_shape represents the size and shape of the build plate.
-    pub(crate) plate_shape: Shape,
+    pub(crate) plate_shape: S,
     // single_plate_mode uses a single, expandable plate
     pub(crate) single_plate_mode: bool,
     // sort_modes is a list of sort modes to attempt when placing.
@@ -49,8 +49,8 @@ pub fn default_sort_modes() -> Vec<SortMode> {
     vec![SurfaceDec, SurfaceInc, Shuffle]
 }
 
-impl<Shape: PlateShape> Request<Shape> {
-    pub fn new(plate_shape: Shape, resolution: f64) -> Self {
+impl<S: PlateShape> Request<S> {
+    pub fn new(plate_shape: S, resolution: f64) -> Self {
         Request {
             plate_shape,
             single_plate_mode: true,
@@ -108,7 +108,7 @@ impl<Shape: PlateShape> Request<Shape> {
         on_solution_found(&solutions[0])
     }
 
-    fn place_all_single_threaded<'a>(placers: &'a mut [Placer<'a, Shape>]) -> Vec<Solution<'a>> {
+    fn place_all_single_threaded<'a>(placers: &'a mut [Placer<'a, S>]) -> Vec<Solution<'a>> {
         info!("Starting single threaded place");
         placers
             .into_iter()
@@ -119,7 +119,7 @@ impl<Shape: PlateShape> Request<Shape> {
             .collect::<Vec<_>>()
     }
 
-    fn place_all_multi_threaded<'a>(placers: &'a mut [Placer<'a, Shape>]) -> Vec<Solution<'a>> {
+    fn place_all_multi_threaded<'a>(placers: &'a mut [Placer<'a, S>]) -> Vec<Solution<'a>> {
         info!("Starting multi threaded place");
         placers
             .into_par_iter()

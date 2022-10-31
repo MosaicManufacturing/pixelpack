@@ -60,7 +60,7 @@ fn get_plate_shape(opts: &RequestOptions, resolution: f64) -> Shape {
 pub fn handle_request(
     opts: RequestOptions,
     models: Vec<ModelOptions>,
-    bitmaps: Vec<Vec<u8>>,
+    bitmaps: Vec<&[u8]>,
 ) -> Option<HashMap<String, ModelResult>> {
     // Use default
     let resolution = if opts.resolution > 0.0 {
@@ -95,11 +95,11 @@ pub fn handle_request(
     request.sort_modes = default_sort_modes();
 
     for (i, model) in models.iter().enumerate() {
-        info!("Adding model {} {}", model.id, bitmaps[i].as_slice().len());
+        info!("Adding model {} {}", model.id, bitmaps[i].len());
         model_opts_map.insert(model.id.to_string(), model);
 
         let bmp =
-            Bitmap::new_bitmap_with_data(model.width, model.height, bitmaps[i].as_slice()).unwrap();
+            Bitmap::new_bitmap_with_data(model.width, model.height, bitmaps[i]).unwrap();
 
         let delta_r = if model.rotation_interval > 0 {
             deg_to_rad(model.rotation_interval as f64)

@@ -55,7 +55,7 @@ impl From<GravityMode> for usize {
 
 type PlateId = usize;
 
-pub(crate) struct Placer<'a, Shape: PlateShape> {
+pub(crate) struct Placer<'a, S: PlateShape> {
     rotate_offset: i32,
     rotate_direction: i32,
     // 0 = CCW, 1 = CW, TODO: make an enum
@@ -67,7 +67,7 @@ pub(crate) struct Placer<'a, Shape: PlateShape> {
     // input data
     locked_parts: Vec<PlacedPart<'a>>,
     unlocked_parts: Vec<PlacedPart<'a>>,
-    request: &'a Request<Shape>,
+    request: &'a Request<S>,
 }
 
 impl<'a, Shape: PlateShape> Placer<'a, Shape> {
@@ -266,9 +266,13 @@ impl<'a, Shape: PlateShape> Placer<'a, Shape> {
             &mut self.locked_parts,
         );
 
+        let mut insertion_map = HashMap::new();
+
+        for (i, part) in self.unlocked_parts.iter().enumerate() {
+            insertion_map.insert(part.part.id.as_str(), i);
+        }
+
         let mut cur_part;
-        self.unlocked_parts
-            .sort_by(|x, y| x.part.id.cmp(&y.part.id));
         while !self.unlocked_parts.is_empty() {
             cur_part = self.unlocked_parts.pop().unwrap();
             match self.place_unlocked_part(&mut plate, cur_part) {
@@ -286,7 +290,11 @@ impl<'a, Shape: PlateShape> Placer<'a, Shape> {
                         }
                     }
                     self.unlocked_parts
-                        .sort_by(|x, y| x.part.id.cmp(&y.part.id));
+                        .sort_by(|x, y| {
+                            let a = insertion_map.get(&x.part.id.as_str()).unwrap();
+                            let b = insertion_map.get(&y.part.id.as_str()).unwrap();
+                            a.cmp(b)
+                        });
                     let expand_mm = 100.0;
                     shape = shape.expand(expand_mm);
                     plate = Plate::make_plate_with_placed_parts(

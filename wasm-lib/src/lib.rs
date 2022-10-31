@@ -1,3 +1,4 @@
+use std::io::Read;
 use js_sys::Uint8Array;
 use log::{info, Level};
 use wasm_bindgen::prelude::*;
@@ -14,15 +15,13 @@ pub fn decode_pixel_data(buf: &Uint8Array, options: JsValue) -> JsValue {
         .expect("Couldn't parse WasmArgs");
 
     info!("First pass");
-    let mut data = vec![0; buf.length() as usize];
-    buf.copy_to(&mut data);
+    let data: Vec<u8> = buf.to_vec();
 
     info!("{:#?}", args);
     let pixel_bufs = decode_pixel_maps(data.as_slice(), args.offsets.as_slice())
         .expect("Couldn't read pixel buf data");
 
     info!("Second pass");
-    let owned_pixel_bufs = pixel_bufs.iter().map(|buf| buf.to_vec()).collect();
 
     let WasmArgs {
         model_options,
@@ -32,7 +31,7 @@ pub fn decode_pixel_data(buf: &Uint8Array, options: JsValue) -> JsValue {
 
     info!("third pass");
 
-    let result = handle_request(options, model_options, owned_pixel_bufs);
+    let result = handle_request(options, model_options, pixel_bufs);
     serde_wasm_bindgen::to_value(&result).unwrap_or_else(|_| JsValue::NULL)
 }
 
