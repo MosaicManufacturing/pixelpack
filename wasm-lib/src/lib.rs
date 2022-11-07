@@ -9,7 +9,11 @@ mod request;
 
 #[wasm_bindgen]
 pub fn decode_pixel_data(buf: &Uint8Array, options: JsValue) -> JsValue {
-    console_log::init_with_level(Level::Debug).unwrap();
+    match console_log::init_with_level(Level::Debug) {
+        Ok(_) => (),
+        Err(e) => info!("Err occurred: {}",e)
+    }
+
     let args: WasmArgs = serde_wasm_bindgen::from_value(options)
         .ok()
         .expect("Couldn't parse WasmArgs");

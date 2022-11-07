@@ -281,8 +281,7 @@ impl<'a, Shape: PlateShape> Placer<'a, Shape> {
                     self.reset_cache();
                     self.unlocked_parts.push(part);
                     // Reclaim all parts
-                    let n = (&plate.parts).len();
-                    for part in &mut plate.parts.drain(0..n) {
+                    for part in &mut plate.parts.drain(..) {
                         if !part.part.locked {
                             self.unlocked_parts.push(part)
                         } else {

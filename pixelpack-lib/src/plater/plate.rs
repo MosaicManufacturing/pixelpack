@@ -62,8 +62,7 @@ impl<'a> Plate<'a> {
     ) -> Self {
         let mut plate = Self::new(shape, precision);
 
-        let n = placed_parts.len();
-        for part in placed_parts.drain(0..n) {
+        for part in placed_parts.drain(..) {
             plate.place(part);
         }
 
