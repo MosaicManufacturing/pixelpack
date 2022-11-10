@@ -148,7 +148,7 @@ impl Bitmap {
         }
     }
 
-    pub(crate) fn dilate(&mut self, distance: i32) {
+    pub fn dilate(&mut self, distance: i32) {
         let width = self.width as usize;
         let height = self.height as usize;
 

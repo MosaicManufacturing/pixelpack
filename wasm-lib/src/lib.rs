@@ -1,5 +1,5 @@
 use std::io::Read;
-use js_sys::Uint8Array;
+use js_sys::{JsString, Uint8Array};
 use log::{info, Level};
 use wasm_bindgen::prelude::*;
 
@@ -36,7 +36,10 @@ pub fn decode_pixel_data(buf: &Uint8Array, options: JsValue) -> JsValue {
     info!("third pass");
 
     let result = handle_request(options, model_options, pixel_bufs);
-    serde_wasm_bindgen::to_value(&result).unwrap_or_else(|_| JsValue::NULL)
+    match serde_wasm_bindgen::to_value(&result) {
+        Ok(val) => val,
+        Err(err) => JsValue::from_str(err.to_string().as_str())
+    }
 }
 
 fn decode_pixel_maps<'a, 'b>(buf: &'a [u8], offsets: &'b [u32]) -> Option<Vec<&'a [u8]>> {

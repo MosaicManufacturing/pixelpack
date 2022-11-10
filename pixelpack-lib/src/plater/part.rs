@@ -35,6 +35,11 @@ impl Part {
             num_bitmaps = 1;
         }
 
+        // Improvement, we currently only use a rotation if it fits within the original plate
+
+        // if for every model there exists a rotation that is contained within,
+        // we may attempt to place the model
+
         let bitmaps = (0..num_bitmaps as usize)
             .into_iter()
             .map(|k| {

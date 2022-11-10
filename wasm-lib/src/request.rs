@@ -58,10 +58,24 @@ fn get_plate_shape(opts: &RequestOptions, resolution: f64) -> Shape {
 }
 
 pub fn handle_request(
-    opts: RequestOptions,
+    mut opts: RequestOptions,
     models: Vec<ModelOptions>,
     bitmaps: Vec<&[u8]>,
 ) -> Option<HashMap<String, ModelResult>> {
+    // Each model has a bunch of orientations with different dimensions
+
+    // width and height are scaled by resolution param
+
+    let (width, height) = models
+        .iter()
+        .map(|x| (x.width, x.height))
+        .reduce(|x, y| (i32::max(x.0, y.0), i32::max(x.1, y.1)))
+        .map(|(x, y)|  (x as f64/opts.resolution, y as f64/opts.resolution))
+        .map(|(x, y)| (f64::max(x, opts.width as f64), f64::max(y, opts.height as f64)))?;
+
+    opts.width = width as i32;
+    opts.height = height as i32;
+
     // Use default
     let resolution = if opts.resolution > 0.0 {
         opts.resolution
@@ -98,9 +112,11 @@ pub fn handle_request(
         info!("Adding model {} {}", model.id, bitmaps[i].len());
         model_opts_map.insert(model.id.to_string(), model);
 
-        let bmp =
+        let mut bmp =
             Bitmap::new_bitmap_with_data(model.width, model.height, bitmaps[i]).unwrap();
 
+        // dilation distance is spacing/precision
+        bmp.dilate((opts.spacing/opts.precision) as i32);
 
         info!("{:#?}", bmp);
         let delta_r = if model.rotation_interval > 0 {
