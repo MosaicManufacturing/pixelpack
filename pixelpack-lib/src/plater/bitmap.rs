@@ -2,6 +2,7 @@ use std::cmp::{max, min};
 
 use crate::plater::util;
 
+#[derive(Debug)]
 pub struct Bitmap {
     // Image dimensions
     pub(crate) width: i32,

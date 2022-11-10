@@ -7,7 +7,7 @@ use pixelpack::plater;
 use pixelpack::plater::bitmap::Bitmap;
 use pixelpack::plater::plate_shape::{PlateShape, Shape};
 use pixelpack::plater::request::{default_sort_modes, ThreadingMode};
-use pixelpack::stl::util::deg_to_rad;
+use pixelpack::stl::util::{deg_to_rad, rad_to_deg};
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct WasmArgs {
@@ -44,8 +44,8 @@ pub struct ModelOptions {
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct ModelResult {
-    offset_x: f64,
-    offset_y: f64,
+    center_x: f64,
+    center_y: f64,
     rotation: f64,
 }
 
@@ -101,6 +101,8 @@ pub fn handle_request(
         let bmp =
             Bitmap::new_bitmap_with_data(model.width, model.height, bitmaps[i]).unwrap();
 
+
+        info!("{:#?}", bmp);
         let delta_r = if model.rotation_interval > 0 {
             deg_to_rad(model.rotation_interval as f64)
         } else {
@@ -146,9 +148,9 @@ pub fn handle_request(
                     placement.id.to_owned(),
                     ModelResult {
                         // TODO: All of this should be made private
-                        offset_x: placement.center.x - model_opts.center_x,
-                        offset_y: placement.center.y - model_opts.center_y,
-                        rotation: placement.rotation,
+                        center_x: placement.center.x,
+                        center_y: placement.center.y,
+                        rotation: rad_to_deg(placement.rotation),
                     },
                 );
             }
