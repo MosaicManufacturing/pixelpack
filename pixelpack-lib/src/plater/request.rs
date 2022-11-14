@@ -87,7 +87,7 @@ impl<S: PlateShape> Request<S> {
                 for rotate_direction in 0..2 {
                     for gravity_mode in GRAVITY_MODE_LIST {
                         let mut placer = Placer::new(self);
-                        placer.sort_parts(sort_mode);
+                        // placer.sort_parts(sort_mode);
                         placer.set_gravity_mode(gravity_mode);
                         placer.set_rotate_direction(rotate_direction);
                         placer.set_rotate_offset(rotate_offset);

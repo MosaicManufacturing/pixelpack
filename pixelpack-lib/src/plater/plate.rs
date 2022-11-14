@@ -13,6 +13,7 @@ fn generate_unique_plate_id() -> usize {
     COUNTER.fetch_add(1, Ordering::Relaxed)
 }
 
+#[derive(Clone)]
 pub struct Plate<'a> {
     pub(crate) plate_id: usize,
     pub(crate) width: f64,
@@ -72,7 +73,7 @@ impl<'a> Plate<'a> {
     pub(crate) fn place(&mut self, placed_part: PlacedPart<'a>) {
         {
             // let borrowed_placed_part = (*placed_part).borrow_mut();
-            let bitmap = placed_part.get_bitmap().unwrap();
+            let bitmap = placed_part.get_bitmap();
             let off_x = placed_part.get_x() / self.precision;
             let off_y = placed_part.get_y() / self.precision;
 
@@ -85,7 +86,7 @@ impl<'a> Plate<'a> {
     }
 
     pub(crate) fn can_place(&self, placed_part: &PlacedPart) -> bool {
-        let part_bmp = placed_part.get_bitmap().unwrap();
+        let part_bmp = placed_part.get_bitmap();
 
         let x = placed_part.get_x();
         let y = placed_part.get_y();

@@ -1,11 +1,12 @@
 use std::collections::HashMap;
 use std::f64::consts::PI;
-
-use log::info;
+use log::{info, log};
 use rand::seq::SliceRandom;
 use rand::thread_rng;
 
 use crate::plater::placed_part::PlacedPart;
+use crate::plater::placer::Alt::{Fst, Snd};
+use crate::plater::placer::Attempts::{Failure, Solved, ToCompute};
 use crate::plater::placer::GravityMode::{GravityEQ, GravityXY, GravityYX};
 use crate::plater::plate::Plate;
 use crate::plater::plate_shape::PlateShape;
@@ -174,12 +175,15 @@ impl<'a, Shape: PlateShape> Placer<'a, Shape> {
         } else {
             itertools::Either::Right(0..rs)
         };
+
+
         // let iter = 0..1;
         for r in iter {
             let vr = (r + self.rotate_offset as usize) % rs;
             part.set_rotation(vr as i32);
 
-            if part.get_bitmap().is_none() {
+            let bmp = part.get_bitmap();
+            if !(bmp.width as f64 <= plate.width && bmp.height as f64 <= plate.height) {
                 continue;
             }
 
@@ -263,51 +267,118 @@ impl<'a, Shape: PlateShape> Placer<'a, Shape> {
         let mut plate = Plate::make_plate_with_placed_parts(
             &shape,
             self.request.precision,
-            &mut self.locked_parts,
+            &mut Vec::clone(&self.locked_parts),
         );
 
-        let mut insertion_map = HashMap::new();
 
-        for (i, part) in self.unlocked_parts.iter().enumerate() {
-            insertion_map.insert(part.part.id.as_str(), i);
+        for (i, part) in self.unlocked_parts.iter_mut().enumerate() {
+            part.insertion_index = i;
         }
 
-        let mut cur_part;
+        let mut expansion_needed = false;
+        let expand_mm = 10.0;
         while !self.unlocked_parts.is_empty() {
-            cur_part = self.unlocked_parts.pop().unwrap();
-            match self.place_unlocked_part(&mut plate, cur_part) {
-                None => {}
-                Some(part) => {
-                    self.reset_cache();
-                    self.unlocked_parts.push(part);
-                    // Reclaim all parts
-                    for part in &mut plate.parts.drain(..) {
-                        if !part.part.locked {
-                            self.unlocked_parts.push(part)
-                        } else {
-                            self.locked_parts.push(part);
+            if expansion_needed {
+                // Expand and try again
+                shape = shape.expand(expand_mm);
+                plate = Plate::make_plate_with_placed_parts(
+                    &shape,
+                    self.request.precision,
+                    &mut Vec::clone(&self.locked_parts),
+                );
+                expansion_needed = false;
+            }
+
+            // TODO: this will not handle locked parts correctly as locked parts were drained out
+            if  !all_parts_can_be_attempted(&self.unlocked_parts, &shape) {
+                expansion_needed = true;
+                continue;
+            }
+
+            while let Some(cur_part) = self.unlocked_parts.pop() {
+                match self.place_unlocked_part(&mut plate, cur_part) {
+                    None => {}
+                    Some(part) => {
+                        self.reset_cache();
+                        self.unlocked_parts.push(part);
+                        // Reclaim all parts
+                        for part in &mut plate.parts.drain(..) {
+                            if !part.part.locked {
+                                self.unlocked_parts.push(part)
+                            } else {
+                                self.locked_parts.push(part);
+                            }
                         }
+                        self.unlocked_parts
+                            .sort_by(|x, y| {
+                                x.insertion_index.cmp(&y.insertion_index)
+                            });
+
+                        expansion_needed = true;
+                        break;
                     }
-                    self.unlocked_parts
-                        .sort_by(|x, y| {
-                            let a = insertion_map.get(&x.part.id.as_str()).unwrap();
-                            let b = insertion_map.get(&y.part.id.as_str()).unwrap();
-                            a.cmp(b)
-                        });
-                    let expand_mm = 100.0;
-                    shape = shape.expand(expand_mm);
-                    plate = Plate::make_plate_with_placed_parts(
-                        &shape,
-                        self.request.precision,
-                        &mut self.locked_parts,
-                    );
                 }
             }
+
+
+
+
+
         }
+
+
 
         let mut solution = Solution::new();
         solution.add_plate(plate);
         solution
+    }
+
+    fn _place_single_plate(&mut self) -> Solution<'a> {
+        let mut shape = Clone::clone(&self.request.plate_shape);
+        // let mut plate = Plate::make_plate_with_placed_parts(
+        //     &shape,
+        //     self.request.precision,
+        //     &mut Vec::clone(&self.locked_parts),
+        // );
+
+
+        for (i, part) in self.unlocked_parts.iter_mut().enumerate() {
+            part.insertion_index = i;
+        }
+
+        let mut expansion_needed = false;
+        let expand_mm = 10.0;
+
+
+        exponential_search(|i| {
+            info!("{} iteration", i);
+            let shape = shape.expand(f64::sqrt(i as f64) * expand_mm);
+            let mut unlocked_parts = Vec::clone(&self.unlocked_parts);
+            let mut plate = Plate::make_plate_with_placed_parts(
+                &shape,
+                self.request.precision,
+                &mut Vec::clone(&self.locked_parts),
+            );
+
+            if !all_parts_can_be_attempted(&unlocked_parts, &shape) {
+                return None;
+            }
+
+            while let Some(cur_part) = unlocked_parts.pop() {
+                match self.place_unlocked_part(&mut plate, cur_part) {
+                    None => {}
+                    Some(_) => {
+                        return None;
+                    }
+                }
+            }
+
+            info!("{} iteration complete", i);
+            let mut solution = Solution::new();
+            solution.add_plate(plate);
+            Some(solution)
+        })
+
     }
 
     fn place_multi_plate(&mut self) -> Solution {
@@ -368,4 +439,220 @@ impl<'a, Shape: PlateShape> Placer<'a, Shape> {
             self.place_multi_plate()
         }
     }
+}
+// def binary_search(arr, x):
+// low = 0
+// high = len(arr) - 1
+// mid = 0
+//
+// while low <= high:
+//
+// mid = (high + low) // 2
+//
+// # If x is greater, ignore left half
+// if arr[mid] < x:
+// low = mid + 1
+//
+// # If x is smaller, ignore right half
+// elif arr[mid] > x:
+// high = mid - 1
+//
+// # means x is present at mid
+// else:
+// return mid
+//
+// # If we reach here, then the element was not present
+// return -1
+//
+
+#[derive(Clone)]
+enum Attempts<T> {
+    ToCompute,
+    Solved(T),
+    Failure
+}
+
+fn exponential_search<T: Clone>(mut run: impl FnMut(usize) -> Option<T>) -> T {
+    let first_found_solution;
+
+    let mut i = 1;
+    loop {
+        info!("Loop {}", i);
+        let res = run(i);
+        if res.is_some() {
+            first_found_solution = res.unwrap();
+            break;
+        }
+
+        i *= 2;
+    }
+
+    let mut results: Vec<Attempts<T>> = vec![ToCompute; i as usize];
+
+    let mut j = 1;
+    while j < i {
+        results[j] = Failure;
+        j *= 2;
+    }
+
+
+    results[(i-1) as usize] = Solved(first_found_solution);
+
+    let mut lo = 0 as usize;
+    let mut hi = (i - 1) as usize;
+
+    let mut boundary_index = 1;
+
+    while lo <= hi {
+        let mut mid = (lo + hi)/2;
+
+        info!("LO: {}, HI: {}, MID: {}", lo, hi, mid);
+
+        if let ToCompute = results[mid] {
+            results[mid] = match run(mid) {
+                None => Failure,
+                Some(x) => Solved(x)
+            }
+        }
+
+        match results[mid] {
+            Solved(_) => {
+
+                if mid == 0 {
+                    boundary_index = mid as i32;
+                    break;
+                }
+
+                if let ToCompute = results[mid-1] {
+                    results[mid-1] = match run(mid-1) {
+                        None => Failure,
+                        Some(x) => Solved(x)
+                    }
+                }
+
+                if let Failure = results[mid-1] {
+                    boundary_index = mid as i32;
+                    break;
+                }
+
+                hi = mid - 1;
+            }
+            Failure => {
+                lo = mid + 1;
+            }
+            ToCompute => unreachable!()
+        }
+
+    }
+
+    info!("Boundary index {}", boundary_index);
+
+
+    let mut ans = ToCompute;
+    std::mem::swap(&mut ans, &mut results[boundary_index as usize]);
+    match ans {
+        Solved(x) => x,
+        _ => unreachable!()
+    }
+}
+
+
+// If for every model, there exists some rotation that fits try it
+fn all_parts_can_be_attempted<S: PlateShape>(parts: &Vec<PlacedPart>, plate_shape: &S) -> bool {
+    parts
+        .iter()
+        .map(|part| part
+            .part
+            .bitmaps
+            .iter()
+            .map(|x| {
+                x.width as f64 <= plate_shape.width()
+                    && x.height as f64 <= plate_shape.height()
+            }).any(|x| x))
+        .all(|x| x)
+}
+
+
+
+enum CombinedIterator<A: Copy, B:Iterator> {
+    XFixed {x: A, it: B},
+    YFixed {y: A, it: B}
+
+}
+
+#[derive(Copy, Clone)]
+struct FloatIterator {
+    start: f64,
+    end: f64,
+    dx: f64
+}
+
+impl Iterator for FloatIterator{
+    type Item = f64;
+    fn next(&mut self) -> Option<Self::Item> {
+        if self.start <= self.end {
+            let res = Some(self.start);
+            self.start += self.dx;
+            res
+        } else {
+            None
+        }
+    }
+}
+
+enum Alt<A, B> {
+    Fst(A, B),
+    Snd(B, A)
+}
+
+impl<A> Into<(A, A)> for Alt<A, A> {
+    fn into(self) -> (A, A) {
+        match self {
+            Fst(x, y) => (x, y),
+            Snd(x, y) => (x, y)
+        }
+    }
+}
+
+impl<A: Copy, B:Iterator> Iterator for CombinedIterator<A, B> {
+    type Item =  Alt<A, B::Item>;
+
+    fn next(&mut self) -> Option<Self::Item> {
+
+        match self{
+            CombinedIterator::XFixed { x, it } => {
+                match it.next() {
+                    None => None,
+                    Some(y) => Some(Fst(*x, y))
+                }
+            }
+            CombinedIterator::YFixed { y, it } => {
+                match it.next() {
+                    None => None,
+                    Some(x) => Some(Snd(x, *y))
+                }
+            }
+        }
+    }
+}
+
+
+fn test(dx: f64, width: f64, height: f64) -> impl Iterator<Item=(f64, f64)> {
+    let x = FloatIterator {
+        start: 0.0,
+        end: width,
+        dx
+    };
+
+    let y = FloatIterator {
+        start: 0.0,
+        end: height,
+        dx
+    };
+
+     x
+        .into_iter()
+        .flat_map(move |x| CombinedIterator::XFixed {x, it: y })
+        .map(|x: Alt<f64, f64>| x.into())
+
 }

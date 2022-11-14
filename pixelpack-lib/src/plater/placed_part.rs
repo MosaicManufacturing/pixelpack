@@ -9,6 +9,7 @@ pub struct PlacedPart<'a> {
     x: f64,
     y: f64,
     rotation: i32,
+    pub(crate) insertion_index: usize,
 }
 
 impl<'a> PlacedPart<'a> {
@@ -18,6 +19,7 @@ impl<'a> PlacedPart<'a> {
             x: 0.0,
             y: 0.0,
             rotation: 0,
+            insertion_index: 0
         }
     }
 
@@ -47,16 +49,16 @@ impl<'a> PlacedPart<'a> {
         self.y
     }
 
-    pub(crate) fn get_bitmap(&self) -> Option<&Bitmap> {
+    pub(crate) fn get_bitmap(&self) -> &Bitmap {
         self.part.get_bitmap(self.rotation as usize)
     }
 
     fn get_center_x(&self) -> f64 {
-        self.x + self.part.precision * self.get_bitmap().unwrap().center_x
+        self.x + self.part.precision * self.get_bitmap().center_x
     }
 
     fn get_center_y(&self) -> f64 {
-        self.y + self.part.precision * self.get_bitmap().unwrap().center_y
+        self.y + self.part.precision * self.get_bitmap().center_y
     }
 
     // get_rotation returns the rotation about the Z axis at the Part's center
@@ -73,8 +75,8 @@ impl<'a> PlacedPart<'a> {
         let mut has_score = false;
         let mut score = 0.0;
 
-        for bitmap in &self.part.bitmaps {
-            if let Some(bmp) = bitmap.as_ref() {
+        for bmp in &self.part.bitmaps {
+            // TODO: this really needs to filter out plates that don't fit, PlacedPart, Plate
                 let g_x = (bmp.s_x as f64) / (bmp.pixels as f64);
                 let g_y = (bmp.s_y as f64) / (bmp.pixels as f64);
                 let s = g_x * g_x + g_y * g_y;
@@ -83,18 +85,18 @@ impl<'a> PlacedPart<'a> {
                     has_score = true;
                 }
             }
-        }
+
 
         score
     }
 
     pub(crate) fn get_gx(&self) -> f64 {
-        let bmp = self.get_bitmap().unwrap();
+        let bmp = self.get_bitmap();
         (bmp.s_x as f64 / bmp.pixels as f64) * self.part.precision
     }
 
     pub(crate) fn get_gy(&self) -> f64 {
-        let bmp = self.get_bitmap().unwrap();
+        let bmp = self.get_bitmap();
         (bmp.s_y as f64 / bmp.pixels as f64) * self.part.precision
     }
 

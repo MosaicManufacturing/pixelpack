@@ -1,6 +1,7 @@
 use crate::plater::placed_part::PlacedPart;
 use crate::plater::plate::Plate;
 
+#[derive(Clone)]
 pub struct Solution<'a> {
     plates: Vec<Plate<'a>>,
 }

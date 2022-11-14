@@ -66,15 +66,15 @@ pub fn handle_request(
 
     // width and height are scaled by resolution param
 
-    let (width, height) = models
-        .iter()
-        .map(|x| (x.width, x.height))
-        .reduce(|x, y| (i32::max(x.0, y.0), i32::max(x.1, y.1)))
-        .map(|(x, y)|  (x as f64/opts.resolution, y as f64/opts.resolution))
-        .map(|(x, y)| (f64::max(x, opts.width as f64), f64::max(y, opts.height as f64)))?;
-
-    opts.width = width as i32;
-    opts.height = height as i32;
+    // let (width, height) = models
+    //     .iter()
+    //     .map(|x| (x.width, x.height))
+    //     .reduce(|x, y| (i32::max(x.0, y.0), i32::max(x.1, y.1)))
+    //     .map(|(x, y)|  (x as f64/opts.resolution, y as f64/opts.resolution))
+    //     .map(|(x, y)| (f64::max(x, opts.width as f64), f64::max(y, opts.height as f64)))?;
+    //
+    // opts.width = 10;
+    // opts.height = 10;
 
     // Use default
     let resolution = if opts.resolution > 0.0 {
@@ -116,9 +116,9 @@ pub fn handle_request(
             Bitmap::new_bitmap_with_data(model.width, model.height, bitmaps[i]).unwrap();
 
         // dilation distance is spacing/precision
-        bmp.dilate((opts.spacing/opts.precision) as i32);
+        bmp.dilate(10);
 
-        info!("{:#?}", bmp);
+        // info!("{:#?}", bmp);
         let delta_r = if model.rotation_interval > 0 {
             deg_to_rad(model.rotation_interval as f64)
         } else {
@@ -143,7 +143,7 @@ pub fn handle_request(
             plate_width,
             plate_height,
             model.locked,
-        )?;
+        );
 
         info!("Part loaded");
 

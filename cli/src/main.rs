@@ -20,9 +20,6 @@ struct Args {
 
 fn main() {
     SimpleLogger::new().init().unwrap();
-    //
-    // rayon::ThreadPoolBuilder::new().num_threads(1).build_global().unwrap();
-    //
 
     //  "cube.stl".into()
     let args = request::CliOpts::parse();
