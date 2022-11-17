@@ -168,54 +168,53 @@ impl<'a, Shape: PlateShape> Placer<'a, Shape> {
         let mut better_r = 0;
         let mut found = false;
 
+
         let rs = f64::ceil(PI * 2.0 / self.request.delta_r) as usize;
 
-        for r in 0..rs {
-            let vr = (r + self.rotate_offset as usize) % rs;
-            part.set_rotation(vr as i32);
 
-            let bmp = part.get_bitmap();
-            if !(bmp.width as f64 <= plate.width && bmp.height as f64 <= plate.height) {
-                continue;
-            }
+        info!("Placing part: {}", part.get_id());
+       'outer:  for (x, y) in spiral_iterator(self.request.delta, plate.width, plate.height){
+            info!("At point ({}, {})", x, y);
+            part.set_offset(x, y);
+            for r in 0..rs {
+                let vr = (r + self.rotate_offset as usize) % rs;
+                part.set_rotation(vr as i32);
 
-            let delta = self.request.delta;
-            let mut x = 0.0;
+                let bmp = part.get_bitmap();
 
-            for (x, y) in spiral_iterator(delta, plate.width, plate.height) {
-                let gx = part.get_gx() + x;
-                let gy = part.get_gy() + y;
 
-                let score = gy * self.y_coef + gx * self.x_coef;
+                info!("Bmp Width: {} Height: {}, r: {}", bmp.width, bmp.height, r);
+                // if !(bmp.width as f64 <= plate.width && bmp.height as f64 <= plate.height) {
+                //     continue;
+                // }
 
-                if !found  {
-                    part.set_offset(x, y);
-                    if plate.can_place(&part) {
-                        found = true;
-                        better_x = x;
-                        better_y = y;
-                        better_score = score;
-                        better_r = vr;
-                        break;
-                    }
+                if plate.can_place(&part) {
+                    found = true;
+                    info!("Placing");
+                    better_x = x;
+                    better_y = y;
+                    better_r = vr;
+                    break 'outer;
+                } else {
+                    info!("Could not place at {}", r);
                 }
-            }
 
-            return if found {
-                part.set_rotation(better_r as i32);
-                part.set_offset(better_x, better_y);
-                plate.place(part);
-                None
-            } else {
-                self.cache
-                    .get_mut(&plate.plate_id)
-                    .unwrap()
-                    .insert(cache_name, true);
-                Some(part)
-            };
+            }
         }
 
-        Some(part)
+        return if found {
+            info!("Placing at {} {}", better_x, better_y);
+            part.set_rotation(better_r as i32);
+            part.set_offset(better_x, better_y);
+            plate.place(part);
+            None
+        } else {
+            self.cache
+                .get_mut(&plate.plate_id)
+                .unwrap()
+                .insert(cache_name, true);
+            Some(part)
+        };
     }
 
     fn _place_unlocked_part<'b>(
