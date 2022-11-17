@@ -77,8 +77,26 @@ impl<S: PlateShape> Request<S> {
         Some(())
     }
 
+
     // Replace with explicit error handling
     pub fn process<T>(&self, mode: ThreadingMode, on_solution_found: impl Fn(&Solution) -> T) -> T {
+        let mut placer = Placer::new(self);
+        placer.sort_parts(SortMode::SurfaceDec);
+
+
+        for part in &placer.unlocked_parts {
+            info!("{} {}", part.get_id(), part.get_surface());
+        }
+
+
+        let mut placers = vec![placer];
+        let solution =  Request::place_all_single_threaded(&mut placers);
+        on_solution_found(&solution[0])
+    }
+
+
+    // Replace with explicit error handling
+    pub fn _process<T>(&self, mode: ThreadingMode, on_solution_found: impl Fn(&Solution) -> T) -> T {
         let mut placers = vec![];
         let sort_modes = Vec::clone(&self.sort_modes);
 
