@@ -68,6 +68,7 @@ impl Part {
             let Bitmap { width, height, .. } = &p.bitmaps[k];
 
             p.surface += (width * height) as f64;
+            correct += 1;
             //
             // if *width as f64 * precision < plate_width && *height as f64 * precision < plate_height
             // {
