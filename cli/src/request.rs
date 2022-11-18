@@ -121,5 +121,5 @@ pub fn run(opts: &CliOpts, filenames: Vec<String>) -> Option<()> {
         Some(())
     };
 
-    request.process(MultiThreaded, write_solution)
+    request.process(write_solution)
 }

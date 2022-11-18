@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 use std::f64::consts::PI;
+use std::marker::PhantomData;
 use log::{info, log};
 use rand::seq::SliceRandom;
 use rand::thread_rng;
@@ -10,9 +11,47 @@ use crate::plater::placer::Attempts::{Failure, Solved, ToCompute};
 use crate::plater::placer::GravityMode::{GravityEQ, GravityXY, GravityYX};
 use crate::plater::plate::Plate;
 use crate::plater::plate_shape::PlateShape;
-use crate::plater::request::Request;
+use crate::plater::request::{BedExpansionMode, ConfigOrder, PointEnumerationMode, Request, Strategy};
 use crate::plater::solution::Solution;
-use crate::plater::spiral::spiral_iterator;
+use crate::plater::spiral::{RepeatIter, spiral_iterator};
+
+
+// struct StructGenerator<A, I: Iterator<Item=A>, F: FnMut() -> I> {
+//     fun: F
+// }
+//
+//
+// impl <A, I: Iterator<Item=A>, F: FnMut() -> I> Iterator for StructGenerator<A, I, F> {
+//     type Item = I;
+//
+//     fn next(&mut self) -> Option<Self::Item> {
+//         Some((&mut self.fun)())
+//     }
+// }
+
+
+
+
+// fn compose<A, B> fn ()
+
+//
+// struct Composite<A, B, I: Iterator<Item = A>, S: Iterator<Item = B>, J: FnMut(()) -> S> {
+//     i: I,
+//     j: J,
+// }
+//
+//
+//
+// impl<A, B, I: Iterator<Item = A>, S: Iterator<Item = B>, J: FnMut(()) -> S> Iterator for Composite<A, B, I, S, J>  {
+//     type Item = (A, B);
+//
+//     fn next(&mut self) -> Option<Self::Item> {
+//         cycle
+//
+//         todo!()
+//     }
+// }
+
 
 #[derive(Clone, Copy)]
 pub enum SortMode {
@@ -69,7 +108,7 @@ pub(crate) struct Placer<'a, S: PlateShape> {
     // input data
     locked_parts: Vec<PlacedPart<'a>>,
     pub(crate) unlocked_parts: Vec<PlacedPart<'a>>,
-    request: &'a Request<S>,
+    pub(crate) request: &'a Request<S>,
 }
 
 impl<'a, Shape: PlateShape> Placer<'a, Shape> {
@@ -172,21 +211,90 @@ impl<'a, Shape: PlateShape> Placer<'a, Shape> {
         let rs = f64::ceil(PI * 2.0 / self.request.delta_r) as usize;
 
 
-        info!("Placing part: {}", part.get_id());
-       'outer:  for (x, y) in spiral_iterator(self.request.delta, plate.width, plate.height){
-            info!("At point ({}, {})", x, y);
+        let make_rotation_iter = || 0..rs;
+
+
+        let make_point_iter = || {
+            let mut a = None;
+            let mut b = None;
+            match self.request.algorithm.strategy {
+                Strategy::PixelPack => {
+                    a = Some((0..)
+                        .map(|x| (x as f64) * self.request.delta)
+                        .take_while(|x| *x < plate.width)
+                        .map(|x| {
+                            (0..)
+                                .map(|y| (y as f64) * self.request.delta)
+                                .take_while(|y| *y < plate.height)
+                                .map(move |y| (x, y))
+                        }).flatten()) // x, y annoying point interator
+                }
+                Strategy::SpiralPlace => b = Some(spiral_iterator(self.request.delta, plate.width, plate.height))
+            };
+
+            a.into_iter().flatten().chain(b.into_iter().flatten())
+        };
+
+
+
+        let all_points = {
+            let mut x = None;
+            let mut y = None;
+
+            match self.request.algorithm.order_config {
+                ConfigOrder::PointFirst => {
+                    x = Some(make_point_iter()
+                        .into_iter()
+                        .map(|(x, y)| {
+                            make_rotation_iter().into_iter().map(move |r| (x, y, r))
+                        }).flatten() )
+                }
+                ConfigOrder::RotationFirst => {
+                    y = Some(make_rotation_iter()
+                        .into_iter()
+                        .map(|r|{
+                            make_point_iter().into_iter().map(move |(x, y)| (x, y, r))
+                        }).flatten())
+                }
+            }
+
+            x.into_iter().flatten().chain(y.into_iter().flatten())
+        };
+
+
+
+
+
+
+
+
+
+        //
+        // let combined_iter;
+        //
+        // {
+        //     let mut a = None;
+        //     let mut b = None;
+        //
+        //     match self.request.algorithm.point_enumeration_mode {
+        //         PointEnumerationMode::Row => {
+        //           poin
+        //         },
+        //         PointEnumerationMode::Spiral => todo!()
+        //     }
+        // }
+        //
+
+
+
+        'outer:  for (x, y) in make_point_iter() {
+            // info!("At point ({}, {})", x, y);
             part.set_offset(x, y);
             for r in 0..rs {
                 let vr = (r + self.rotate_offset as usize) % rs;
                 part.set_rotation(vr as i32);
 
                 let bmp = part.get_bitmap();
-
-
-                info!("Bmp Width: {} Height: {}, r: {}", bmp.width, bmp.height, r);
-                // if !(bmp.width as f64 <= plate.width && bmp.height as f64 <= plate.height) {
-                //     continue;
-                // }
 
                 if plate.can_place(&part) {
                     found = true;
@@ -196,8 +304,10 @@ impl<'a, Shape: PlateShape> Placer<'a, Shape> {
                     better_r = vr;
                     break 'outer;
                 } else {
-                    info!("Could not place at {}", r);
+                    // info!("Could not place at {}", r);
                 }
+
+                break;
 
             }
         }
@@ -339,7 +449,7 @@ impl<'a, Shape: PlateShape> Placer<'a, Shape> {
         solution
     }
 
-    fn place_single_plate(&mut self) -> Solution<'a> {
+    fn place_single_plate_linear(&mut self) -> Solution<'a> {
         let mut shape = Clone::clone(&self.request.plate_shape);
         let mut plate = Plate::make_plate_with_placed_parts(
             &shape,
@@ -410,7 +520,7 @@ impl<'a, Shape: PlateShape> Placer<'a, Shape> {
         solution
     }
 
-    fn _place_single_plate(&mut self) -> Solution<'a> {
+    fn place_single_plate_exp(&mut self) -> Solution<'a> {
         let mut shape = Clone::clone(&self.request.plate_shape);
         // let mut plate = Plate::make_plate_with_placed_parts(
         //     &shape,
@@ -429,7 +539,7 @@ impl<'a, Shape: PlateShape> Placer<'a, Shape> {
 
         exponential_search(|i| {
             info!("{} iteration", i);
-            let shape = shape.expand(f64::sqrt(i as f64) * expand_mm);
+            let shape = shape.expand(i as f64 * expand_mm);
             let mut unlocked_parts = Vec::clone(&self.unlocked_parts);
             let mut plate = Plate::make_plate_with_placed_parts(
                 &shape,
@@ -511,7 +621,10 @@ impl<'a, Shape: PlateShape> Placer<'a, Shape> {
 
     pub(crate) fn place(&mut self) -> Solution {
         if self.request.single_plate_mode {
-            self.place_single_plate()
+            match self.request.algorithm.bed_expansion_mode {
+                BedExpansionMode::Linear => self.place_single_plate_linear(),
+                BedExpansionMode::Exponential => self.place_single_plate_exp()
+            }
         } else {
             self.place_multi_plate()
         }
@@ -727,7 +840,7 @@ fn test(dx: f64, width: f64, height: f64) -> impl Iterator<Item=(f64, f64)> {
         dx
     };
 
-     x
+    x
         .into_iter()
         .flat_map(move |x| CombinedIterator::XFixed {x, it: y })
         .map(|x: Alt<f64, f64>| x.into())

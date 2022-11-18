@@ -34,11 +34,46 @@ pub struct Request<S: PlateShape> {
     // Parts to place (TODO: revice, can this become vec)
     pub(crate) parts: HashMap<String, Part>,
     resolution: f64, // internal resolution (pixels per mm)
+    pub(crate) algorithm: Algorithm,
 }
 
+#[derive(Clone)]
 pub enum ThreadingMode {
     SingleThreaded,
     MultiThreaded,
+}
+
+#[derive(Clone)]
+pub enum Strategy {
+    PixelPack,
+    SpiralPlace
+}
+
+#[derive(Clone)]
+pub enum ConfigOrder {
+    PointFirst,
+    RotationFirst
+}
+
+#[derive(Clone)]
+pub enum PointEnumerationMode {
+    Row,
+    Spiral
+}
+
+#[derive(Clone)]
+pub enum BedExpansionMode {
+    Linear,
+    Exponential
+}
+
+#[derive(Clone)]
+pub struct Algorithm {
+    pub threading_mode: ThreadingMode,
+    pub strategy: Strategy,
+    pub order_config: ConfigOrder,
+    pub point_enumeration_mode: PointEnumerationMode,
+    pub bed_expansion_mode: BedExpansionMode
 }
 
 // TODO: Don't understand the original version
@@ -50,7 +85,7 @@ pub fn default_sort_modes() -> Vec<SortMode> {
 }
 
 impl<S: PlateShape> Request<S> {
-    pub fn new(plate_shape: S, resolution: f64) -> Self {
+    pub fn new(plate_shape: S, resolution: f64, algorithm: Algorithm) -> Self {
         Request {
             plate_shape,
             single_plate_mode: true,
@@ -62,6 +97,7 @@ impl<S: PlateShape> Request<S> {
             delta_r: PI / 2.0,
             parts: Default::default(),
             resolution,
+            algorithm
         }
     }
 
@@ -77,9 +113,17 @@ impl<S: PlateShape> Request<S> {
         Some(())
     }
 
+    pub fn process<T>(&self, on_solution_found: impl Fn(&Solution) -> T) -> T {
+        let strategy = match self.algorithm.strategy {
+            Strategy::PixelPack => Request::pixelpack,
+            Strategy::SpiralPlace => Request::spiral_place
+        };
+
+        strategy(&self, on_solution_found)
+    }
 
     // Replace with explicit error handling
-    pub fn process<T>(&self, mode: ThreadingMode, on_solution_found: impl Fn(&Solution) -> T) -> T {
+    pub fn spiral_place<T>(&self, on_solution_found: impl Fn(&Solution) -> T) -> T {
         let mut placer = Placer::new(self);
         placer.sort_parts(SortMode::SurfaceDec);
 
@@ -90,13 +134,22 @@ impl<S: PlateShape> Request<S> {
 
 
         let mut placers = vec![placer];
-        let solution =  Request::place_all_single_threaded(&mut placers);
+
+        let place =  match &self.algorithm.threading_mode {
+            ThreadingMode::SingleThreaded => Request::place_all_single_threaded,
+            ThreadingMode::MultiThreaded => Request::place_all_multi_threaded,
+        };
+
+
+        let solution = place(&mut placers);
+
+        ;
         on_solution_found(&solution[0])
     }
 
 
     // Replace with explicit error handling
-    pub fn _process<T>(&self, mode: ThreadingMode, on_solution_found: impl Fn(&Solution) -> T) -> T {
+    pub fn pixelpack<T>(&self, on_solution_found: impl Fn(&Solution) -> T) -> T {
         let mut placers = vec![];
         let sort_modes = Vec::clone(&self.sort_modes);
 
@@ -105,7 +158,7 @@ impl<S: PlateShape> Request<S> {
                 for rotate_direction in 0..2 {
                     for gravity_mode in GRAVITY_MODE_LIST {
                         let mut placer = Placer::new(self);
-                        // placer.sort_parts(sort_mode);
+                        placer.sort_parts(sort_mode);
                         placer.set_gravity_mode(gravity_mode);
                         placer.set_rotate_direction(rotate_direction);
                         placer.set_rotate_offset(rotate_offset);
@@ -115,13 +168,12 @@ impl<S: PlateShape> Request<S> {
             }
         }
 
-        let place_all_placers = match mode {
+        let place_all_placers = match self.algorithm.threading_mode {
             ThreadingMode::SingleThreaded => Request::place_all_single_threaded,
             ThreadingMode::MultiThreaded => Request::place_all_multi_threaded,
         };
 
         let mut solutions = place_all_placers(&mut placers);
-
         solutions.sort_by(|x, y| f64::partial_cmp(&x.score(), &y.score()).unwrap());
         on_solution_found(&solutions[0])
     }
@@ -134,6 +186,7 @@ impl<S: PlateShape> Request<S> {
                 info!("Starting");
                 placer.place()
             })
+            .take(1)
             .collect::<Vec<_>>()
     }
 

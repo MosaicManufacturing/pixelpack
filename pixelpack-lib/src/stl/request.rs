@@ -18,12 +18,14 @@ pub struct Request {
 }
 
 impl Request {
-    pub fn process<T>(&self, mode: ThreadingMode, on_solution_found: impl Fn(&Solution) -> T) -> T {
-        self.request.process(mode, on_solution_found)
+    pub fn process<T>(&self, on_solution_found: impl Fn(&Solution) -> T) -> T {
+        self.request.process(on_solution_found)
     }
 
     pub fn new(plate_shape: plater::plate_shape::Shape, resolution: f64) -> Self {
-        let request = plater::request::Request::new(plate_shape, resolution);
+
+
+        let request = plater::request::Request::new(plate_shape, resolution, todo!());
         Request {
             request,
             resolution,

@@ -178,13 +178,13 @@ impl<A, T: Iterator<Item = A>, const N: usize> Iterator for WindowIter<A, T, N> 
     }
 }
 
-struct RepeatIter<T, const N: usize> {
+pub struct RepeatIter<T, const N: usize> {
     values: [T;N],
     index: usize
 }
 
 impl<T, const N: usize> RepeatIter<T, N> {
-    fn new(values: [T; N]) -> Self {
+    pub fn new(values: [T; N]) -> Self {
         if values.is_empty() {
             panic!("Provided an empty array");
         }

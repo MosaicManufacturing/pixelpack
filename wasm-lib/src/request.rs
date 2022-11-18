@@ -6,7 +6,7 @@ use serde::{Deserialize, Serialize};
 use pixelpack::plater;
 use pixelpack::plater::bitmap::Bitmap;
 use pixelpack::plater::plate_shape::{PlateShape, Shape};
-use pixelpack::plater::request::{default_sort_modes, ThreadingMode};
+use pixelpack::plater::request::{Algorithm, BedExpansionMode, ConfigOrder, default_sort_modes, PointEnumerationMode, Strategy, ThreadingMode};
 use pixelpack::stl::util::{deg_to_rad, rad_to_deg};
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -61,6 +61,7 @@ pub fn handle_request(
     mut opts: RequestOptions,
     models: Vec<ModelOptions>,
     bitmaps: Vec<&[u8]>,
+    alg: Algorithm
 ) -> Option<HashMap<String, ModelResult>> {
     // Each model has a bunch of orientations with different dimensions
 
@@ -91,7 +92,7 @@ pub fn handle_request(
 
     info!("DIMS {} {}", plate_width, plate_height);
 
-    let mut request = plater::request::Request::new(plate_shape, resolution);
+    let mut request = plater::request::Request::new(plate_shape, resolution, alg);
 
     if opts.precision > 0.0 {
         request.precision = opts.precision * resolution;
@@ -152,7 +153,7 @@ pub fn handle_request(
 
     info!("Loaded all parts");
 
-    let result = request.process(ThreadingMode::SingleThreaded, |sol| {
+    let result = request.process( |sol| {
         let mut result = HashMap::new();
 
         for plate in sol.get_plates() {

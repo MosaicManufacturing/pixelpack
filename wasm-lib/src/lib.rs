@@ -2,6 +2,7 @@ use std::io::Read;
 use js_sys::{JsString, Uint8Array};
 use log::{info, Level};
 use wasm_bindgen::prelude::*;
+use pixelpack::plater::request::{Algorithm, BedExpansionMode, ConfigOrder, PointEnumerationMode, Strategy, ThreadingMode};
 
 use crate::request::{handle_request, WasmArgs};
 
@@ -9,6 +10,29 @@ mod request;
 
 #[wasm_bindgen]
 pub fn decode_pixel_data(buf: &Uint8Array, options: JsValue) -> JsValue {
+    let alg = Algorithm {
+        threading_mode: ThreadingMode::SingleThreaded,
+        strategy: Strategy::PixelPack,
+        order_config: ConfigOrder::PointFirst,
+        point_enumeration_mode: PointEnumerationMode::Row,
+        bed_expansion_mode: BedExpansionMode::Exponential
+    };
+    decode_pixel_data_generic(buf, options, alg)
+}
+
+#[wasm_bindgen]
+pub fn decode_pixel_spiral_pack(buf: &Uint8Array, options: JsValue) -> JsValue {
+    let alg = Algorithm {
+        threading_mode: ThreadingMode::SingleThreaded,
+        strategy: Strategy::SpiralPlace,
+        order_config: ConfigOrder::PointFirst,
+        point_enumeration_mode: PointEnumerationMode::Spiral,
+        bed_expansion_mode: BedExpansionMode::Exponential
+    };
+    decode_pixel_data_generic(buf, options, alg)
+}
+
+pub fn decode_pixel_data_generic(buf: &Uint8Array, options: JsValue, alg: Algorithm) -> JsValue {
     match console_log::init_with_level(Level::Debug) {
         Ok(_) => (),
         Err(e) => info!("Err occurred: {}",e)
@@ -35,7 +59,7 @@ pub fn decode_pixel_data(buf: &Uint8Array, options: JsValue) -> JsValue {
 
     info!("third pass");
 
-    let result = handle_request(options, model_options, pixel_bufs);
+    let result = handle_request(options, model_options, pixel_bufs, alg);
     match serde_wasm_bindgen::to_value(&result) {
         Ok(val) => val,
         Err(err) => JsValue::from_str(err.to_string().as_str())
