@@ -18,7 +18,7 @@ use crate::plater::spiral::{RepeatIter, spiral_iterator};
 
 
 #[derive(Clone, Copy, Debug)]
-struct Rect {
+pub struct Rect {
     width: f64,
     height: f64,
     center_x: f64,
@@ -186,193 +186,7 @@ impl<'a, Shape: PlateShape> Placer<'a, Shape> {
         self.rotate_offset = offset;
     }
 
-    fn place_unlocked_part<'b>(
-        &mut self,
-        plate: &mut Plate<'b>,
-        mut part: PlacedPart<'b>,
-    ) -> Option<PlacedPart<'b>> {
-        let cache_name = String::from(part.get_id());
 
-        if self.cache.get(&plate.plate_id).is_none() {
-            self.cache.insert(plate.plate_id, HashMap::new());
-        }
-
-        let k = self
-            .cache
-            .get(&plate.plate_id)
-            .unwrap()
-            .get(cache_name.as_str());
-        // If already seen, don't recompute
-        if k.is_some() {
-            return None;
-        }
-
-        let mut better_x = 0.0;
-        let mut better_y = 0.0;
-        let mut better_score = 0.0;
-        let mut better_r = 0;
-        let mut found = false;
-
-
-        let rs = f64::ceil(PI * 2.0 / self.request.delta_r) as usize;
-
-
-        let make_rotation_iter = || 0..rs;
-
-
-        let make_point_iter = || {
-            let mut a = None;
-            let mut b = None;
-            match self.request.algorithm.strategy {
-                Strategy::PixelPack => {
-                    a = Some((0..)
-                        .map(|x| (x as f64) * self.request.delta)
-                        .take_while(|x| *x < plate.width)
-                        .map(|x| {
-                            (0..)
-                                .map(|y| (y as f64) * self.request.delta)
-                                .take_while(|y| *y < plate.height)
-                                .map(move |y| (x, y))
-                        }).flatten()) // x, y annoying point interator
-                }
-                Strategy::SpiralPlace => b = Some(spiral_iterator(self.request.delta, plate.width, plate.height))
-            };
-
-            a.into_iter().flatten().chain(b.into_iter().flatten())
-        };
-
-
-
-        let all_points = {
-            let mut x = None;
-            let mut y = None;
-
-            match self.request.algorithm.order_config {
-                ConfigOrder::PointFirst => {
-                    x = Some(make_point_iter()
-                        .into_iter()
-                        .map(|(x, y)| {
-                            make_rotation_iter().into_iter().map(move |r| (x, y, r))
-                        }).flatten() )
-                }
-                ConfigOrder::RotationFirst => {
-                    y = Some(make_rotation_iter()
-                        .into_iter()
-                        .map(|r|{
-                            make_point_iter().into_iter().map(move |(x, y)| (x, y, r))
-                        }).flatten())
-                }
-            }
-
-            x.into_iter().flatten().chain(y.into_iter().flatten())
-        };
-
-
-
-
-
-
-
-
-
-        //
-        // let combined_iter;
-        //
-        // {
-        //     let mut a = None;
-        //     let mut b = None;
-        //
-        //     match self.request.algorithm.point_enumeration_mode {
-        //         PointEnumerationMode::Row => {
-        //           poin
-        //         },
-        //         PointEnumerationMode::Spiral => todo!()
-        //     }
-        // }
-        //
-
-
-        let mut chosen_rect = None;
-        let mut found = false;
-            for (x, y) in make_point_iter()  {
-                'outer:for r in 0..rs  {
-                part.set_offset(x, y);
-                let vr = (r + self.rotate_offset as usize) % rs;
-                part.set_rotation(vr as i32);
-
-                let bmp = part.get_bitmap();
-
-
-
-                let mut cur_rect = None;
-                let score = match self.request.algorithm.strategy {
-                    Strategy::PixelPack => {
-                        let gx = part.get_gx() + x;
-                        let gy = part.get_gy() + y;
-                        gy * self.y_coef + gx * self.x_coef
-                    }
-                    Strategy::SpiralPlace => {
-                        let w2 = bmp.width;
-                        let h2 = bmp.height;
-                        let (c2_x, c2_y) = (bmp.center_x, bmp.center_y);
-
-                        let cur = Rect {
-                            width: w2 as f64,
-                            height: h2 as f64,
-                            center_x: c2_x,
-                            center_y: c2_y,
-                        };
-
-                        let merged = if let Some(r) = &self.current_bounding_box {
-                            r.combine(&cur)
-                        } else {
-                            cur.clone()
-                        };
-
-
-                        let area = merged.height * merged.width;
-                        cur_rect = Some(merged);
-                        area
-                    }
-                };
-
-                if !found || score < better_score {
-                    if plate.can_place(&part)  {
-                        println!("Found {}", part.get_id());
-                        found = true;
-                        // info!("Placing");
-                        better_x = x;
-                        better_y = y;
-                        better_r = vr;
-                        better_score = score;
-                        chosen_rect = cur_rect;
-                        // break 'outer;
-                    }
-                }
-            }
-
-                // if found {
-                //     break;
-                // }
-
-            // break;
-        }
-
-        if found {
-            // info!("Placing at {} {}", better_x, better_y);
-            part.set_rotation(better_r as i32);
-            part.set_offset(better_x, better_y);
-            plate.place(part);
-            self.current_bounding_box = chosen_rect;
-            None
-        } else {
-            self.cache
-                .get_mut(&plate.plate_id)
-                .unwrap()
-                .insert(cache_name, true);
-            Some(part)
-        }
-    }
 
     fn place_single_plate_linear(&mut self) -> Solution<'a> {
         let mut shape = Clone::clone(&self.request.plate_shape);
@@ -748,3 +562,5 @@ fn test(dx: f64, width: f64, height: f64) -> impl Iterator<Item=(f64, f64)> {
         .map(|x: Alt<f64, f64>| x.into())
 
 }
+
+mod strategies;
