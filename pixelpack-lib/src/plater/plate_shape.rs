@@ -1,3 +1,4 @@
+use std::cmp::{max, min};
 use crate::plater::bitmap::Bitmap;
 
 pub trait PlateShape: Clone + Send + Sync {
@@ -6,6 +7,7 @@ pub trait PlateShape: Clone + Send + Sync {
     fn string(&self) -> String;
     fn mask_bitmap(&self, bitmap: &mut Bitmap, precision: f64);
     fn expand(&self, size: f64) -> Self;
+    fn intersect_square(&self, size: f64, floor: f64) -> Option<Self>;
 }
 
 #[derive(Clone)]
@@ -59,6 +61,13 @@ impl PlateShape for Shape {
             Shape::Circle(c) => Shape::Circle(PlateShape::expand(c, size)),
         }
     }
+
+    fn intersect_square(&self, size: f64, floor: f64) -> Option<Self> {
+        match self {
+            Shape::Rectangle(r) => r.intersect_square(size, floor).map(|x| Shape::Rectangle(x)),
+            Shape::Circle(c) => c.intersect_square(size, floor).map(|x| Shape::Circle(x)),
+        }
+    }
 }
 
 // PlateRectangle represents a rectangular build plate.
@@ -102,6 +111,20 @@ impl PlateShape for PlateRectangle {
             self.height / self.resolution + size,
             self.resolution,
         )
+    }
+
+    fn intersect_square(&self, size: f64, floor: f64) -> Option<Self> {
+
+        if size <= 0.0 {
+            return None;
+        }
+
+        let width = self.width / self.resolution;
+        let height = self.height / self.resolution;
+
+
+
+        Some(PlateRectangle::new(f64::min(size, width), f64::min(size, height), self.resolution))
     }
 }
 
@@ -153,5 +176,14 @@ impl PlateShape for PlateCircle {
     // of the receiver increased by size.
     fn expand(&self, size: f64) -> Self {
         PlateCircle::new(self.diameter / self.resolution + size, self.resolution)
+    }
+
+    fn intersect_square(&self, size: f64, floor: f64) -> Option<Self> {
+        let diameter= self.diameter / self.resolution - size;
+        if diameter <= 0.0 {
+            None
+        } else {
+            Some(PlateCircle::new(diameter, self.resolution))
+        }
     }
 }

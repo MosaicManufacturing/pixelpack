@@ -174,7 +174,11 @@ impl<S: PlateShape> Request<S> {
         };
 
         let mut solutions = place_all_placers(&mut placers);
-        solutions.sort_by(|x, y| f64::partial_cmp(&x.score(), &y.score()).unwrap());
+        solutions.sort_by(|x, y| f64::partial_cmp(&x.plate_area(), &y.plate_area()).unwrap());
+        solutions.iter().for_each(|s| {
+            let (x, y) = s.dims();
+            info!("Width: {} Height:{}  area: {}", x, y, s.plate_area())
+        });
         on_solution_found(&solutions[0])
     }
 
@@ -186,7 +190,6 @@ impl<S: PlateShape> Request<S> {
                 info!("Starting");
                 placer.place()
             })
-            .take(1)
             .collect::<Vec<_>>()
     }
 

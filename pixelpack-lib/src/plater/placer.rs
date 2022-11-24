@@ -1,3 +1,4 @@
+use std::cmp::Ordering;
 use std::collections::HashMap;
 use std::f64::consts::PI;
 use std::marker::PhantomData;
@@ -14,6 +15,46 @@ use crate::plater::plate_shape::PlateShape;
 use crate::plater::request::{BedExpansionMode, ConfigOrder, PointEnumerationMode, Request, Strategy};
 use crate::plater::solution::Solution;
 use crate::plater::spiral::{RepeatIter, spiral_iterator};
+
+
+#[derive(Clone, Copy, Debug)]
+struct Rect {
+    width: f64,
+    height: f64,
+    center_x: f64,
+    center_y: f64
+}
+
+
+impl Rect {
+    fn combine(&self, other: &Self)  -> Self {
+        let top_height = f64::max(self.height/2.0 + self.center_y, other.height/2.0 + self.center_y);
+        let bottom_height = f64::min(-self.height/2.0 + self.center_y, -other.height/2.0 + self.center_y);
+
+        let left_width = f64::min(-self.width/2.0 + self.center_y, -other.width/2.0 + self.center_y);
+        let right_width = f64::max(self.width/2.0 + self.center_y, other.width/2.0 + self.center_y);
+
+        Rect {
+            width: right_width - left_width,
+            height: top_height - bottom_height,
+            center_x: (right_width + left_width)/2.0,
+            center_y: (top_height + bottom_height)/2.0
+        }
+    }
+}
+
+
+impl PartialEq<Self> for Rect {
+    fn eq(&self, other: &Self) -> bool {
+        (self.width  * self.height) == (other.width * other.height)
+    }
+}
+
+impl PartialOrd for Rect {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        f64::partial_cmp(&(self.width * self.height), &(other.width * other.height))
+    }
+}
 
 
 // struct StructGenerator<A, I: Iterator<Item=A>, F: FnMut() -> I> {
@@ -109,6 +150,8 @@ pub(crate) struct Placer<'a, S: PlateShape> {
     locked_parts: Vec<PlacedPart<'a>>,
     pub(crate) unlocked_parts: Vec<PlacedPart<'a>>,
     pub(crate) request: &'a Request<S>,
+    // center_x, center_y, width, height
+    current_bounding_box: Option<Rect>
 }
 
 impl<'a, Shape: PlateShape> Placer<'a, Shape> {
@@ -122,6 +165,7 @@ impl<'a, Shape: PlateShape> Placer<'a, Shape> {
             locked_parts: vec![],
             unlocked_parts: vec![],
             request,
+            current_bounding_box: None
         };
 
         for part in request.parts.values() {
@@ -286,37 +330,78 @@ impl<'a, Shape: PlateShape> Placer<'a, Shape> {
         //
 
 
-
-        'outer:  for (x, y) in make_point_iter() {
-            // info!("At point ({}, {})", x, y);
-            part.set_offset(x, y);
-            for r in 0..rs {
+        let mut chosen_rect = None;
+        let mut found = false;
+            for (x, y) in make_point_iter()  {
+                'outer:for r in 0..rs  {
+                part.set_offset(x, y);
                 let vr = (r + self.rotate_offset as usize) % rs;
                 part.set_rotation(vr as i32);
 
                 let bmp = part.get_bitmap();
 
-                if plate.can_place(&part) {
-                    found = true;
-                    info!("Placing");
-                    better_x = x;
-                    better_y = y;
-                    better_r = vr;
-                    break 'outer;
-                } else {
-                    // info!("Could not place at {}", r);
+
+
+                let mut cur_rect = None;
+                let score = match self.request.algorithm.strategy {
+                    Strategy::PixelPack => {
+                        let gx = part.get_gx() + x;
+                        let gy = part.get_gy() + y;
+                        gy * self.y_coef + gx * self.x_coef
+                    }
+                    Strategy::SpiralPlace => {
+                        let w2 = bmp.width;
+                        let h2 = bmp.height;
+                        let (c2_x, c2_y) = (bmp.center_x, bmp.center_y);
+
+                        let cur = Rect {
+                            width: w2 as f64,
+                            height: h2 as f64,
+                            center_x: c2_x,
+                            center_y: c2_y,
+                        };
+
+                        let merged = if let Some(r) = &self.current_bounding_box {
+                            r.combine(&cur)
+                        } else {
+                            cur.clone()
+                        };
+
+
+                        let area = merged.height * merged.width;
+                        cur_rect = Some(merged);
+                        area
+                    }
+                };
+
+                if !found || score < better_score {
+                    if plate.can_place(&part)  {
+                        println!("Found {}", part.get_id());
+                        found = true;
+                        // info!("Placing");
+                        better_x = x;
+                        better_y = y;
+                        better_r = vr;
+                        better_score = score;
+                        chosen_rect = cur_rect;
+                        // break 'outer;
+                    }
                 }
-
-                break;
-
             }
+
+                // if found {
+                //     break;
+                // }
+
+            // break;
         }
 
-        return if found {
-            info!("Placing at {} {}", better_x, better_y);
+        if found {
+            // info!("Placing at {} {}", better_x, better_y);
             part.set_rotation(better_r as i32);
             part.set_offset(better_x, better_y);
             plate.place(part);
+            self.current_bounding_box = chosen_rect;
             None
         } else {
             self.cache
@@ -324,7 +409,7 @@ impl<'a, Shape: PlateShape> Placer<'a, Shape> {
                 .unwrap()
                 .insert(cache_name, true);
             Some(part)
-        };
+        }
     }
 
     fn _place_unlocked_part<'b>(
