@@ -156,21 +156,24 @@ pub fn handle_request(
     let result = request.process( |sol| {
         let mut result = HashMap::new();
 
-        for plate in sol.get_plates() {
-            for placement in plate.get_placements() {
-                info!("{:#?}", placement);
-                let id = placement.id.to_owned();
-                let model_opts = model_opts_map.get(&id).unwrap();
-                result.insert(
-                    placement.id.to_owned(),
-                    ModelResult {
-                        // TODO: All of this should be made private
-                        center_x: placement.center.x,
-                        center_y: placement.center.y,
-                        rotation: rad_to_deg(placement.rotation),
-                    },
-                );
-            }
+        let plate = &sol.get_plates()[0];
+
+
+        info!("{}", plate.get_ppm());
+
+        for placement in plate.get_placements() {
+            info!("{:#?}", placement);
+            let id = placement.id.to_owned();
+            let model_opts = model_opts_map.get(&id).unwrap();
+            result.insert(
+                placement.id.to_owned(),
+                ModelResult {
+                    // TODO: All of this should be made private
+                    center_x: placement.center.x,
+                    center_y: placement.center.y,
+                    rotation: rad_to_deg(placement.rotation),
+                },
+            );
         }
 
         result
@@ -178,4 +181,5 @@ pub fn handle_request(
 
     info!("{:#?}", result);
     Some(result)
+
 }

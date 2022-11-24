@@ -29,6 +29,16 @@ impl<'a> Solution<'a> {
             + (1.0 - 1.0 / (1 + self.get_last_plate().count_parts()) as f64);
     }
 
+    pub(crate) fn plate_area(&self) -> f64 {
+        let plate = self.get_last_plate();
+        plate.width * plate.height
+    }
+
+    pub(crate) fn dims(&self) -> (f64, f64) {
+        let plate = self.get_last_plate();
+        (plate.width, plate.height)
+    }
+
     pub fn count_plates(&self) -> usize {
         self.plates.len()
     }

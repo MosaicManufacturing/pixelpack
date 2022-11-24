@@ -118,7 +118,12 @@ impl<'a> Plate<'a> {
         result
     }
 
-    fn get_ppm(&self) -> String {
+    pub fn get_ppm(&self) -> String {
         self.bitmap.to_ppm()
+    }
+
+
+    pub fn get_size(&self) -> (f64, f64) {
+        (self.width, self.height)
     }
 }
