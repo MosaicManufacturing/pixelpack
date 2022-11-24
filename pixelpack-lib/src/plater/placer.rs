@@ -464,38 +464,6 @@ impl<'a, Shape: PlateShape> Placer<'a, Shape> {
         Some(part)
     }
 
-    fn place_once(&mut self) -> Solution<'a> {
-        let mut shape = Clone::clone(&self.request.plate_shape);
-        let mut plate = Plate::make_plate_with_placed_parts(
-            &shape,
-            self.request.precision,
-            &mut self.locked_parts,
-        );
-        let mut unlocked_parts = vec![];
-
-        std::mem::swap(&mut self.unlocked_parts, &mut unlocked_parts);
-
-        self.reset_cache();
-        while !unlocked_parts.is_empty() {
-            let part = unlocked_parts.pop().unwrap();
-            match self.place_unlocked_part(&mut plate, part) {
-                None => {}
-                Some(part) => {
-                    self.cache.clear();
-                    unlocked_parts.push(part);
-                    let expand_mm = 100.0;
-                    shape = shape.expand(expand_mm);
-                    plate = plate.make_from(&shape, self.request.precision);
-                }
-            }
-        }
-
-        self.unlocked_parts.clear();
-        let mut solution = Solution::new();
-        solution.add_plate(plate);
-        solution
-    }
-
     fn place_single_plate_linear(&mut self) -> Solution<'a> {
         let mut shape = Clone::clone(&self.request.plate_shape);
         let mut plate = Plate::make_plate_with_placed_parts(
