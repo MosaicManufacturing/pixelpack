@@ -56,44 +56,6 @@ impl PartialOrd for Rect {
     }
 }
 
-
-// struct StructGenerator<A, I: Iterator<Item=A>, F: FnMut() -> I> {
-//     fun: F
-// }
-//
-//
-// impl <A, I: Iterator<Item=A>, F: FnMut() -> I> Iterator for StructGenerator<A, I, F> {
-//     type Item = I;
-//
-//     fn next(&mut self) -> Option<Self::Item> {
-//         Some((&mut self.fun)())
-//     }
-// }
-
-
-
-
-// fn compose<A, B> fn ()
-
-//
-// struct Composite<A, B, I: Iterator<Item = A>, S: Iterator<Item = B>, J: FnMut(()) -> S> {
-//     i: I,
-//     j: J,
-// }
-//
-//
-//
-// impl<A, B, I: Iterator<Item = A>, S: Iterator<Item = B>, J: FnMut(()) -> S> Iterator for Composite<A, B, I, S, J>  {
-//     type Item = (A, B);
-//
-//     fn next(&mut self) -> Option<Self::Item> {
-//         cycle
-//
-//         todo!()
-//     }
-// }
-
-
 #[derive(Clone, Copy)]
 pub enum SortMode {
     // SortSurfaceDec sorts parts in descending order of surface area.
@@ -591,13 +553,7 @@ impl<'a, Shape: PlateShape> Placer<'a, Shape> {
                     }
                 }
             }
-
-
-
-
-
         }
-
 
 
         let mut solution = Solution::new();
