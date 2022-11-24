@@ -5,7 +5,7 @@ use log::info;
 use crate::plater;
 use crate::plater::placer::Placer;
 use crate::plater::plate_shape::PlateShape;
-use crate::plater::request::ThreadingMode;
+use crate::plater::request::{Algorithm, BedExpansionMode, ConfigOrder, PointEnumerationMode, Strategy, ThreadingMode};
 use crate::plater::solution::Solution;
 use crate::stl::model::Model;
 use crate::stl::orientation::Orientation;
@@ -24,8 +24,16 @@ impl Request {
 
     pub fn new(plate_shape: plater::plate_shape::Shape, resolution: f64) -> Self {
 
+        let alg = Algorithm {
+            threading_mode: ThreadingMode::MultiThreaded,
+            strategy: Strategy::PixelPack,
+            order_config: ConfigOrder::PointFirst,
+            point_enumeration_mode: PointEnumerationMode::Row,
+            bed_expansion_mode: BedExpansionMode::Exponential
+        };
 
-        let request = plater::request::Request::new(plate_shape, resolution, todo!());
+
+        let request = plater::request::Request::new(plate_shape, resolution, alg);
         Request {
             request,
             resolution,
