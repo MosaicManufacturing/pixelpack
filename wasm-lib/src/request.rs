@@ -49,6 +49,13 @@ pub struct ModelResult {
     rotation: f64,
 }
 
+#[derive(Serialize, Deserialize, Debug)]
+pub struct PlacingResult {
+    models: HashMap<String, ModelResult>,
+    plate_width: f64,
+    plate_height: f64
+}
+
 fn get_plate_shape(opts: &RequestOptions, resolution: f64) -> Shape {
     if opts.diameter > 0 {
         Shape::new_circle(opts.diameter as f64, resolution)
@@ -62,7 +69,7 @@ pub fn handle_request(
     models: Vec<ModelOptions>,
     bitmaps: Vec<&[u8]>,
     alg: Algorithm
-) -> Option<HashMap<String, ModelResult>> {
+) -> Option<PlacingResult> {
     // Each model has a bunch of orientations with different dimensions
 
     // width and height are scaled by resolution param
@@ -176,7 +183,12 @@ pub fn handle_request(
             );
         }
 
-        result
+        let (plate_width, plate_height) = plate.get_size();
+        PlacingResult {
+            models: result,
+            plate_width,
+            plate_height
+        }
     });
 
     info!("{:#?}", result);
