@@ -77,9 +77,9 @@ impl<'a> Plate<'a> {
             let off_x = placed_part.get_x() / self.precision;
             let off_y = placed_part.get_y() / self.precision;
 
-            self.bitmap
-                .copy_from_with_update(bitmap, off_x as i32, off_y as i32);
-            // self.bitmap.write(bitmap, off_x as i32, off_y as i32);
+            // self.bitmap
+            //     .copy_from_with_update(bitmap, off_x as i32, off_y as i32);
+            self.bitmap.write(bitmap, off_x as i32, off_y as i32);
         }
 
         self.parts.push(placed_part);
