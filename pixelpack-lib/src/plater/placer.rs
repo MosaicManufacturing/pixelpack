@@ -607,24 +607,29 @@ impl<'a, Shape: PlateShape> Placer<'a, Shape> {
 
     fn place_single_plate_exp(&mut self) -> Solution<'a> {
         let mut shape = Clone::clone(&self.request.plate_shape);
-        // let mut plate = Plate::make_plate_with_placed_parts(
-        //     &shape,
-        //     self.request.precision,
-        //     &mut Vec::clone(&self.locked_parts),
-        // );
-
 
         for (i, part) in self.unlocked_parts.iter_mut().enumerate() {
             part.insertion_index = i;
         }
 
         let mut expansion_needed = false;
-        let expand_mm = 10.0;
+        let expand_mm = 20.0;
 
 
+        let m = f64::min(shape.width(), shape.height());
+        let n = 16;
         exponential_search(|i| {
             info!("{} iteration", i);
-            let shape = shape.expand(i as f64 * expand_mm);
+            let shape = if i < n {
+                shape.intersect_square(m + (i as f64 - n as f64 + 1.0) * expand_mm, 10.0)?
+            } else if i == n {
+                shape.clone()
+            } else {
+                shape.expand( f64::powf((i - n) as f64, 0.25) as f64 * expand_mm)
+            };
+
+
+            // info!("For {}, width: {}, height: {}", i, shape.width(), shape.height());
             let mut unlocked_parts = Vec::clone(&self.unlocked_parts);
             let mut plate = Plate::make_plate_with_placed_parts(
                 &shape,
@@ -637,8 +642,10 @@ impl<'a, Shape: PlateShape> Placer<'a, Shape> {
             }
 
             while let Some(cur_part) = unlocked_parts.pop() {
+                let name = cur_part.part.id.to_owned();
                 match self.place_unlocked_part(&mut plate, cur_part) {
-                    None => {}
+                    None => {
+                    }
                     Some(_) => {
                         return None;
                     }
