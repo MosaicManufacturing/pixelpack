@@ -81,7 +81,9 @@ pub fn default_sort_modes() -> Vec<SortMode> {
     // let random_shuffles: usize = 3;
     // let sort_shuffle_as_usize: usize = SortShuffle.into();
     // let last_sort: usize = sort_shuffle_as_usize + random_shuffles - 1;
-    vec![SurfaceDec, SurfaceInc, Shuffle]
+
+    // TODO: too many shuffles dynamically use shuffles if all existing solutions do not fit on the plate
+    vec![SurfaceDec, SurfaceInc, Shuffle, Shuffle, Shuffle, Shuffle, Shuffle]
 }
 
 impl<S: PlateShape> Request<S> {
