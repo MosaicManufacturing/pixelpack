@@ -184,7 +184,7 @@ impl<S: PlateShape> Request<S> {
             let (x, y) = s.dims();
             info!("Width: {} Height:{}  area: {}", x, y, s.plate_area())
         });
-        on_solution_found(&solutions[0])
+        on_solution_found(&last)
     }
 
     fn place_all_single_threaded<'a>(placers: &'a mut [Placer<'a, S>]) -> Vec<Solution<'a>> {
