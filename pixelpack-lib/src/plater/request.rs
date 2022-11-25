@@ -145,7 +145,6 @@ impl<S: PlateShape> Request<S> {
 
         let solution = place(&mut placers);
 
-        ;
         on_solution_found(&solution[0])
     }
 
