@@ -1,14 +1,23 @@
+use std::fmt::{Debug, Formatter};
 use crate::plater::placed_part::PlacedPart;
 use crate::plater::plate::Plate;
 
 #[derive(Clone)]
 pub struct Solution<'a> {
     plates: Vec<Plate<'a>>,
+    pub best_so_far: Option<usize>
+}
+
+
+impl<'a> Debug for Solution<'a> {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{:#?}", self.best_so_far)
+    }
 }
 
 impl<'a> Solution<'a> {
     pub(crate) fn new() -> Self {
-        Solution { plates: vec![] }
+        Solution { plates: vec![], best_so_far: None }
     }
 
     pub(crate) fn reclaim_placed_parts(self) -> Vec<PlacedPart<'a>> {

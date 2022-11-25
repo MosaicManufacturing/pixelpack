@@ -176,6 +176,10 @@ impl<S: PlateShape> Request<S> {
         };
 
         let mut solutions = place_all_placers(&mut placers);
+
+        info!("Solutions lenght: {}", solutions.len());
+        let last = solutions.pop().unwrap();
+
         solutions.sort_by(|x, y| f64::partial_cmp(&x.plate_area(), &y.plate_area()).unwrap());
         solutions.iter().for_each(|s| {
             let (x, y) = s.dims();
@@ -185,12 +189,22 @@ impl<S: PlateShape> Request<S> {
     }
 
     fn place_all_single_threaded<'a>(placers: &'a mut [Placer<'a, S>]) -> Vec<Solution<'a>> {
-        info!("Starting single threaded place");
+        info!("Starting single threaded place new");
+        let mut k = None;
         placers
             .into_iter()
-            .map(|placer| {
-                info!("Starting");
-                placer.place()
+            .filter_map(|placer| {
+                placer.smallest_observed_plate = k.clone();
+
+                // info!("Updated k, Starting n");
+                let mut cur = placer.place();
+
+                // Update the best solution if we found something better
+                if let Some(d) = &mut cur {
+                    k = Option::clone(&d.best_so_far);
+                    // info!("Updated k, k is {:#?}, width, height: {:#?}",k, d.dims());
+                }
+                cur
             })
             .collect::<Vec<_>>()
     }
@@ -201,7 +215,7 @@ impl<S: PlateShape> Request<S> {
             .into_par_iter()
             .map(|placer| {
                 info!("Starting");
-                placer.place()
+                placer.place().unwrap()
             })
             .collect::<Vec<_>>()
     }

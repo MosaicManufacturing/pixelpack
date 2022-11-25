@@ -1,6 +1,7 @@
 use std::cmp::Ordering;
 use std::collections::HashMap;
 use std::f64::consts::PI;
+use std::fmt::Debug;
 use std::marker::PhantomData;
 use log::{info, log};
 use rand::seq::SliceRandom;
@@ -113,7 +114,8 @@ pub(crate) struct Placer<'a, S: PlateShape> {
     pub(crate) unlocked_parts: Vec<PlacedPart<'a>>,
     pub(crate) request: &'a Request<S>,
     // center_x, center_y, width, height
-    current_bounding_box: Option<Rect>
+    current_bounding_box: Option<Rect>,
+    pub smallest_observed_plate: Option<usize>
 }
 
 impl<'a, Shape: PlateShape> Placer<'a, Shape> {
@@ -127,7 +129,8 @@ impl<'a, Shape: PlateShape> Placer<'a, Shape> {
             locked_parts: vec![],
             unlocked_parts: vec![],
             request,
-            current_bounding_box: None
+            current_bounding_box: None,
+            smallest_observed_plate: None
         };
 
         for part in request.parts.values() {
@@ -253,7 +256,7 @@ impl<'a, Shape: PlateShape> Placer<'a, Shape> {
         solution
     }
 
-    fn place_single_plate_exp(&mut self) -> Solution<'a> {
+    fn place_single_plate_exp(&mut self) -> Option<Solution<'a>> {
         let mut shape = Clone::clone(&self.request.plate_shape);
 
         for (i, part) in self.unlocked_parts.iter_mut().enumerate() {
@@ -261,21 +264,30 @@ impl<'a, Shape: PlateShape> Placer<'a, Shape> {
         }
 
         let mut expansion_needed = false;
-        let expand_mm = 20.0;
+        let expand_mm = 10.0;
 
 
         let m = f64::min(shape.width(), shape.height());
-        let n = 16;
-        exponential_search(|i| {
-            info!("{} iteration", i);
+        let n = 32;
+
+        let res= Clone::clone(&self.smallest_observed_plate);
+
+        let f=  |i| {
+            if let Some(x) = res {
+                if i >= x {
+                    return None;
+                }
+            }
+
+
+            // info!("Updated k, {} iteration", i);
             let shape = if i < n {
                 shape.intersect_square(m + (i as f64 - n as f64 + 1.0) * expand_mm, 10.0)?
             } else if i == n {
                 shape.clone()
             } else {
-                shape.expand( f64::powf((i - n) as f64, 0.25) as f64 * expand_mm)
+                shape.expand( f64::powf((i - n) as f64, 1.0) as f64 * expand_mm)
             };
-
 
             // info!("For {}, width: {}, height: {}", i, shape.width(), shape.height());
             let mut unlocked_parts = Vec::clone(&self.unlocked_parts);
@@ -286,6 +298,7 @@ impl<'a, Shape: PlateShape> Placer<'a, Shape> {
             );
 
             if !all_parts_can_be_attempted(&unlocked_parts, &shape) {
+                // info!("Updated k attempt, Failed {} iteration", i);
                 return None;
             }
 
@@ -295,17 +308,39 @@ impl<'a, Shape: PlateShape> Placer<'a, Shape> {
                     None => {
                     }
                     Some(_) => {
+                        // info!("Updated k place, {} iteration", i);
                         return None;
                     }
                 }
             }
 
+            // self.smallest_observed_plate = Some(n);
             info!("{} iteration complete", i);
             let mut solution = Solution::new();
             solution.add_plate(plate);
+            solution.best_so_far = Some(i);
             Some(solution)
-        })
+        };
 
+
+        exponential_search(128 + 1, f)
+
+        //
+        // if let Some(n_so_far) = res {
+        //     if n_so_far == 0 {
+        //         return None;
+        //     }
+        //
+        //     info!("Going to start binary");
+        //     // We should really decrease here by 1
+        //     match binary_search(vec![ToCompute; n_so_far], f) {
+        //         Solved(x) => Some(x),
+        //         _ => None
+        //     }
+        // } else {
+        //     info!("Going to start exp");
+        //     Some(exponential_search(todo!(), f))
+        // }
     }
 
     fn place_multi_plate(&mut self) -> Solution {
@@ -359,41 +394,46 @@ impl<'a, Shape: PlateShape> Placer<'a, Shape> {
         solution
     }
 
-    pub(crate) fn place(&mut self) -> Solution {
+    pub(crate) fn place(&mut self) -> Option<Solution> {
         if self.request.single_plate_mode {
             match self.request.algorithm.bed_expansion_mode {
-                BedExpansionMode::Linear => self.place_single_plate_linear(),
+                BedExpansionMode::Linear => Some(self.place_single_plate_linear()),
                 BedExpansionMode::Exponential => self.place_single_plate_exp()
             }
         } else {
-            self.place_multi_plate()
+            Some(self.place_multi_plate())
         }
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 enum Attempts<T> {
     ToCompute,
     Solved(T),
     Failure
 }
 
-fn exponential_search<T: Clone>(mut run: impl FnMut(usize) -> Option<T>) -> T {
-    let first_found_solution;
+fn exponential_search<T: Clone + Debug>(limit: usize, mut run: impl FnMut(usize) -> Option<T>) -> Option<T> {
+    let mut first_found_solution = None;
 
     let mut i = 1;
-    loop {
-        info!("Loop {}", i);
+    while i < limit {
+        // info!("Loop {}", i);
         let res = run(i);
         if res.is_some() {
-            first_found_solution = res.unwrap();
+            first_found_solution = res;
             break;
         }
 
         i *= 2;
     }
 
-    let mut results: Vec<Attempts<T>> = vec![ToCompute; i as usize];
+    if first_found_solution.is_none() {
+        return None;
+    }
+
+
+    let mut results: Vec<Attempts<T>> = vec![ToCompute; i + 1 as usize];
 
     let mut j = 1;
     while j < i {
@@ -402,10 +442,10 @@ fn exponential_search<T: Clone>(mut run: impl FnMut(usize) -> Option<T>) -> T {
     }
 
 
-    results[(i-1) as usize] = Solved(first_found_solution);
+    results[(i) as usize] = Solved(first_found_solution.unwrap());
 
     let mut lo = 0 as usize;
-    let mut hi = (i - 1) as usize;
+    let mut hi = (i) as usize;
 
     let mut boundary_index = 1;
 
@@ -454,11 +494,13 @@ fn exponential_search<T: Clone>(mut run: impl FnMut(usize) -> Option<T>) -> T {
     info!("Boundary index {}", boundary_index);
 
 
+    info!("tag {:#?}", results);
+
     let mut ans = ToCompute;
     std::mem::swap(&mut ans, &mut results[boundary_index as usize]);
     match ans {
-        Solved(x) => x,
-        _ => unreachable!()
+        Solved(x) => Some(x),
+        _ => None
     }
 }
 
