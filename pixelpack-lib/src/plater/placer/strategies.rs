@@ -83,13 +83,20 @@ impl<'a, Shape: PlateShape> Placer<'a, Shape> {
         let mut better_r = 0;
         let mut found = false;
 
-        for (x, y) in spiral_iterator(self.request.delta, plate.width, plate.height) {
-            for r in 0..rs {
-                part.set_offset(x, y);
+        // Conditionally reverse iteration direction
+        let make_rot_iter = || if self.rotate_direction != 0 {
+            itertools::Either::Left((0..rs).rev())
+        } else {
+            itertools::Either::Right(0..rs)
+        };
+
+
+
+        for (x, y) in spiral_iterator(self.request.delta, plate.width, plate.height){
+            part.set_offset(x, y);
+            for r in make_rot_iter() {
                 let vr = (r + self.rotate_offset as usize) % rs;
                 part.set_rotation(vr as i32);
-
-
                 let score = {
                     let gx = part.get_gx() + x;
                     let gy = part.get_gy() + y;
@@ -123,7 +130,7 @@ impl<'a, Shape: PlateShape> Placer<'a, Shape> {
 
     fn spiral_place<'b>(&mut self, rs: usize,plate: &mut Plate<'b>,
                         part: &mut PlacedPart<'b>) -> Option<(f64, f64, usize)> {
-        let iter = (0..)
+        let make_iter = || (0..)
             .map(|x| (x as f64) * self.request.delta)
             .take_while(|x| *x < plate.width)
             .map(|x| {
@@ -140,15 +147,21 @@ impl<'a, Shape: PlateShape> Placer<'a, Shape> {
         let mut better_r = 0;
         let mut found = false;
 
-        for (x, y) in iter {
-            for r in 0..rs {
-                part.set_offset(x, y);
+
+        // Conditionally reverse iteration direction
+        let make_rot_iter = || if self.rotate_direction != 0 {
+            itertools::Either::Left((0..rs).rev())
+        } else {
+            itertools::Either::Right(0..rs)
+        };
+
+        for (x, y) in make_iter() {
+            part.set_offset(x, y);
+            for r in make_rot_iter() {
                 let vr = (r + self.rotate_offset as usize) % rs;
                 part.set_rotation(vr as i32);
-
                 let mut cur_rect = None;
                 let bmp = part.get_bitmap();
-
 
 
                 let score = {
