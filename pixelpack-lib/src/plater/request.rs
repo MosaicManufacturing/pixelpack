@@ -172,13 +172,23 @@ impl<S: PlateShape> Request<S> {
         }
         placers.shuffle(&mut thread_rng());
 
+        let mut subset = {
+            let mut subs = vec![];
+            for i in 0..30 {
+                if let Some(k) = placers.pop() {
+                    subs.push(k)
+                }
+            }
+            subs
+        };
+
 
         let place_all_placers = match self.algorithm.threading_mode {
             ThreadingMode::SingleThreaded => Request::place_all_single_threaded,
             ThreadingMode::MultiThreaded => Request::place_all_multi_threaded,
         };
 
-        let mut solutions = place_all_placers(&mut placers);
+        let mut solutions = place_all_placers(&mut subset);
 
         info!("Solutions lenght: {}", solutions.len());
         let last = solutions.pop().unwrap();
