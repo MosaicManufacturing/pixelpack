@@ -3,6 +3,7 @@ use std::collections::HashMap;
 use std::f64::consts::PI;
 use std::fmt::Debug;
 use std::marker::PhantomData;
+use std::vec;
 use log::{info, log};
 use rand::seq::SliceRandom;
 use rand::thread_rng;
@@ -65,6 +66,8 @@ pub enum SortMode {
     SurfaceInc,
     // SortShuffle sorts parts in random order.
     Shuffle,
+    WidthDec,
+    HeightDec,
 }
 
 impl From<SortMode> for usize {
@@ -73,6 +76,8 @@ impl From<SortMode> for usize {
             SortMode::SurfaceDec => 0,
             SortMode::SurfaceInc => 1,
             SortMode::Shuffle => 2,
+            SortMode::WidthDec => 3,
+            SortMode::HeightDec => 4,
         }
     }
 }
@@ -167,6 +172,20 @@ impl<'a, Shape: PlateShape> Placer<'a, Shape> {
                 let mut rng = thread_rng();
                 self.unlocked_parts.shuffle(&mut rng)
             }
+            SortMode::WidthDec =>  {
+                self.unlocked_parts.sort_by(|x, y| {
+                    let s1 = x.part.get_bitmap(0).width;
+                    let s2 = y.part.get_bitmap(0).width;
+                    i32::partial_cmp(&s1, &s2).unwrap()
+                });
+            },
+            SortMode::HeightDec => {
+                self.unlocked_parts.sort_by(|x, y| {
+                    let s1 = x.part.get_bitmap(0).width;
+                    let s2 = y.part.get_bitmap(0).width;
+                    i32::partial_cmp(&s2, &s1).unwrap()
+                });
+            },
         }
     }
 
@@ -264,11 +283,14 @@ impl<'a, Shape: PlateShape> Placer<'a, Shape> {
         }
 
         let mut expansion_needed = false;
-        let expand_mm = 10.0;
+        let expand_mm = 5.0;
+
 
 
         let m = f64::min(shape.width(), shape.height());
-        let n = 32;
+        // 32, 128
+        let n = 128;
+        let limit = 1024;
 
         let res= Clone::clone(&self.smallest_observed_plate);
 
@@ -323,7 +345,10 @@ impl<'a, Shape: PlateShape> Placer<'a, Shape> {
         };
 
 
-        exponential_search(128 + 1, f)
+        let mut buffer = vec![ToCompute; 2 * limit + 2];
+
+
+        exponential_search(&mut buffer, limit + 1, f)
 
         //
         // if let Some(n_so_far) = res {
@@ -413,10 +438,11 @@ enum Attempts<T> {
     Failure
 }
 
-fn exponential_search<T: Clone + Debug>(limit: usize, mut run: impl FnMut(usize) -> Option<T>) -> Option<T> {
+fn exponential_search<T: Clone + Debug>(results: &mut Vec<Attempts<T>>, limit: usize, mut run: impl FnMut(usize) -> Option<T>) -> Option<T> {
     let mut first_found_solution = None;
 
     let mut i = 1;
+
     while i < limit {
         // info!("Loop {}", i);
         let res = run(i);
@@ -425,20 +451,37 @@ fn exponential_search<T: Clone + Debug>(limit: usize, mut run: impl FnMut(usize)
             break;
         }
 
+        if i * 2 >= limit {
+            break;
+        }
+
         i *= 2;
     }
 
-    if first_found_solution.is_none() {
-        return None;
+
+    //
+    // let mut results: Vec<Attempts<T>> = vec![ToCompute; i + 1 as usize];
+
+    // results.clear();
+
+    results
+        .iter_mut()
+        .for_each(|x| *x = ToCompute);
+
+    if results.len() < i + 1 {
+        info!("Failed {} {}", results.len(), i + 1);
+        unreachable!()
     }
-
-
-    let mut results: Vec<Attempts<T>> = vec![ToCompute; i + 1 as usize];
 
     let mut j = 1;
     while j < i {
         results[j] = Failure;
         j *= 2;
+    }
+
+    if first_found_solution.is_none() {
+        info!("tag fail {:#?}", results);
+        return None;
     }
 
 

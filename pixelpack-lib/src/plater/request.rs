@@ -2,10 +2,12 @@ use std::collections::HashMap;
 use std::f64::consts::PI;
 
 use log::info;
+use rand::prelude::SliceRandom;
+use rand::thread_rng;
 use rayon::prelude::{IntoParallelIterator, ParallelIterator};
 
 use crate::plater::part::Part;
-use crate::plater::placer::SortMode::{Shuffle, SurfaceDec, SurfaceInc};
+use crate::plater::placer::SortMode::{HeightDec, Shuffle, SurfaceDec, SurfaceInc, WidthDec};
 use crate::plater::placer::{Placer, SortMode, GRAVITY_MODE_LIST};
 use crate::plater::plate_shape::PlateShape;
 use crate::plater::solution::Solution;
@@ -83,7 +85,7 @@ pub fn default_sort_modes() -> Vec<SortMode> {
     // let last_sort: usize = sort_shuffle_as_usize + random_shuffles - 1;
 
     // TODO: too many shuffles dynamically use shuffles if all existing solutions do not fit on the plate
-    vec![SurfaceDec, SurfaceInc, Shuffle, Shuffle, Shuffle, Shuffle, Shuffle]
+    vec![SurfaceDec, SurfaceInc, Shuffle, WidthDec, HeightDec]
 }
 
 impl<S: PlateShape> Request<S> {
@@ -118,7 +120,7 @@ impl<S: PlateShape> Request<S> {
     pub fn process<T>(&self, on_solution_found: impl Fn(&Solution) -> T) -> T {
         let strategy = match self.algorithm.strategy {
             Strategy::PixelPack => Request::pixelpack,
-            Strategy::SpiralPlace => Request::spiral_place
+            Strategy::SpiralPlace => Request::pixelpack,
         };
 
         strategy(&self, on_solution_found)
@@ -168,6 +170,8 @@ impl<S: PlateShape> Request<S> {
                 }
             }
         }
+        placers.shuffle(&mut thread_rng());
+
 
         let place_all_placers = match self.algorithm.threading_mode {
             ThreadingMode::SingleThreaded => Request::place_all_single_threaded,
@@ -184,6 +188,9 @@ impl<S: PlateShape> Request<S> {
             let (x, y) = s.dims();
             info!("Width: {} Height:{}  area: {}", x, y, s.plate_area())
         });
+
+
+
         on_solution_found(&last)
     }
 
