@@ -19,7 +19,7 @@ impl<'a> PlacedPart<'a> {
             x: 0.0,
             y: 0.0,
             rotation: 0,
-            insertion_index: 0
+            insertion_index: 0,
         }
     }
 

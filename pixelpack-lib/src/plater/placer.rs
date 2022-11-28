@@ -375,24 +375,7 @@ impl<'a, Shape: PlateShape> Placer<'a, Shape> {
         let mut buffer = vec![ToCompute; 2 * limit + 2];
 
 
-        exponential_search(&mut buffer, limit + 1, f)
-
-        //
-        // if let Some(n_so_far) = res {
-        //     if n_so_far == 0 {
-        //         return None;
-        //     }
-        //
-        //     info!("Going to start binary");
-        //     // We should really decrease here by 1
-        //     match binary_search(vec![ToCompute; n_so_far], f) {
-        //         Solved(x) => Some(x),
-        //         _ => None
-        //     }
-        // } else {
-        //     info!("Going to start exp");
-        //     Some(exponential_search(todo!(), f))
-        // }
+      exponential_search(&mut buffer, limit + 1, f)
     }
 
     fn place_multi_plate(&mut self) -> Solution {
