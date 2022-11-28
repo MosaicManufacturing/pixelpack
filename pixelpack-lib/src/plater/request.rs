@@ -120,7 +120,7 @@ impl<S: PlateShape> Request<S> {
     pub fn process<T>(&self, on_solution_found: impl Fn(&Solution) -> T) -> T {
         let strategy = match self.algorithm.strategy {
             Strategy::PixelPack => Request::pixelpack,
-            Strategy::SpiralPlace => Request::pixelpack,
+            Strategy::SpiralPlace => Request::spiral_place,
         };
 
         strategy(&self, on_solution_found)
@@ -130,12 +130,6 @@ impl<S: PlateShape> Request<S> {
     pub fn spiral_place<T>(&self, on_solution_found: impl Fn(&Solution) -> T) -> T {
         let mut placer = Placer::new(self);
         placer.sort_parts(SortMode::SurfaceDec);
-
-
-        for part in &placer.unlocked_parts {
-            info!("{} {}", part.get_id(), part.get_surface());
-        }
-
 
         let mut placers = vec![placer];
 
@@ -173,13 +167,14 @@ impl<S: PlateShape> Request<S> {
         placers.shuffle(&mut thread_rng());
 
         let mut subset = {
-            let mut subs = vec![];
-            for i in 0..30 {
-                if let Some(k) = placers.pop() {
-                    subs.push(k)
-                }
-            }
-            subs
+            // let mut subs = vec![];
+            // for i in 0..200 {
+            //     if let Some(k) = placers.pop() {
+            //         subs.push(k)
+            //     }
+            // }
+            // subs
+            placers
         };
 
 
