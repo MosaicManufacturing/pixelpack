@@ -90,9 +90,18 @@ impl<'a, Shape: PlateShape> Placer<'a, Shape> {
             itertools::Either::Right(0..rs)
         };
 
+        let make_iter = || (0..)
+            .map(|x| (x as f64) * self.request.delta)
+            .take_while(|x| *x < plate.width)
+            .map(|x| {
+                (0..)
+                    .map(|y| (y as f64) * self.request.delta)
+                    .take_while(|y| *y < plate.height)
+                    .map(move |y| (x, y))
+            }).flatten();
 
 
-        for (x, y) in spiral_iterator(self.request.delta, plate.width, plate.height){
+        for (x, y) in make_iter(){
             part.set_offset(x, y);
             for r in make_rot_iter() {
                 let vr = (r + self.rotate_offset as usize) % rs;
@@ -130,15 +139,7 @@ impl<'a, Shape: PlateShape> Placer<'a, Shape> {
 
     fn spiral_place<'b>(&mut self, rs: usize,plate: &mut Plate<'b>,
                         part: &mut PlacedPart<'b>) -> Option<(f64, f64, usize)> {
-        let make_iter = || (0..)
-            .map(|x| (x as f64) * self.request.delta)
-            .take_while(|x| *x < plate.width)
-            .map(|x| {
-                (0..)
-                    .map(|y| (y as f64) * self.request.delta)
-                    .take_while(|y| *y < plate.height)
-                    .map(move |y| (x, y))
-            }).flatten();
+
 
 
         let mut better_x = 0.0;
@@ -155,14 +156,15 @@ impl<'a, Shape: PlateShape> Placer<'a, Shape> {
             itertools::Either::Right(0..rs)
         };
 
-        for (x, y) in make_iter() {
+        let initial_box = self.current_bounding_box.clone();
+
+        for (x, y) in spiral_iterator(self.request.delta, plate.width, plate.height) {
             part.set_offset(x, y);
             for r in make_rot_iter() {
                 let vr = (r + self.rotate_offset as usize) % rs;
                 part.set_rotation(vr as i32);
                 let mut cur_rect = None;
                 let bmp = part.get_bitmap();
-
 
                 let score = {
                     let w2 = bmp.width;
@@ -172,11 +174,11 @@ impl<'a, Shape: PlateShape> Placer<'a, Shape> {
                     let cur = Rect {
                         width: w2 as f64,
                         height: h2 as f64,
-                        center_x: c2_x,
-                        center_y: c2_y,
+                        center_x: c2_x + x,
+                        center_y: c2_y + y,
                     };
 
-                    let merged = if let Some(r) = &self.current_bounding_box {
+                    let merged = if let Some(r) = &initial_box {
                         r.combine(&cur)
                     } else {
                         cur.clone()
@@ -191,7 +193,6 @@ impl<'a, Shape: PlateShape> Placer<'a, Shape> {
 
                 if !found || score < better_score {
                     if plate.can_place(&part)  {
-                        println!("Found {}", part.get_id());
                         found = true;
                         // info!("Placing");
                         better_x = x;
