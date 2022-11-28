@@ -18,8 +18,41 @@ use crate::plater::request::{BedExpansionMode, ConfigOrder, PointEnumerationMode
 use crate::plater::solution::Solution;
 use crate::plater::spiral::{RepeatIter, spiral_iterator};
 
+#[cfg(test)]
+mod tests {
+    use log::info;
+    use crate::plater::placer::Rect;
 
-#[derive(Clone, Copy, Debug)]
+    #[test]
+    fn exploration() {
+
+        let fst = Rect {
+            width: 2.0,
+            height: 2.0,
+            center_x: 0.0,
+            center_y: 0.0
+        };
+        let snd = Rect {
+            width: 2.0,
+            height: 2.0,
+            center_x: 1.0,
+            center_y: 0.0
+        };
+        let trd = Rect {
+            width: 3.0,
+            height: 2.0,
+            center_x: 1.5,
+            center_y: 0.0
+        };
+
+
+        let res = fst.combine(&snd);
+        assert_eq!(res, trd);
+    }
+}
+
+
+#[derive(Clone, Copy, Debug, PartialEq)]
 pub struct Rect {
     width: f64,
     height: f64,
@@ -30,11 +63,11 @@ pub struct Rect {
 
 impl Rect {
     fn combine(&self, other: &Self)  -> Self {
-        let top_height = f64::max(self.height/2.0 + self.center_y, other.height/2.0 + self.center_y);
-        let bottom_height = f64::min(-self.height/2.0 + self.center_y, -other.height/2.0 + self.center_y);
+        let top_height = f64::max(self.height/2.0 + self.center_y, other.height/2.0 + other.center_y);
+        let bottom_height = f64::min(-self.height/2.0 + self.center_y, -other.height/2.0 + other.center_y);
 
-        let left_width = f64::min(-self.width/2.0 + self.center_y, -other.width/2.0 + self.center_y);
-        let right_width = f64::max(self.width/2.0 + self.center_y, other.width/2.0 + self.center_y);
+        let left_width = f64::min(-self.width/2.0 + self.center_x, -other.width/2.0 + other.center_x);
+        let right_width = f64::max(self.width/2.0 + self.center_x, other.width/2.0 + other.center_x);
 
         Rect {
             width: right_width - left_width,
@@ -45,12 +78,6 @@ impl Rect {
     }
 }
 
-
-impl PartialEq<Self> for Rect {
-    fn eq(&self, other: &Self) -> bool {
-        (self.width  * self.height) == (other.width * other.height)
-    }
-}
 
 impl PartialOrd for Rect {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
