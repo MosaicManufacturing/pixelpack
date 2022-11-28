@@ -7,6 +7,7 @@ use pixelpack::plater;
 use pixelpack::plater::bitmap::Bitmap;
 use pixelpack::plater::plate_shape::{PlateShape, Shape};
 use pixelpack::plater::request::{Algorithm, BedExpansionMode, ConfigOrder, default_sort_modes, PointEnumerationMode, Strategy, ThreadingMode};
+use pixelpack::plater::solution::Solution;
 use pixelpack::stl::util::{deg_to_rad, rad_to_deg};
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -123,8 +124,11 @@ pub fn handle_request(
         let mut bmp =
             Bitmap::new_bitmap_with_data(model.width, model.height, bitmaps[i]).unwrap();
 
-        // dilation distance is spacing/precision
-        bmp.dilate(10);
+        if !model.locked {
+            // dilation distance is spacing/precision
+            bmp.dilate((request.spacing/request.precision) as i32);
+        }
+
 
         // info!("{:#?}", bmp);
         let delta_r = if model.rotation_interval > 0 {
@@ -160,7 +164,7 @@ pub fn handle_request(
 
     info!("Loaded all parts");
 
-    let result = request.process( |sol| {
+    let on_solution = |sol: &Solution| {
         let mut result = HashMap::new();
 
         let plate = &sol.get_plates()[0];
@@ -172,15 +176,18 @@ pub fn handle_request(
             info!("{:#?}", placement);
             let id = placement.id.to_owned();
             let model_opts = model_opts_map.get(&id).unwrap();
-            result.insert(
-                placement.id.to_owned(),
-                ModelResult {
-                    // TODO: All of this should be made private
-                    center_x: placement.center.x,
-                    center_y: placement.center.y,
-                    rotation: rad_to_deg(placement.rotation),
-                },
-            );
+            // Center x and center y are funky when in locked mode
+            if !model_opts.locked {
+                result.insert(
+                    placement.id.to_owned(),
+                    ModelResult {
+                        // TODO: All of this should be made private
+                        center_x: placement.center.x,
+                        center_y: placement.center.y,
+                        rotation: rad_to_deg(placement.rotation),
+                    },
+                );
+            }
         }
 
         let (plate_width, plate_height) = plate.get_size();
@@ -189,9 +196,34 @@ pub fn handle_request(
             plate_width,
             plate_height
         }
-    });
+    };
 
-    info!("{:#?}", result);
-    Some(result)
+
+    // let mut all_results = vec![];
+    // for (i, tolerance) in [(10.0, 40), (5.0, 30), (2.5,20), (1.25,15), (0.75, 10)] {
+    //     info!("I {}, tolerance {}", i, tolerance);
+    //     request.delta = i as f64 * resolution;
+    //     let result = request.process(on_solution);
+    //     if result.plate_width <= plate_width {
+    //         info!("{:#?}", result);
+    //         return Some(result);
+    //     } else {
+    //         if result.plate_width - plate_width > tolerance as f64 {
+    //             info!("Fail {} {} tolerance {}", result.plate_width, plate_width, tolerance);
+    //             all_results.push(result);
+    //             break;
+    //         }
+    //         all_results.push(result);
+    //     }
+    //
+    // }
+    //
+    // all_results.sort_by(|x, y| f64::total_cmp(&y.plate_width, &x.plate_width));
+    // let result = all_results.pop();
+    // info!("{:#?}", result);
+    //
+    // result
+
+    Some(request.process(on_solution))
 
 }

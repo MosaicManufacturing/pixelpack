@@ -10,8 +10,8 @@ pub struct Part {
     pub(crate) delta_r: f64,
     width: f64,
     height: f64,
-    center_x: f64,
-    center_y: f64,
+    pub(crate) center_x: f64,
+    pub(crate) center_y: f64,
     surface: f64,
     // average bitmap size
     pub(crate) bitmaps: Vec<Bitmap>,
@@ -35,19 +35,27 @@ impl Part {
             num_bitmaps = 1;
         }
 
+        let (width, height) = bitmap.get_dims();
+
         // Improvement, we currently only use a rotation if it fits within the original plate
 
         // if for every model there exists a rotation that is contained within,
         // we may attempt to place the model
 
-        let bitmaps = (0..num_bitmaps as usize)
-            .into_iter()
-            .map(|k|
-                bitmap.rotate((k as f64) * delta_r).trim()
-            )
-            .collect();
+        let bitmaps = if locked {
+            vec![bitmap]
+        } else {
+            (0..num_bitmaps as usize)
+                .into_iter()
+                .map(|k|
+                    bitmap.rotate((k as f64) * delta_r).trim()
+                )
+                .collect()
+        };
 
-        let (width, height) = bitmap.get_dims();
+
+        let spacing_factor = if locked {0.0} else {2.0 * spacing};
+
 
         let mut p = Part {
             precision,
@@ -57,8 +65,8 @@ impl Part {
             bitmaps,
             center_y,
             center_x,
-            width: width as f64 + 2.0 * spacing,
-            height: height as f64 + 2.0 * spacing,
+            width: width as f64 + spacing_factor,
+            height: height as f64 + spacing_factor,
             surface: 0.0,
         };
 

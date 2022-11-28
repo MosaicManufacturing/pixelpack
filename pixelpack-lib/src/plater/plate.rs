@@ -60,14 +60,16 @@ impl<'a> Plate<'a> {
         shape: &S,
         precision: f64,
         placed_parts: &mut Vec<PlacedPart<'a>>,
-    ) -> Self {
+    ) -> Option<Self> {
         let mut plate = Self::new(shape, precision);
 
         for part in placed_parts.drain(..) {
+            if !plate.can_contain(&part) {
+                return None;
+            }
             plate.place(part);
         }
-
-        plate
+        Some(plate)
     }
 
     pub(crate) fn place(&mut self, placed_part: PlacedPart<'a>) {
@@ -76,14 +78,27 @@ impl<'a> Plate<'a> {
             let bitmap = placed_part.get_bitmap();
             let off_x = placed_part.get_x() / self.precision;
             let off_y = placed_part.get_y() / self.precision;
-
-            // self.bitmap
-            //     .copy_from_with_update(bitmap, off_x as i32, off_y as i32);
             self.bitmap.write(bitmap, off_x as i32, off_y as i32);
         }
 
         self.parts.push(placed_part);
     }
+
+    pub(crate) fn can_contain(&self, placed_part: &PlacedPart) -> bool {
+        let part_bmp = placed_part.get_bitmap();
+
+        let x = placed_part.get_x();
+        let y = placed_part.get_y();
+
+        if (x + (part_bmp.width as f64) * self.precision) > self.width
+            || (y + (part_bmp.height as f64) * self.precision) > self.height
+        {
+            return false;
+        }
+
+        return true;
+    }
+
 
     pub(crate) fn can_place(&self, placed_part: &PlacedPart) -> bool {
         let part_bmp = placed_part.get_bitmap();

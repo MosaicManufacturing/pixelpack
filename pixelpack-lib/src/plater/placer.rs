@@ -166,8 +166,11 @@ impl<'a, Shape: PlateShape> Placer<'a, Shape> {
         };
 
         for part in request.parts.values() {
-            let placed_part = PlacedPart::new_placed_part(part);
+            let (x, y) = (part.center_x, part.center_y);
+            let mut placed_part = PlacedPart::new_placed_part(part);
+
             if part.locked {
+                placed_part.set_offset(x, y);
                 p.locked_parts.push(placed_part)
             } else {
                 p.unlocked_parts.push(placed_part);
@@ -239,11 +242,12 @@ impl<'a, Shape: PlateShape> Placer<'a, Shape> {
 
     fn place_single_plate_linear(&mut self) -> Solution<'a> {
         let mut shape = Clone::clone(&self.request.plate_shape);
+        // TODO
         let mut plate = Plate::make_plate_with_placed_parts(
             &shape,
             self.request.precision,
             &mut Vec::clone(&self.locked_parts),
-        );
+        ).unwrap();
 
 
         for (i, part) in self.unlocked_parts.iter_mut().enumerate() {
@@ -260,7 +264,7 @@ impl<'a, Shape: PlateShape> Placer<'a, Shape> {
                     &shape,
                     self.request.precision,
                     &mut Vec::clone(&self.locked_parts),
-                );
+                ).unwrap();
                 expansion_needed = false;
             }
 
@@ -329,10 +333,34 @@ impl<'a, Shape: PlateShape> Placer<'a, Shape> {
             }
 
 
+            // if i  128 {
+            //     return None;
+            // }
+            //
+            //
+            // let shape = if i == 128 {
+            //     shape.clone()
+            // } else {
+            //
+            //     shape.expand( f64::powf(i as f64, 1.0) as f64 * expand_mm)
+            // };
+
+
+            // TODO, if one of the models is locked, you have to align the new plate with the origin of th eprint bed
+
+            // TODO: positioning of locked models not fully correct if plate is smaller
             // info!("Updated k, {} iteration", i);
-            let shape = if i < n {
-                shape.intersect_square(m + (i as f64 - n as f64 + 1.0) * expand_mm, 10.0)?
-            } else if i == n {
+
+
+            if i < n {
+                return None;
+            }
+            //
+            // if i < n && false {
+            //     shape.intersect_square(m + (i as f64 - n as f64 + 1.0) * expand_mm, 10.0)?
+            // } else
+
+            let shape =  if i == n {
                 shape.clone()
             } else {
                 shape.expand( f64::powf((i - n) as f64, 1.0) as f64 * expand_mm)
@@ -344,7 +372,12 @@ impl<'a, Shape: PlateShape> Placer<'a, Shape> {
                 &shape,
                 self.request.precision,
                 &mut Vec::clone(&self.locked_parts),
-            );
+            )?;
+
+
+            for part in &self.locked_parts {
+                info!("Before attempting place, {:#?} {:#?}", part.get_x(), part.get_y());
+            }
 
             if !all_parts_can_be_attempted(&unlocked_parts, &shape) {
                 // info!("Updated k attempt, Failed {} iteration", i);
@@ -386,7 +419,7 @@ impl<'a, Shape: PlateShape> Placer<'a, Shape> {
             &plate_shape,
             self.request.precision,
             &mut Vec::clone(&self.locked_parts),
-        );
+        ).unwrap();
         solution.add_plate(plate);
 
         let mut unlocked_parts = vec![];
@@ -415,7 +448,7 @@ impl<'a, Shape: PlateShape> Placer<'a, Shape> {
                                 &shape,
                                 self.request.precision,
                                 &mut Vec::clone(&self.locked_parts),
-                            );
+                            ).unwrap();
                             solution.add_plate(next_plate);
                         }
                         current_part = part;
@@ -490,7 +523,7 @@ fn exponential_search<T: Clone + Debug>(results: &mut Vec<Attempts<T>>, limit: u
     }
 
     if first_found_solution.is_none() {
-        info!("tag fail {:#?}", results);
+        //info!("tag fail {:#?}", results);
         return None;
     }
 
@@ -547,7 +580,7 @@ fn exponential_search<T: Clone + Debug>(results: &mut Vec<Attempts<T>>, limit: u
     info!("Boundary index {}", boundary_index);
 
 
-    info!("tag {:#?}", results);
+    // info!("tag {:#?}", results);
 
     let mut ans = ToCompute;
     std::mem::swap(&mut ans, &mut results[boundary_index as usize]);
