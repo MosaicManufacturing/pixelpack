@@ -29,6 +29,8 @@ pub struct RequestOptions {
     rotation_interval: f64,
     multiple_sort: bool,
     random_iterations: i32,
+    bed_center_x: f64,
+    bed_center_y: f64,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -100,7 +102,8 @@ pub fn handle_request(
 
     info!("DIMS {} {}", plate_width, plate_height);
 
-    let mut request = plater::request::Request::new(plate_shape, resolution, alg);
+    // TODO: There might be a missing scaling factor for the center
+    let mut request = plater::request::Request::new(plate_shape, resolution, alg, opts.bed_center_x, opts.bed_center_y);
 
     if opts.precision > 0.0 {
         request.precision = opts.precision * resolution;

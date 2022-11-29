@@ -21,10 +21,12 @@ pub struct Plate<'a> {
     precision: f64,
     pub(crate) parts: Vec<PlacedPart<'a>>,
     bitmap: Bitmap,
+    center_x: f64,
+    center_y: f64
 }
 
 impl<'a> Plate<'a> {
-    pub(crate) fn new<S: PlateShape>(shape: &S, precision: f64) -> Self {
+    pub(crate) fn new<S: PlateShape>(shape: &S, precision: f64, center_x: f64, center_y: f64) -> Self {
         let width = shape.width();
         let height = shape.height();
 
@@ -35,6 +37,8 @@ impl<'a> Plate<'a> {
             height,
             parts: vec![],
             bitmap: Bitmap::new((width / precision) as i32, (height / precision) as i32),
+            center_x,
+            center_y
         }
     }
 
@@ -60,26 +64,24 @@ impl<'a> Plate<'a> {
         shape: &S,
         precision: f64,
         placed_parts: &mut Vec<PlacedPart<'a>>,
+        center_x: f64,
+        center_y: f64
     ) -> Option<Self> {
-        let mut plate = Self::new(shape, precision);
+        let mut plate = Self::new(shape, precision, center_x, center_y);
 
         for part in placed_parts.drain(..) {
-            if !plate.can_contain(&part) {
-                return None;
-            }
             plate.place(part);
         }
         Some(plate)
     }
 
     pub(crate) fn place(&mut self, placed_part: PlacedPart<'a>) {
-        {
-            // let borrowed_placed_part = (*placed_part).borrow_mut();
-            let bitmap = placed_part.get_bitmap();
-            let off_x = placed_part.get_x() / self.precision;
-            let off_y = placed_part.get_y() / self.precision;
-            self.bitmap.write(bitmap, off_x as i32, off_y as i32);
-        }
+        let bitmap = placed_part.get_bitmap();
+        // TODO: Scaling factor with precision is probably wrong
+        let off_x = placed_part.get_x() / self.precision - (self.center_x - self.width/2.0);
+        let off_y = placed_part.get_y() / self.precision - ( self.center_y - self.height/2.0);
+        self.bitmap.write(bitmap, off_x as i32, off_y as i32);
+
 
         self.parts.push(placed_part);
     }
@@ -103,8 +105,9 @@ impl<'a> Plate<'a> {
     pub(crate) fn can_place(&self, placed_part: &PlacedPart) -> bool {
         let part_bmp = placed_part.get_bitmap();
 
-        let x = placed_part.get_x();
-        let y = placed_part.get_y();
+        // TODO: Scaling factor with precision is probably wrong
+        let x = placed_part.get_x() - (self.center_x - self.width/2.0);
+        let y = placed_part.get_y() - (self.center_y - self.height/2.0);
 
         if (x + (part_bmp.width as f64) * self.precision) > self.width
             || (y + (part_bmp.height as f64) * self.precision) > self.height

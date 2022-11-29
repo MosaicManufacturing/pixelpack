@@ -247,6 +247,8 @@ impl<'a, Shape: PlateShape> Placer<'a, Shape> {
             &shape,
             self.request.precision,
             &mut Vec::clone(&self.locked_parts),
+            self.request.center_x,
+            self.request.center_y
         ).unwrap();
 
 
@@ -264,6 +266,8 @@ impl<'a, Shape: PlateShape> Placer<'a, Shape> {
                     &shape,
                     self.request.precision,
                     &mut Vec::clone(&self.locked_parts),
+                    self.request.center_x,
+                    self.request.center_y
                 ).unwrap();
                 expansion_needed = false;
             }
@@ -346,22 +350,9 @@ impl<'a, Shape: PlateShape> Placer<'a, Shape> {
             // };
 
 
-            // TODO, if one of the models is locked, you have to align the new plate with the origin of th eprint bed
-
-            // TODO: positioning of locked models not fully correct if plate is smaller
-            // info!("Updated k, {} iteration", i);
-
-
-            if i < n {
-                return None;
-            }
-
-            // if i < n  {
-            //     shape.intersect_square(m + (i as f64 - n as f64 + 1.0) * expand_mm, 10.0)?
-            // } else if i == n {
-
-
-            let shape = if i == n {
+            let shape = if i < n  {
+                shape.intersect_square(m + (i as f64 - n as f64 + 1.0) * expand_mm, 10.0)?
+            } else if i == n {
                 shape.clone()
             } else {
                 shape.expand( f64::powf((i - n) as f64, 1.0) as f64 * expand_mm)
@@ -373,6 +364,8 @@ impl<'a, Shape: PlateShape> Placer<'a, Shape> {
                 &shape,
                 self.request.precision,
                 &mut Vec::clone(&self.locked_parts),
+                self.request.center_x,
+                self.request.center_y
             )?;
 
 
@@ -420,6 +413,8 @@ impl<'a, Shape: PlateShape> Placer<'a, Shape> {
             &plate_shape,
             self.request.precision,
             &mut Vec::clone(&self.locked_parts),
+            self.request.center_x,
+            self.request.center_y
         ).unwrap();
         solution.add_plate(plate);
 
@@ -449,6 +444,8 @@ impl<'a, Shape: PlateShape> Placer<'a, Shape> {
                                 &shape,
                                 self.request.precision,
                                 &mut Vec::clone(&self.locked_parts),
+                                self.request.center_x,
+                                self.request.center_y
                             ).unwrap();
                             solution.add_plate(next_plate);
                         }

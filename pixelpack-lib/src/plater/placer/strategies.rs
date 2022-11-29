@@ -98,7 +98,12 @@ impl<'a, Shape: PlateShape> Placer<'a, Shape> {
                     .map(|y| (y as f64) * self.request.delta)
                     .take_while(|y| *y < plate.height)
                     .map(move |y| (x, y))
-            }).flatten();
+            })
+            .flatten()
+            .map(|(x, y)|{
+                (x + self.request.center_x - plate.width/2.0, y + self.request.center_y - plate.height/2.0)
+        });
+
 
 
         for (x, y) in make_iter(){
@@ -136,11 +141,8 @@ impl<'a, Shape: PlateShape> Placer<'a, Shape> {
         }
     }
 
-
     fn spiral_place<'b>(&mut self, rs: usize,plate: &mut Plate<'b>,
                         part: &mut PlacedPart<'b>) -> Option<(f64, f64, usize)> {
-
-
 
         let mut better_x = 0.0;
         let mut better_y = 0.0;
@@ -158,7 +160,13 @@ impl<'a, Shape: PlateShape> Placer<'a, Shape> {
 
         let initial_box = self.current_bounding_box.clone();
 
-        for (x, y) in spiral_iterator(self.request.delta, plate.width, plate.height) {
+        let spiral =
+            spiral_iterator(self.request.delta, plate.width, plate.height)
+                .map(|(x,y) | {
+                    (x + self.request.center_x - plate.width/2.0, y + self.request.center_y - plate.height/2.0)
+                });
+
+        for (x, y) in spiral {
             part.set_offset(x, y);
             for r in make_rot_iter() {
                 let vr = (r + self.rotate_offset as usize) % rs;
@@ -194,7 +202,6 @@ impl<'a, Shape: PlateShape> Placer<'a, Shape> {
                 if !found || score < better_score {
                     if plate.can_place(&part)  {
                         found = true;
-                        // info!("Placing");
                         better_x = x;
                         better_y = y;
                         better_r = vr;

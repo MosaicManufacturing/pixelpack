@@ -32,8 +32,10 @@ impl Request {
             bed_expansion_mode: BedExpansionMode::Exponential
         };
 
+        let (width, height) = (plate_shape.width()/ resolution, plate_shape.height()/ resolution);
 
-        let request = plater::request::Request::new(plate_shape, resolution, alg);
+        // There might be a missing scaling factor for the center
+        let request = plater::request::Request::new(plate_shape, resolution, alg, width, height);
         Request {
             request,
             resolution,

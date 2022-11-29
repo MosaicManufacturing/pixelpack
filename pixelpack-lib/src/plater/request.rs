@@ -37,6 +37,9 @@ pub struct Request<S: PlateShape> {
     pub(crate) parts: HashMap<String, Part>,
     resolution: f64, // internal resolution (pixels per mm)
     pub(crate) algorithm: Algorithm,
+
+    pub(crate) center_x: f64,
+    pub(crate) center_y: f64
 }
 
 #[derive(Clone)]
@@ -89,7 +92,7 @@ pub fn default_sort_modes() -> Vec<SortMode> {
 }
 
 impl<S: PlateShape> Request<S> {
-    pub fn new(plate_shape: S, resolution: f64, algorithm: Algorithm) -> Self {
+    pub fn new(plate_shape: S, resolution: f64, algorithm: Algorithm, center_x: f64, center_y: f64) -> Self {
         Request {
             plate_shape,
             single_plate_mode: true,
@@ -101,7 +104,9 @@ impl<S: PlateShape> Request<S> {
             delta_r: PI / 2.0,
             parts: Default::default(),
             resolution,
-            algorithm
+            algorithm,
+            center_x,
+            center_y
         }
     }
 
