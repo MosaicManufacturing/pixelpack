@@ -206,8 +206,6 @@ impl<S: PlateShape> Request<S> {
             .into_iter()
             .filter_map(|placer| {
                 placer.smallest_observed_plate = k.clone();
-
-                // info!("Updated k, Starting n");
                 let mut cur = placer.place();
 
                 // Update the best solution if we found something better

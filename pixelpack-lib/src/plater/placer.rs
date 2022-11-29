@@ -355,12 +355,13 @@ impl<'a, Shape: PlateShape> Placer<'a, Shape> {
             if i < n {
                 return None;
             }
-            //
-            // if i < n && false {
-            //     shape.intersect_square(m + (i as f64 - n as f64 + 1.0) * expand_mm, 10.0)?
-            // } else
 
-            let shape =  if i == n {
+            // if i < n  {
+            //     shape.intersect_square(m + (i as f64 - n as f64 + 1.0) * expand_mm, 10.0)?
+            // } else if i == n {
+
+
+            let shape = if i == n {
                 shape.clone()
             } else {
                 shape.expand( f64::powf((i - n) as f64, 1.0) as f64 * expand_mm)

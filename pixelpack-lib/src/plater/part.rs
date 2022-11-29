@@ -53,10 +53,6 @@ impl Part {
                 .collect()
         };
 
-
-        let spacing_factor = if locked {0.0} else {2.0 * spacing};
-
-
         let mut p = Part {
             precision,
             delta_r,
@@ -65,8 +61,8 @@ impl Part {
             bitmaps,
             center_y,
             center_x,
-            width: width as f64 + spacing_factor,
-            height: height as f64 + spacing_factor,
+            width: width as f64 + 2.0 * spacing,
+            height: height as f64 + 2.0 * spacing,
             surface: 0.0,
         };
 
