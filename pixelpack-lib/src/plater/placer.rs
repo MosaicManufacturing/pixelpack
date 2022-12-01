@@ -318,14 +318,14 @@ impl<'a, Shape: PlateShape> Placer<'a, Shape> {
         }
 
         let mut expansion_needed = false;
-        let expand_mm = 5.0;
+        let expand_mm = 1.0;
 
 
 
         let m = f64::min(shape.width(), shape.height());
         // 32, 128
-        let n = 128;
-        let limit = 1024;
+        let n = 512;
+        let limit = 2048;
 
         let res= Clone::clone(&self.smallest_observed_plate);
 
