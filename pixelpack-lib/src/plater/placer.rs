@@ -18,38 +18,38 @@ use crate::plater::request::{BedExpansionMode, ConfigOrder, PointEnumerationMode
 use crate::plater::solution::Solution;
 use crate::plater::spiral::{RepeatIter, spiral_iterator};
 
-#[cfg(test)]
-mod tests {
-    use log::info;
-    use crate::plater::placer::Rect;
-
-    #[test]
-    fn exploration() {
-
-        let fst = Rect {
-            width: 2.0,
-            height: 2.0,
-            center_x: 0.0,
-            center_y: 0.0
-        };
-        let snd = Rect {
-            width: 2.0,
-            height: 2.0,
-            center_x: 1.0,
-            center_y: 0.0
-        };
-        let trd = Rect {
-            width: 3.0,
-            height: 2.0,
-            center_x: 1.5,
-            center_y: 0.0
-        };
-
-
-        let res = fst.combine(&snd);
-        assert_eq!(res, trd);
-    }
-}
+// #[cfg(test)]
+// mod tests {
+//     use log::info;
+//     use crate::plater::placer::Rect;
+//
+//     #[test]
+//     fn exploration() {
+//
+//         let fst = Rect {
+//             width: 2.0,
+//             height: 2.0,
+//             center_x: 0.0,
+//             center_y: 0.0
+//         };
+//         let snd = Rect {
+//             width: 2.0,
+//             height: 2.0,
+//             center_x: 1.0,
+//             center_y: 0.0
+//         };
+//         let trd = Rect {
+//             width: 3.0,
+//             height: 2.0,
+//             center_x: 1.5,
+//             center_y: 0.0
+//         };
+//
+//
+//         let res = fst.combine(&snd);
+//         assert_eq!(res, trd);
+//     }
+// }
 
 
 #[derive(Clone, Copy, Debug, PartialEq)]
@@ -336,20 +336,6 @@ impl<'a, Shape: PlateShape> Placer<'a, Shape> {
                 }
             }
 
-
-            // if i  128 {
-            //     return None;
-            // }
-            //
-            //
-            // let shape = if i == 128 {
-            //     shape.clone()
-            // } else {
-            //
-            //     shape.expand( f64::powf(i as f64, 1.0) as f64 * expand_mm)
-            // };
-
-
             let shape = if i < n  {
                 shape.intersect_square(m + (i as f64 - n as f64 + 1.0) * expand_mm, 10.0)?
             } else if i == n {
@@ -369,12 +355,8 @@ impl<'a, Shape: PlateShape> Placer<'a, Shape> {
             )?;
 
 
-            for part in &self.locked_parts {
-                info!("Before attempting place, {:#?} {:#?}", part.get_x(), part.get_y());
-            }
-
             if !all_parts_can_be_attempted(&unlocked_parts, &shape) {
-                // info!("Updated k attempt, Failed {} iteration", i);
+
                 return None;
             }
 
@@ -384,13 +366,11 @@ impl<'a, Shape: PlateShape> Placer<'a, Shape> {
                     None => {
                     }
                     Some(_) => {
-                        // info!("Updated k place, {} iteration", i);
                         return None;
                     }
                 }
             }
 
-            // self.smallest_observed_plate = Some(n);
             info!("{} iteration complete", i);
             let mut solution = Solution::new();
             solution.add_plate(plate);
@@ -398,11 +378,8 @@ impl<'a, Shape: PlateShape> Placer<'a, Shape> {
             Some(solution)
         };
 
-
         let mut buffer = vec![ToCompute; 2 * limit + 2];
-
-
-      exponential_search(&mut buffer, limit + 1, f)
+        exponential_search(&mut buffer, limit + 1, f).map(|x| x.0)
     }
 
     fn place_multi_plate(&mut self) -> Solution {
@@ -473,19 +450,20 @@ impl<'a, Shape: PlateShape> Placer<'a, Shape> {
 }
 
 #[derive(Clone, Debug)]
-enum Attempts<T> {
+pub enum Attempts<T> {
     ToCompute,
     Solved(T),
     Failure
 }
 
-fn exponential_search<T: Clone + Debug>(results: &mut Vec<Attempts<T>>, limit: usize, mut run: impl FnMut(usize) -> Option<T>) -> Option<T> {
+
+
+pub(crate) fn exponential_search<T: Clone + Debug>(results: &mut Vec<Attempts<T>>, limit: usize, mut run: impl FnMut(usize) -> Option<T>) -> Option<(T, usize)> {
     let mut first_found_solution = None;
 
     let mut i = 1;
 
     while i < limit {
-        // info!("Loop {}", i);
         let res = run(i);
         if res.is_some() {
             first_found_solution = res;
@@ -499,11 +477,6 @@ fn exponential_search<T: Clone + Debug>(results: &mut Vec<Attempts<T>>, limit: u
         i *= 2;
     }
 
-
-    //
-    // let mut results: Vec<Attempts<T>> = vec![ToCompute; i + 1 as usize];
-
-    // results.clear();
 
     results
         .iter_mut()
@@ -521,7 +494,6 @@ fn exponential_search<T: Clone + Debug>(results: &mut Vec<Attempts<T>>, limit: u
     }
 
     if first_found_solution.is_none() {
-        //info!("tag fail {:#?}", results);
         return None;
     }
 
@@ -583,7 +555,7 @@ fn exponential_search<T: Clone + Debug>(results: &mut Vec<Attempts<T>>, limit: u
     let mut ans = ToCompute;
     std::mem::swap(&mut ans, &mut results[boundary_index as usize]);
     match ans {
-        Solved(x) => Some(x),
+        Solved(x) => Some((x, boundary_index as usize)),
         _ => None
     }
 }

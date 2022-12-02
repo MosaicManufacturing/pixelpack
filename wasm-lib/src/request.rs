@@ -127,13 +127,9 @@ pub fn handle_request(
         let mut bmp =
             Bitmap::new_bitmap_with_data(model.width, model.height, bitmaps[i]).unwrap();
 
-        if !model.locked {
-            // dilation distance is spacing/precision
-            bmp.dilate((request.spacing/request.precision) as i32);
-        }
 
+        bmp.dilate((request.spacing/request.precision) as i32);
 
-        // info!("{:#?}", bmp);
         let delta_r = if model.rotation_interval > 0 {
             deg_to_rad(model.rotation_interval as f64)
         } else {

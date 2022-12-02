@@ -172,13 +172,9 @@ impl<S: PlateShape> Request<S> {
         placers.shuffle(&mut thread_rng());
 
         let mut subset = {
-            // let mut subs = vec![];
-            // for i in 0..200 {
-            //     if let Some(k) = placers.pop() {
-            //         subs.push(k)
-            //     }
-            // }
-            // subs
+            for i in 0..(placers.len() - 40) {
+                placers.swap_remove(0);
+            }
             placers
         };
 
@@ -191,6 +187,7 @@ impl<S: PlateShape> Request<S> {
         let mut solutions = place_all_placers(&mut subset);
 
         info!("Solutions lenght: {}", solutions.len());
+        // TODO: propagate this up as an error
         let last = solutions.pop().unwrap();
 
         solutions.sort_by(|x, y| f64::partial_cmp(&x.plate_area(), &y.plate_area()).unwrap());
@@ -216,7 +213,6 @@ impl<S: PlateShape> Request<S> {
                 // Update the best solution if we found something better
                 if let Some(d) = &mut cur {
                     k = Option::clone(&d.best_so_far);
-                    // info!("Updated k, k is {:#?}, width, height: {:#?}",k, d.dims());
                 }
                 cur
             })

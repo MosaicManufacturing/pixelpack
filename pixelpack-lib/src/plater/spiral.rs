@@ -1,9 +1,4 @@
 use std::cmp::{max, min};
-use std::error::Error;
-use std::io;
-use std::path::Iter;
-use std::io::Write;
-use log::info;
 use crate::plater::spiral::StraightLine::{XFixed, YFixed};
 use crate::plater::spiral::StraightLineIter::{Empty, XIter, YIter};
 
@@ -24,6 +19,7 @@ impl InclusiveRange {
     }
 }
 
+#[derive(Debug)]
 struct Rectangle {
     x_range: InclusiveRange,
     y_range: InclusiveRange
