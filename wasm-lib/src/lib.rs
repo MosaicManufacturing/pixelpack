@@ -42,22 +42,17 @@ pub fn decode_pixel_data_generic(buf: &Uint8Array, options: JsValue, alg: Algori
         .ok()
         .expect("Couldn't parse WasmArgs");
 
-    info!("First pass");
     let data: Vec<u8> = buf.to_vec();
 
     info!("{:#?}", args);
     let pixel_bufs = decode_pixel_maps(data.as_slice(), args.offsets.as_slice())
         .expect("Couldn't read pixel buf data");
 
-    info!("Second pass");
-
     let WasmArgs {
         model_options,
         options,
         ..
     } = args;
-
-    info!("third pass");
 
     let result = handle_request(options, model_options, pixel_bufs, alg);
     match serde_wasm_bindgen::to_value(&result) {
