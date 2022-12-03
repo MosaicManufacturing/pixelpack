@@ -105,8 +105,8 @@ impl<S: PlateShape> Request<S> {
             parts: Default::default(),
             resolution,
             algorithm,
-            center_x,
-            center_y
+            center_x: center_x * resolution,
+            center_y: center_y * resolution
         }
     }
 
@@ -172,9 +172,10 @@ impl<S: PlateShape> Request<S> {
         placers.shuffle(&mut thread_rng());
 
         let mut subset = {
-            for i in 0..(placers.len() - 40) {
-                placers.swap_remove(0);
-            }
+            // info!("Placers len {}", placers.len());
+            // for i in 0..(placers.len() - 40) {
+            //     placers.swap_remove(0);
+            // }
             placers
         };
 

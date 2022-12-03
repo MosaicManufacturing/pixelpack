@@ -2,6 +2,7 @@ use crate::plater::placer;
 
 use std::collections::HashMap;
 use std::f64::consts::PI;
+use log::info;
 use crate::plater::placed_part::PlacedPart;
 use crate::plater::placer::Rect;
 use crate::plater::plate::Plate;
@@ -182,8 +183,8 @@ impl<'a, Shape: PlateShape> Placer<'a, Shape> {
                     let cur = Rect {
                         width: w2 as f64,
                         height: h2 as f64,
-                        center_x: c2_x + x,
-                        center_y: c2_y + y,
+                        center_x: c2_x + x/self.request.precision,
+                        center_y: c2_y + y/self.request.precision,
                     };
 
                     let merged = if let Some(r) = &initial_box {

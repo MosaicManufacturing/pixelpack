@@ -87,12 +87,18 @@ impl Request {
     }
 
     fn create_model(&self, p: &plater::plate::Plate) -> Option<Model> {
+        info!("DIMS {} {}",p.width, p.height);
+        for dims in &p.parts {
+            info!("{} {}", dims.part.center_x, dims.part.center_y)
+        }
+
         let placements = p.get_placements();
         let x = placements
             .iter()
             .map(|placement| {
                 let id = placement.id.as_str();
                 let model = self.models.get(id).unwrap();
+                // info!("Model {} {}", mode)
                 model
                     .clone()
                     .center_consume()
