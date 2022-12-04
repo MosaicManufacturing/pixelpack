@@ -25,27 +25,31 @@ struct Rectangle {
     y_range: InclusiveRange
 }
 
+
+
 // Just check four points
 
 impl Rectangle {
     fn intersection(&self, other: &StraightLine) -> StraightLine {
         match other {
+            // max, min
             XFixed { x, ys } => {
-                if self.x_range.contains(*x) && ys.intersects(&self.x_range) {
+                if self.x_range.contains(*x) && ys.intersects(&self.y_range) {
                     StraightLine::XFixed { x: *x, ys: InclusiveRange {
-                        start: max(self.x_range.start, ys.start),
-                        stop: min(self.x_range.stop, ys.stop),
+                        start: max(self.y_range.start, ys.start),
+                        stop: min(self.y_range.stop, ys.stop),
                         step: ys.step
                     } }
                 } else {
                     StraightLine::Empty
                 }
             }
+            // TODO
             YFixed { y, xs } => {
-                if self.y_range.contains(*y) && xs.intersects(&self.y_range) {
+                if self.y_range.contains(*y) && xs.intersects(&self.x_range) {
                     StraightLine::YFixed { y: *y, xs: InclusiveRange {
-                        start: max(self.y_range.start, xs.start),
-                        stop: min(self.y_range.stop, xs.stop),
+                        start: max(self.x_range.start, xs.start),
+                        stop: min(self.x_range.stop, xs.stop),
                         step: xs.step
                     } }
                 } else {
@@ -293,6 +297,8 @@ struct Point2D {
     y: isize
 }
 
+#[derive(Ord, Eq, PartialOrd, PartialEq)]
+struct PairWrapper<A, B> ((A, B));
 
 pub(crate) fn spiral_iterator(delta: f64, width: f64, height: f64) -> impl Iterator<Item = (f64, f64)> {
     let d_width = f64::floor(width/delta) as isize;
@@ -309,7 +315,6 @@ pub(crate) fn spiral_iterator(delta: f64, width: f64, height: f64) -> impl Itera
         step: 1
     } };
 
-
     let origin = (d_width/2, d_height/2);
     // info!("ORIGIN");
 
@@ -325,7 +330,6 @@ pub(crate) fn spiral_iterator(delta: f64, width: f64, height: f64) -> impl Itera
         .scan(origin, |st, next| {
             let (a, b) = *st;
             *st = (a + next.0, b + next.1);
-            //println!("ST {} {}", (*st).0, (*st).1);
             Some(*st)
         });
 
@@ -340,11 +344,15 @@ pub(crate) fn spiral_iterator(delta: f64, width: f64, height: f64) -> impl Itera
     let spiral_lines = windowed.map(|[p1, p2]|
         StraightLine::new(p1, p2));
 
+
     let grouped_lines = WindowIter::new(spiral_lines)
         .map(move |[a,b, c, d]|{
             let xs = [a.unwrap(), b.unwrap(), c.unwrap(), d.unwrap()];
             let mut ys = xs.into_iter()
-                .map(|x| rect.intersection(&x))
+                .map(|x| {
+                    let res = rect.intersection(&x);
+                    res
+                })
                 .filter(|x| x.ne(&StraightLine::Empty))
                 .collect::<Vec<_>>();
 
@@ -361,10 +369,11 @@ pub(crate) fn spiral_iterator(delta: f64, width: f64, height: f64) -> impl Itera
         .flatten();
 
     let spiral = NoConsecutiveDuplicates::new(Cons {initial: Some(origin), it: grouped_lines.flat_map(|x| {
-
         x.into_iter()
-        // x.into_iter().skip()
     })});
 
-    spiral.map(move |(x, y)| (x as f64 * delta, y as f64 * delta))
+    spiral.map(move |(x , y)| {
+        (x as f64 *delta, y as f64 *delta)
+    })
 }
+
