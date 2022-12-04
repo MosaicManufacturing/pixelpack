@@ -500,7 +500,7 @@ pub(crate) fn exponential_search<T: Clone + Debug>(results: &mut Vec<Attempts<T>
 
     results[(i) as usize] = Solved(first_found_solution.unwrap());
 
-    let mut lo = 0 as usize;
+    let mut lo = 1 as usize;
     let mut hi = (i) as usize;
 
     let mut boundary_index = 1;
@@ -520,7 +520,7 @@ pub(crate) fn exponential_search<T: Clone + Debug>(results: &mut Vec<Attempts<T>
         match results[mid] {
             Solved(_) => {
 
-                if mid == 0 {
+                if mid == 1 {
                     boundary_index = mid as i32;
                     break;
                 }
