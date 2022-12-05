@@ -6,9 +6,9 @@ use clap::Parser;
 use log::info;
 use simple_logger::SimpleLogger;
 
-use pixelpack::stl::model::Model;
 
-use crate::request::CliOpts;
+
+
 
 mod request;
 

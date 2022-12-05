@@ -5,7 +5,7 @@ use log::info;
 
 use pixelpack::plater::placer::SortMode;
 use pixelpack::plater::plate_shape::Shape;
-use pixelpack::plater::request::ThreadingMode::{MultiThreaded, SingleThreaded};
+
 use pixelpack::plater::solution::Solution;
 use pixelpack::{plater, stl};
 

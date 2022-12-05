@@ -105,8 +105,8 @@ impl<'a> Plate<'a> {
         let part_bmp = placed_part.get_bitmap();
 
         // TODO: Scaling factor with precision is probably wrong
-        let x = (placed_part.get_x() - (self.center_x - self.width/2.0)) ;
-        let y = (placed_part.get_y() - ( self.center_y - self.height/2.0)) ;
+        let x = placed_part.get_x() - (self.center_x - self.width/2.0);
+        let y = placed_part.get_y() - ( self.center_y - self.height/2.0);
 
         if (x + (part_bmp.width as f64) * self.precision) > self.width
             || (y + (part_bmp.height as f64) * self.precision) > self.height

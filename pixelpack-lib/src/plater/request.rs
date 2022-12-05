@@ -33,7 +33,7 @@ pub struct Request<S: PlateShape> {
     pub delta: f64,
     pub delta_r: f64,
 
-    // Parts to place (TODO: revice, can this become vec)
+    // Parts to place (TODO: revise, can this become vec)
     pub(crate) parts: HashMap<String, Part>,
     resolution: f64, // internal resolution (pixels per mm)
     pub(crate) algorithm: Algorithm,
@@ -187,7 +187,7 @@ impl<S: PlateShape> Request<S> {
 
         let mut solutions = place_all_placers(&mut subset);
 
-        info!("Solutions lenght: {}", solutions.len());
+        info!("Solutions length: {}", solutions.len());
         // TODO: propagate this up as an error
         let last = solutions.pop().unwrap();
 

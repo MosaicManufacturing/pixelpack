@@ -6,7 +6,7 @@ use serde::{Deserialize, Serialize};
 use pixelpack::plater;
 use pixelpack::plater::bitmap::Bitmap;
 use pixelpack::plater::plate_shape::{PlateShape, Shape};
-use pixelpack::plater::request::{Algorithm, BedExpansionMode, ConfigOrder, default_sort_modes, PointEnumerationMode, Strategy, ThreadingMode};
+use pixelpack::plater::request::{Algorithm, default_sort_modes};
 use pixelpack::plater::solution::Solution;
 use pixelpack::stl::util::{deg_to_rad, rad_to_deg};
 
@@ -68,7 +68,7 @@ fn get_plate_shape(opts: &RequestOptions, resolution: f64) -> Shape {
 }
 
 pub fn handle_request(
-    mut opts: RequestOptions,
+    opts: RequestOptions,
     models: Vec<ModelOptions>,
     bitmaps: Vec<&[u8]>,
     alg: Algorithm

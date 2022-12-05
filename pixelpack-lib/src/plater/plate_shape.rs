@@ -1,4 +1,4 @@
-use std::cmp::{max, min};
+
 use crate::plater::bitmap::Bitmap;
 
 pub trait PlateShape: Clone + Send + Sync {

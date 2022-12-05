@@ -1,13 +1,13 @@
-use crate::plater::placer;
+
 
 use std::collections::HashMap;
 use std::f64::consts::PI;
-use log::info;
+
 use crate::plater::placed_part::PlacedPart;
 use crate::plater::placer::Rect;
 use crate::plater::plate::Plate;
 use crate::plater::plate_shape::PlateShape;
-use crate::plater::request::{ConfigOrder, Strategy};
+use crate::plater::request::{Strategy};
 use crate::plater::spiral::spiral_iterator;
 
 
@@ -35,23 +35,6 @@ impl<'a, Shape: PlateShape> Placer<'a, Shape> {
             return None;
         }
         let rs = f64::ceil(PI * 2.0 / self.request.delta_r) as usize;
-
-        //
-        // let combined_iter;
-        //
-        // {
-        //     let mut a = None;
-        //     let mut b = None;
-        //
-        //     match self.request.algorithm.point_enumeration_mode {
-        //         PointEnumerationMode::Row => {
-        //           poin
-        //         },
-        //         PointEnumerationMode::Spiral => todo!()
-        //     }
-        // }
-        //
-
 
         let res =  match self.request.algorithm.strategy {
             Strategy::PixelPack => Placer::pixel_place(self, rs, plate, &mut part),

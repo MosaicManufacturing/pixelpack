@@ -1,5 +1,4 @@
 use log::info;
-use rayon::prelude::IntoParallelRefMutIterator;
 
 use crate::plater;
 use crate::plater::bitmap::Bitmap;

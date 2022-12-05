@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use log::info;
 
 use crate::plater;
-use crate::plater::placer::Placer;
+
 use crate::plater::plate_shape::PlateShape;
 use crate::plater::request::{Algorithm, BedExpansionMode, ConfigOrder, PointEnumerationMode, Strategy, ThreadingMode};
 use crate::plater::solution::Solution;

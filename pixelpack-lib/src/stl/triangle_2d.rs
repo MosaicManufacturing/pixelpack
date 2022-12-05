@@ -49,9 +49,9 @@ impl Triangle2D {
     }
 
     pub(crate) fn contains(&self, x: f64, y: f64) -> bool {
-        let a = plater::point::Point::new(x - self.a.x, y - self.a.y);
-        let b = plater::point::Point::new(x - self.b.x, y - self.b.y);
-        let c = plater::point::Point::new(x - self.c.x, y - self.c.y);
+        let a = Point::new(x - self.a.x, y - self.a.y);
+        let b = Point::new(x - self.b.x, y - self.b.y);
+        let c = Point::new(x - self.c.x, y - self.c.y);
 
         let side_a = get_side(&a, &self.n_ab, &self.ab);
         let side_b = get_side(&b, &self.n_bc, &self.bc);

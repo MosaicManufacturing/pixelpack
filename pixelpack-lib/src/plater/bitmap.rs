@@ -1,5 +1,4 @@
 use std::cmp::{max, min};
-use log::info;
 
 use crate::plater::util;
 

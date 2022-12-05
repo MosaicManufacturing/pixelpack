@@ -1,5 +1,4 @@
-use std::io::Read;
-use js_sys::{JsString, Uint8Array};
+use js_sys::{Uint8Array};
 use log::{info, Level};
 use wasm_bindgen::prelude::*;
 use pixelpack::plater::request::{Algorithm, BedExpansionMode, ConfigOrder, PointEnumerationMode, Strategy, ThreadingMode};

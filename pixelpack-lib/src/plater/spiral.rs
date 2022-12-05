@@ -345,7 +345,7 @@ pub(crate) fn spiral_iterator(delta: f64, width: f64, height: f64) -> impl Itera
     let grouped_lines = WindowIter::new(spiral_lines)
         .map(move |[a,b, c, d]|{
             let xs = [a.unwrap(), b.unwrap(), c.unwrap(), d.unwrap()];
-            let mut ys = xs.into_iter()
+            let ys = xs.into_iter()
                 .map(|x| {
                     let res = rect.intersection(&x);
                     res

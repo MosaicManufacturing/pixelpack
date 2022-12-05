@@ -1,10 +1,9 @@
 use std::cmp::Ordering;
 use std::collections::HashMap;
-use std::f64::consts::PI;
 use std::fmt::Debug;
-use std::marker::PhantomData;
+
 use std::vec;
-use log::{info, log};
+use log::{info};
 use rand::seq::SliceRandom;
 use rand::thread_rng;
 
@@ -14,9 +13,9 @@ use crate::plater::placer::Attempts::{Failure, Solved, ToCompute};
 use crate::plater::placer::GravityMode::{GravityEQ, GravityXY, GravityYX};
 use crate::plater::plate::Plate;
 use crate::plater::plate_shape::PlateShape;
-use crate::plater::request::{BedExpansionMode, ConfigOrder, PointEnumerationMode, Request, Strategy};
+use crate::plater::request::{BedExpansionMode, Request};
 use crate::plater::solution::Solution;
-use crate::plater::spiral::{RepeatIter, spiral_iterator};
+
 
 // #[cfg(test)]
 // mod tests {
@@ -311,16 +310,13 @@ impl<'a, Shape: PlateShape> Placer<'a, Shape> {
     }
 
     fn place_single_plate_exp(&mut self) -> Option<Solution<'a>> {
-        let mut shape = Clone::clone(&self.request.plate_shape);
+        let shape = Clone::clone(&self.request.plate_shape);
 
         for (i, part) in self.unlocked_parts.iter_mut().enumerate() {
             part.insertion_index = i;
         }
 
-        let mut expansion_needed = false;
         let expand_mm = 1.0;
-
-
 
         let m = f64::min(shape.width(), shape.height());
         // 32, 128
@@ -361,7 +357,6 @@ impl<'a, Shape: PlateShape> Placer<'a, Shape> {
             }
 
             while let Some(cur_part) = unlocked_parts.pop() {
-                let name = cur_part.part.id.to_owned();
                 match self.place_unlocked_part(&mut plate, cur_part) {
                     None => {
                     }
@@ -511,7 +506,7 @@ pub(crate) fn exponential_search<T: Clone + Debug>(limit: usize, mut run: impl F
 
     while lo <= hi {
         let gap = hi - lo;
-        let mut mid = lo + gap/2;
+        let mid = lo + gap/2;
 
         info!("LO: {}, HI: {}, MID: {}", lo, hi, mid);
 
