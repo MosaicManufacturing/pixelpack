@@ -378,8 +378,7 @@ impl<'a, Shape: PlateShape> Placer<'a, Shape> {
             Some(solution)
         };
 
-        let mut buffer = vec![ToCompute; 2 * limit + 2];
-        exponential_search(&mut buffer, limit + 1, f).map(|x| x.0)
+        exponential_search( limit + 1, f).map(|x| x.0)
     }
 
     fn place_multi_plate(&mut self) -> Solution {
@@ -458,7 +457,7 @@ pub enum Attempts<T> {
 
 
 
-pub(crate) fn exponential_search<T: Clone + Debug>(results: &mut Vec<Attempts<T>>, limit: usize, mut run: impl FnMut(usize) -> Option<T>) -> Option<(T, usize)> {
+pub(crate) fn exponential_search<T: Clone + Debug>(limit: usize, mut run: impl FnMut(usize) -> Option<T>) -> Option<(T, usize)> {
     let mut first_found_solution = None;
 
     let mut i = 1;
@@ -478,6 +477,9 @@ pub(crate) fn exponential_search<T: Clone + Debug>(results: &mut Vec<Attempts<T>
         lower = i;
         i *= 2;
     }
+
+
+    let mut results = vec![ToCompute; 2 * limit];
 
 
     results
