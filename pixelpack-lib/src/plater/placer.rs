@@ -462,6 +462,7 @@ pub(crate) fn exponential_search<T: Clone + Debug>(results: &mut Vec<Attempts<T>
     let mut first_found_solution = None;
 
     let mut i = 1;
+    let mut lower = i;
 
     while i < limit {
         let res = run(i);
@@ -474,6 +475,7 @@ pub(crate) fn exponential_search<T: Clone + Debug>(results: &mut Vec<Attempts<T>
             break;
         }
 
+        lower = i;
         i *= 2;
     }
 
@@ -500,13 +502,14 @@ pub(crate) fn exponential_search<T: Clone + Debug>(results: &mut Vec<Attempts<T>
 
     results[(i) as usize] = Solved(first_found_solution.unwrap());
 
-    let mut lo = 1 as usize;
+    let mut lo = lower as usize;
     let mut hi = (i) as usize;
 
     let mut boundary_index = 1;
 
     while lo <= hi {
-        let mut mid = (lo + hi)/2;
+        let gap = hi - lo;
+        let mut mid = lo + gap/2;
 
         info!("LO: {}, HI: {}, MID: {}", lo, hi, mid);
 
