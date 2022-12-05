@@ -7,7 +7,7 @@ pub trait PlateShape: Clone + Send + Sync {
     fn string(&self) -> String;
     fn mask_bitmap(&self, bitmap: &mut Bitmap, precision: f64);
     fn expand(&self, size: f64) -> Self;
-    fn intersect_square(&self, size: f64, floor: f64) -> Option<Self>;
+    fn intersect_square(&self, size: f64) -> Option<Self>;
 }
 
 #[derive(Clone)]
@@ -62,10 +62,10 @@ impl PlateShape for Shape {
         }
     }
 
-    fn intersect_square(&self, size: f64, floor: f64) -> Option<Self> {
+    fn intersect_square(&self, size: f64) -> Option<Self> {
         match self {
-            Shape::Rectangle(r) => r.intersect_square(size, floor).map(|x| Shape::Rectangle(x)),
-            Shape::Circle(c) => c.intersect_square(size, floor).map(|x| Shape::Circle(x)),
+            Shape::Rectangle(r) => r.intersect_square(size).map(|x| Shape::Rectangle(x)),
+            Shape::Circle(c) => c.intersect_square(size).map(|x| Shape::Circle(x)),
         }
     }
 }
@@ -113,7 +113,7 @@ impl PlateShape for PlateRectangle {
         )
     }
 
-    fn intersect_square(&self, size: f64, floor: f64) -> Option<Self> {
+    fn intersect_square(&self, size: f64) -> Option<Self> {
 
         if size <= 0.0 {
             return None;
@@ -178,7 +178,7 @@ impl PlateShape for PlateCircle {
         PlateCircle::new(self.diameter / self.resolution + size, self.resolution)
     }
 
-    fn intersect_square(&self, size: f64, floor: f64) -> Option<Self> {
+    fn intersect_square(&self, size: f64) -> Option<Self> {
         let diameter= self.diameter / self.resolution - size;
         if diameter <= 0.0 {
             None

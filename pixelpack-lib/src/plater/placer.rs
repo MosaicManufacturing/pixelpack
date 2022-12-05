@@ -337,7 +337,7 @@ impl<'a, Shape: PlateShape> Placer<'a, Shape> {
             }
 
             let shape = if i < n  {
-                shape.intersect_square(m + (i as f64 - n as f64 + 1.0) * expand_mm, 10.0)?
+                shape.intersect_square(m + (i as f64 - n as f64 + 1.0) * expand_mm)?
             } else if i == n {
                 shape.clone()
             } else {
