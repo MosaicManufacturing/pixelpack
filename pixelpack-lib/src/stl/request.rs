@@ -26,7 +26,7 @@ impl Request {
 
         let alg = Algorithm {
             threading_mode: ThreadingMode::MultiThreaded,
-            strategy: Strategy::PixelPack,
+            strategy: Strategy::SpiralPlace,
             order_config: ConfigOrder::PointFirst,
             point_enumeration_mode: PointEnumerationMode::Row,
             bed_expansion_mode: BedExpansionMode::Exponential
