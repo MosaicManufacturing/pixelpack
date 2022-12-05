@@ -8,8 +8,8 @@ pub struct Part {
     pub(crate) id: String,
     pub(crate) precision: f64,
     pub(crate) delta_r: f64,
-    width: f64,
-    height: f64,
+    _width: f64,
+    _height: f64,
     pub(crate) center_x: f64,
     pub(crate) center_y: f64,
     surface: f64,
@@ -26,8 +26,8 @@ impl Part {
         precision: f64,
         delta_r: f64,
         spacing: f64,
-        plate_width: f64,
-        plate_height: f64,
+        _plate_width: f64,
+        _plate_height: f64,
         locked: bool,
     ) -> Self {
         let mut num_bitmaps = f64::ceil(PI * 2.0 / delta_r) as i32;
@@ -61,8 +61,8 @@ impl Part {
             bitmaps,
             center_y,
             center_x,
-            width: width as f64 + 2.0 * spacing,
-            height: height as f64 + 2.0 * spacing,
+            _width: width as f64 + 2.0 * spacing,
+            _height: height as f64 + 2.0 * spacing,
             surface: 0.0,
         };
 
@@ -92,6 +92,7 @@ impl Part {
         &self.id
     }
 
+    #[allow(dead_code)]
     fn get_rotation(&self) -> f64 {
         self.delta_r
     }
@@ -104,6 +105,7 @@ impl Part {
         self.surface
     }
 
+    #[allow(dead_code)]
     fn get_density(&self, index: usize) -> f64 {
         let bmp = self.get_bitmap(index);
         let (width, height) = bmp.get_dims();

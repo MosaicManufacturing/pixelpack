@@ -155,7 +155,7 @@ impl<'a, Shape: PlateShape> Placer<'a, Shape> {
             for r in make_rot_iter() {
                 let vr = (r + self.rotate_offset as usize) % rs;
                 part.set_rotation(vr as i32);
-                let mut cur_rect = None;
+                let cur_rect;
                 let bmp = part.get_bitmap();
 
                 let score = {

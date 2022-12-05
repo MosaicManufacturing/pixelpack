@@ -160,6 +160,7 @@ impl Model {
     }
 
     //noinspection DuplicatedCode
+    #[allow(dead_code)]
     pub(crate) fn rotate_z(&self, r: f64) -> Self {
         self.clone_model_with_point_transform(|Point3D { x, y, .. }| {
             let (x_, y_) = plater::util::apply_rotation_f64((*x, *y), r);
@@ -194,6 +195,7 @@ impl Model {
         })
     }
 
+    #[allow(dead_code)]
     pub(crate) fn center(&self) -> Self {
         let min_p = self.min();
         let max_p = self.max();

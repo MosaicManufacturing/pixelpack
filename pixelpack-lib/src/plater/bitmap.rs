@@ -2,7 +2,6 @@ use std::cmp::{max, min};
 
 use crate::plater::util;
 
-#[derive(Debug)]
 pub struct Bitmap {
     // Image dimensions
     pub(crate) width: i32,
@@ -181,7 +180,9 @@ impl Bitmap {
         }
     }
 
+
     // This only copies if other is fully contained in self
+    #[allow(dead_code)]
     pub(crate) fn copy_from(&mut self, other: &Self, off_x: i32, off_y: i32) -> Option<()> {
         if !(other.width <= self.width && other.height <= self.height) {
             return None;
@@ -196,47 +197,6 @@ impl Bitmap {
 
             let dest_base_i = (off_x + (self.width * (i as i32 + off_y))) as usize;
             let dest_slice = &mut (dest)[dest_base_i..dest_base_i + other.width as usize];
-
-            dest_slice.copy_from_slice(src_slice);
-        }
-
-        Some(())
-    }
-
-    // This only copies if other is fully contained in self
-    pub(crate) fn copy_from_with_update(
-        &mut self,
-        other: &Self,
-        off_x: i32,
-        off_y: i32,
-    ) -> Option<()> {
-        let common_width = min(self.width - off_x, other.width) as usize;
-        let common_height = min(self.height - off_y, other.height) as usize;
-
-        let src = other.data.as_slice();
-        let dest = self.data.as_mut_slice();
-
-        for i in 0..common_height {
-            let src_base_i = (other.width * i as i32) as usize;
-            let src_slice = &(&src)[src_base_i..src_base_i + common_width];
-
-            let dest_base_i = (off_x + (self.width * (i as i32 + off_y))) as usize;
-            let dest_slice = &mut (dest)[dest_base_i..dest_base_i + common_width];
-
-            let y = off_y * self.width;
-            for (i, (old_pixel, new_pixel)) in dest_slice.iter().zip(src_slice.iter()).enumerate() {
-                if *new_pixel == 0 {
-                    continue;
-                }
-
-                if *old_pixel == *new_pixel {
-                    continue;
-                }
-
-                self.s_x += off_x as i64 + i as i64;
-                self.s_y += y as i64;
-                self.pixels += 1;
-            }
 
             dest_slice.copy_from_slice(src_slice);
         }
@@ -378,6 +338,7 @@ impl Bitmap {
         trimmed
     }
 
+    #[allow(dead_code)]
     fn grow(&self, dx: i32, dy: i32) -> Self {
         let new_width = self.width + (2 * dx);
         let new_height = self.height + (2 * dy);

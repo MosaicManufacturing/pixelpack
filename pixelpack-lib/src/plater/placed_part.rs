@@ -37,6 +37,7 @@ impl<'a> PlacedPart<'a> {
         self.rotation = r;
     }
 
+    #[allow(dead_code)]
     fn get_part(&self) -> &Part {
         self.part
     }
@@ -63,6 +64,7 @@ impl<'a> PlacedPart<'a> {
 
     // get_rotation returns the rotation about the Z axis at the Part's center
     // point as placed, in radians.
+    #[allow(dead_code)]
     fn get_rotation(&self) -> f64 {
         (self.rotation as f64) * self.part.delta_r
     }
@@ -71,6 +73,7 @@ impl<'a> PlacedPart<'a> {
         self.part.get_surface()
     }
 
+    #[allow(dead_code)]
     fn get_g_dist(&self) -> f64 {
         let mut has_score = false;
         let mut score = 0.0;

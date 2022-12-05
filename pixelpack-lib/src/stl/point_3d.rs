@@ -25,6 +25,7 @@ impl Point3D {
         }
     }
 
+    #[allow(dead_code)]
     fn dot_product(&self, other: &Self) -> f64 {
         self.x * other.x + self.y * other.y + self.x * other.z
     }

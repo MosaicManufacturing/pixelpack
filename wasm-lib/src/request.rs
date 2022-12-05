@@ -10,14 +10,14 @@ use pixelpack::plater::request::{Algorithm, default_sort_modes};
 use pixelpack::plater::solution::Solution;
 use pixelpack::stl::util::{deg_to_rad, rad_to_deg};
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Deserialize, Debug)]
 pub struct WasmArgs {
     pub options: RequestOptions,
     pub model_options: Vec<ModelOptions>,
     pub offsets: Vec<u32>,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Deserialize, Debug)]
 pub struct RequestOptions {
     width: i32,
     height: i32,
@@ -33,7 +33,7 @@ pub struct RequestOptions {
     bed_center_y: f64,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Deserialize, Debug)]
 pub struct ModelOptions {
     id: String,
     locked: bool,
@@ -45,14 +45,14 @@ pub struct ModelOptions {
     rotation_interval: i32,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Debug)]
 pub struct ModelResult {
     center_x: f64,
     center_y: f64,
     rotation: f64,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Debug)]
 pub struct PlacingResult {
     models: HashMap<String, ModelResult>,
     plate_width: f64,
