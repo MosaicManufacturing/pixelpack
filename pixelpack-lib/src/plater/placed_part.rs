@@ -1,4 +1,3 @@
-use log::info;
 use crate::plater::bitmap::Bitmap;
 use crate::plater::part::Part;
 use crate::plater::placement::Placement;

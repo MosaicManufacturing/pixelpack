@@ -121,7 +121,7 @@ impl Iterator for StraightLineIter {
                     None
                 }
             }
-            Empty => None,
+            StraightLineIter::Empty => None,
         }
     }
 }
@@ -287,11 +287,6 @@ impl <A: Eq, T: Iterator<Item=A>> Iterator for NoConsecutiveDuplicates<A, T> {
         }
         unreachable!()
     }
-}
-
-struct Point2D {
-    x: isize,
-    y: isize
 }
 
 #[derive(Ord, Eq, PartialOrd, PartialEq)]

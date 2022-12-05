@@ -13,6 +13,7 @@ use crate::stl::volume::Volume;
 
 // Writing to a file
 impl Model {
+    //noinspection SpellCheckingInspection
     fn write_ascii<T: Write>(&self, writer: &mut T, resolution: f64) -> std::io::Result<()> {
         writeln!(writer, "solid plate")?;
 

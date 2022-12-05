@@ -159,6 +159,7 @@ impl Model {
         self.translate_consume(-x, -y, -z)
     }
 
+    //noinspection DuplicatedCode
     pub(crate) fn rotate_z(&self, r: f64) -> Self {
         self.clone_model_with_point_transform(|Point3D { x, y, .. }| {
             let (x_, y_) = plater::util::apply_rotation_f64((*x, *y), r);
@@ -167,6 +168,7 @@ impl Model {
         })
     }
 
+    //noinspection DuplicatedCode
     fn rotate_y(&self, r: f64) -> Self {
         self.clone_model_with_point_transform(|Point3D { x, z, .. }| {
             let (x_, z_) = plater::util::apply_rotation_f64((*x, *z), r);
@@ -175,6 +177,7 @@ impl Model {
         })
     }
 
+    //noinspection DuplicatedCode
     fn rotate_x(&self, r: f64) -> Self {
         self.clone_model_with_point_transform(|Point3D { y, z, .. }| {
             let (y_, z_) = plater::util::apply_rotation_f64((*y, *z), r);
