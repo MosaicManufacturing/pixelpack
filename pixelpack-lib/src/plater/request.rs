@@ -134,7 +134,7 @@ impl<S: PlateShape> Request<S> {
     // Replace with explicit error handling
     pub fn spiral_place<T>(&self, on_solution_found: impl Fn(&Solution) -> T) -> T {
         let mut placer = Placer::new(self);
-        placer.sort_parts(SortMode::SurfaceDec);
+        placer.sort_parts(SurfaceDec);
 
         let mut placers = vec![placer];
 

@@ -123,9 +123,9 @@ pub(crate) const GRAVITY_MODE_LIST: [GravityMode; 3] = [GravityYX, GravityXY, Gr
 impl From<GravityMode> for usize {
     fn from(x: GravityMode) -> Self {
         match x {
-            GravityMode::GravityYX => 0,
-            GravityMode::GravityXY => 1,
-            GravityMode::GravityEQ => 2,
+            GravityYX => 0,
+            GravityXY => 1,
+            GravityEQ => 2,
         }
     }
 }
@@ -221,9 +221,9 @@ impl<'a, Shape: PlateShape> Placer<'a, Shape> {
 
     pub(crate) fn set_gravity_mode(&mut self, gravity_mode: GravityMode) {
         let (new_x_coef, new_y_coef) = match gravity_mode {
-            GravityMode::GravityYX => (1.0, 10.0),
-            GravityMode::GravityXY => (10.0, 1.0),
-            GravityMode::GravityEQ => (1.0, 1.0),
+            GravityYX => (1.0, 10.0),
+            GravityXY => (10.0, 1.0),
+            GravityEQ => (1.0, 1.0),
         };
 
         self.x_coef = new_x_coef;

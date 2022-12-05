@@ -1,6 +1,10 @@
 use std::cmp::{max, min};
-use crate::plater::spiral::StraightLine::{XFixed, YFixed};
-use crate::plater::spiral::StraightLineIter::{Empty, XIter, YIter};
+
+enum StraightLineIter {
+    XIter {cur: InclusiveRange, x: isize},
+    YIter {cur: InclusiveRange, y: isize},
+    Empty
+}
 
 #[derive(PartialEq, Debug)]
 struct InclusiveRange {
@@ -33,7 +37,7 @@ impl Rectangle {
     fn intersection(&self, other: &StraightLine) -> StraightLine {
         match other {
             // max, min
-            XFixed { x, ys } => {
+            StraightLine::XFixed { x, ys } => {
                 if self.x_range.contains(*x) && ys.intersects(&self.y_range) {
                     StraightLine::XFixed { x: *x, ys: InclusiveRange {
                         start: max(self.y_range.start, ys.start),
@@ -44,8 +48,7 @@ impl Rectangle {
                     StraightLine::Empty
                 }
             }
-            // TODO
-            YFixed { y, xs } => {
+            StraightLine::YFixed { y, xs } => {
                 if self.y_range.contains(*y) && xs.intersects(&self.x_range) {
                     StraightLine::YFixed { y: *y, xs: InclusiveRange {
                         start: max(self.x_range.start, xs.start),
@@ -74,13 +77,13 @@ type Point = (isize, isize);
 impl StraightLine {
     fn new(x: Point, y: Point) -> Self {
         if x.0 == y.0 {
-            XFixed {x: x.0, ys: InclusiveRange{
+            StraightLine::XFixed {x: x.0, ys: InclusiveRange{
                 start: min(x.1, y.1),
                 stop: max(x.1, y.1),
                 step: if x.1 < y.1 {1} else {-1}
             }}
         } else if x.1 == y.1 {
-            YFixed {y: x.1, xs: InclusiveRange{
+            StraightLine::YFixed {y: x.1, xs: InclusiveRange{
                 start: min(x.0, y.0),
                 stop: max(x.0, y.0),
                 step: if x.0 < y.0 {1} else {-1}
@@ -92,17 +95,11 @@ impl StraightLine {
 
     fn into_iter(self) -> StraightLineIter {
         match self {
-            StraightLine::XFixed { x, ys } => XIter {cur: ys, x},
-            StraightLine::YFixed { y, xs } => YIter {cur: xs, y},
-            StraightLine::Empty => Empty
+            StraightLine::XFixed { x, ys } => StraightLineIter::XIter {cur: ys, x},
+            StraightLine::YFixed { y, xs } => StraightLineIter::YIter {cur: xs, y},
+            StraightLine::Empty => StraightLineIter::Empty
         }
     }
-}
-
-enum StraightLineIter {
-    XIter {cur: InclusiveRange, x: isize},
-    YIter {cur: InclusiveRange, y: isize},
-    Empty
 }
 
 impl Iterator for StraightLineIter {
