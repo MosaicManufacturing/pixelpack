@@ -325,12 +325,14 @@ impl<'a, Shape: PlateShape> Placer<'a, Shape> {
 
         let res= Clone::clone(&self.smallest_observed_plate);
 
-        let f=  |i| {
+        let mut f=  |i| {
             if let Some(x) = res {
                 if i >= x {
                     return None;
                 }
             }
+
+            self.current_bounding_box = None;
 
             let shape = if i < n  {
                 shape.intersect_square(m + (i as f64 - n as f64 + 1.0) * expand_mm)?
