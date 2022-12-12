@@ -145,7 +145,7 @@ impl<'a, Shape: PlateShape> Placer<'a, Shape> {
         let initial_box = self.current_bounding_box.clone();
 
         let spiral =
-            spiral_iterator(self.request.delta, plate.width, plate.height)
+            spiral_iterator(self.request.delta, plate.width, plate.height, self.request.plate_shape.width(), self.request.plate_shape.height())
                 .map(|(x,y) | {
                     (x + plate.center_x - plate.width/2.0, y + plate.center_y - plate.height/2.0)
                 });

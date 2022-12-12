@@ -292,9 +292,23 @@ impl <A: Eq, T: Iterator<Item=A>> Iterator for NoConsecutiveDuplicates<A, T> {
 #[derive(Ord, Eq, PartialOrd, PartialEq)]
 struct PairWrapper<A, B> ((A, B));
 
-pub(crate) fn spiral_iterator(delta: f64, width: f64, height: f64) -> impl Iterator<Item = (f64, f64)> {
+pub(crate) fn spiral_iterator(delta: f64, width: f64, height: f64, original_width: f64, original_height: f64) -> impl Iterator<Item = (f64, f64)> {
     let d_width = f64::floor(width/delta) as isize;
     let d_height = f64::floor(height/delta) as isize;
+
+    let origin = {
+        let (w, h) = {
+            if original_width < width {
+                (original_width, original_height)
+            } else {
+                (width, height)
+            }
+        };
+
+        (f64::floor(w/delta) as isize, f64::floor(h/delta) as isize)
+    };
+
+
 
 
     let rect = Rectangle { x_range: InclusiveRange {
@@ -306,10 +320,6 @@ pub(crate) fn spiral_iterator(delta: f64, width: f64, height: f64) -> impl Itera
         stop: d_height,
         step: 1
     } };
-
-    let origin = (d_width/2, d_height/2);
-    // info!("ORIGIN");
-
     let distances = (1..)
         .flat_map(|n| [n, n]);
 
