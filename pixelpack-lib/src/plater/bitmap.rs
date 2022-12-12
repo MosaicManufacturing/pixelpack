@@ -116,7 +116,7 @@ impl Bitmap {
         ppm
     }
 
-    fn get_point(&self, x: i32, y: i32) -> u8 {
+    pub(crate) fn get_point(&self, x: i32, y: i32) -> u8 {
         if x < 0 || y < 0 || x >= self.width || y >= self.height {
             0
         } else {
