@@ -2,6 +2,7 @@
 use crate::plater::bitmap::Bitmap;
 
 pub trait PlateShape: Clone + Send + Sync {
+    fn resolution(&self) -> f64;
     fn width(&self) -> f64;
     fn height(&self) -> f64;
     fn string(&self) -> String;
@@ -27,6 +28,13 @@ impl Shape {
 }
 
 impl PlateShape for Shape {
+    fn resolution(&self) -> f64 {
+        match self {
+            Shape::Rectangle(r) => PlateShape::resolution(r),
+            Shape::Circle(c) => PlateShape::resolution(c),
+        }
+    }
+
     fn width(&self) -> f64 {
         match self {
             Shape::Rectangle(r) => PlateShape::width(r),
@@ -89,6 +97,10 @@ impl PlateRectangle {
 }
 
 impl PlateShape for PlateRectangle {
+    fn resolution(&self) -> f64 {
+        self.resolution
+    }
+
     fn width(&self) -> f64 {
         self.width
     }
@@ -144,6 +156,10 @@ impl PlateCircle {
 }
 
 impl PlateShape for PlateCircle {
+    fn resolution(&self) -> f64 {
+        self.resolution
+    }
+
     fn width(&self) -> f64 {
         self.diameter
     }
