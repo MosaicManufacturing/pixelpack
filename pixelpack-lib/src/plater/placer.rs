@@ -364,8 +364,10 @@ impl<'a, Shape: PlateShape> Placer<'a, Shape> {
             )?;
 
 
-            if !all_parts_can_be_attempted(&unlocked_parts, &shape) {
+            if i <= n && !all_parts_can_be_attempted(&unlocked_parts, &shape) {
 
+                return None;
+            } else if i > n && !all_parts_can_eventually_be_attempted(&unlocked_parts, &shape) {
                 return None;
             }
 
@@ -585,6 +587,21 @@ fn all_parts_can_be_attempted<S: PlateShape>(parts: &Vec<PlacedPart>, plate_shap
             .map(|x| {
                 x.width as f64 <= plate_shape.width()
                     && x.height as f64 <= plate_shape.height()
+            }).any(|x| x))
+        .all(|x| x)
+}
+
+// If for every model, there exists some rotation that fits try it
+fn all_parts_can_eventually_be_attempted<S: PlateShape>(parts: &Vec<PlacedPart>, plate_shape: &S) -> bool {
+    parts
+        .iter()
+        .map(|part| part
+            .part
+            .bitmaps
+            .iter()
+            .map(|x| {
+                x.width as f64 <= plate_shape.width()
+                    || x.height as f64 <= plate_shape.height()
             }).any(|x| x))
         .all(|x| x)
 }
