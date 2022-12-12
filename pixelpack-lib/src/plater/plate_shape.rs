@@ -120,7 +120,7 @@ impl PlateShape for PlateRectangle {
     fn expand(&self, size: f64) -> Self {
         PlateRectangle::new(
             self.width / self.resolution + size,
-            self.height / self.resolution + size,
+            self.height / self.resolution,
             self.resolution,
         )
     }
