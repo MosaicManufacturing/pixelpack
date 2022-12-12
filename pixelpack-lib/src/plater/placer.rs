@@ -75,6 +75,17 @@ impl Rect {
             center_y: (top_height + bottom_height)/2.0
         }
     }
+
+    fn get_points(&self) -> [(f64, f64); 4] {
+        let w2 = self.width/2.0;
+        let h2 = self.height/2.0;
+        [
+            (self.center_x + w2, self.center_y + h2),
+            (self.center_x - w2, self.center_y + h2),
+            (self.center_x + w2, self.center_y - h2),
+            (self.center_x - w2, self.center_y - h2)
+        ]
+    }
 }
 
 
