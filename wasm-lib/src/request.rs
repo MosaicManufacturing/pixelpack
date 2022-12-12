@@ -42,7 +42,7 @@ pub struct ModelOptions {
     center_x: f64,
     center_y: f64,
     spacing: f64,
-    rotation_interval: i32,
+    rotation_interval: f64,
 }
 
 #[derive(Serialize, Debug)]
@@ -130,8 +130,8 @@ pub fn handle_request(
 
         bmp.dilate((request.spacing/request.precision) as i32);
 
-        let delta_r = if model.rotation_interval > 0 {
-            deg_to_rad(model.rotation_interval as f64)
+        let delta_r = if model.rotation_interval > 0.0 {
+            deg_to_rad(model.rotation_interval)
         } else {
             request.delta_r
         };
