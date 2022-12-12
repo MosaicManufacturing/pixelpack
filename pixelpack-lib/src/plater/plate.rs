@@ -21,11 +21,50 @@ pub struct Plate<'a> {
     precision: f64,
     pub(crate) parts: Vec<PlacedPart<'a>>,
     bitmap: Bitmap,
-    center_x: f64,
-    center_y: f64
+    pub center_x: f64,
+    pub center_y: f64
 }
 
 impl<'a> Plate<'a> {
+    pub(crate) fn align(&mut self, original_width: f64, original_height: f64) {
+        let (bottom_space, top_space, left_space, right_space) = self.bitmap.get_bound();
+        self.center();
+
+        let centered_width = self.width - left_space - right_space;
+        let tr_x = (original_width - centered_width)/2.0;
+
+        for part in &mut self.parts {
+            let (x, y) = (part.get_x(), part.get_y());
+            part.set_offset(x - tr_x, y);
+        }
+
+    }
+
+    pub(crate) fn center(&mut self) {
+        let (bottom_space, top_space, left_space, right_space) = self.bitmap.get_bound();
+        let (width, height) = self.bitmap.get_dims();
+
+        info!("Centering factors {} {} {} {}", bottom_space, top_space, left_space, right_space);
+
+        let new_ref = (left_space, bottom_space);
+        let (new_width, new_height) = (width as f64 - left_space - right_space, height as f64 - bottom_space - top_space);
+        let new_center = (new_ref.0 + new_width/2.0, new_ref.1 + new_height/2.0);
+
+        info!("Bounding {} {}", new_width, new_height);
+
+
+
+        let (tr_x, tr_y) = ((width as f64)/2.0 - new_center.0, (height as f64)/2.0 - new_center.1);
+
+
+        info!("The translation is {} {}", tr_x, tr_y);
+        for part in &mut self.parts {
+            let (x, y) = (part.get_x(), part.get_y());
+            part.set_offset(x + tr_x, y + tr_y);
+        }
+
+    }
+
     pub(crate) fn new<S: PlateShape>(shape: &S, precision: f64, center_x: f64, center_y: f64) -> Self {
         let width = shape.width();
         let height = shape.height();
