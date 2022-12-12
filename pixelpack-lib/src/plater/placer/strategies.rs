@@ -177,7 +177,18 @@ impl<'a, Shape: PlateShape> Placer<'a, Shape> {
                     };
 
 
-                    let area = merged.height * merged.width;
+                    // let area = {
+                    //     let mut acc = 0.0;
+                    //     for(x, y) in cur.get_points() {
+                    //         acc += f64::powf(x - self.request.center_x, 2.0)
+                    //             + f64::powf(y - self.request.center_y, 2.0);
+                    //     }
+                    //     acc
+                    // };
+
+
+                    let area = f64::powf(merged.height, 2.0) + f64::powf(merged.width, 2.0);
+                    // let area = merged.width * merged.height;
                     cur_rect = Some(merged);
                     area
                 };
