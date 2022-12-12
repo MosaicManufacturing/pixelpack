@@ -150,6 +150,7 @@ impl<'a, Shape: PlateShape> Placer<'a, Shape> {
                     (x + plate.center_x - plate.width/2.0, y + plate.center_y - plate.height/2.0)
                 });
 
+        let mut dist = f64::MAX;
         for (x, y) in spiral {
             part.set_offset(x, y);
             for r in make_rot_iter() {
@@ -193,15 +194,17 @@ impl<'a, Shape: PlateShape> Placer<'a, Shape> {
                     area
                 };
 
+                let cur_dist = f64::powf(x - plate.center_x, 2.0) +  f64::powf(y - plate.center_y, 2.0);
 
-                if !found || score < better_score {
+                if !found || score < better_score || (f64::abs(score - better_score) < 0.001 && cur_dist < dist) {
                     if plate.can_place(&part)  {
                         found = true;
                         better_x = x;
                         better_y = y;
                         better_r = vr;
                         better_score = score;
-                        self.current_bounding_box = cur_rect
+                        self.current_bounding_box = cur_rect;
+                        dist = cur_dist;
                         // break 'outer;
                     }
                 }
