@@ -321,18 +321,18 @@ impl<'a, Shape: PlateShape> Placer<'a, Shape> {
     }
 
     fn place_single_plate_exp(&mut self) -> Option<Solution<'a>> {
-        let shape = Clone::clone(&self.request.plate_shape);
+        let original_shape = Clone::clone(&self.request.plate_shape);
 
         for (i, part) in self.unlocked_parts.iter_mut().enumerate() {
             part.insertion_index = i;
         }
 
-        let expand_mm = 1.0;
+        let expand_mm = 5.0;
 
-        let m = f64::min(shape.width(), shape.height());
+        let m = f64::min(original_shape.width(), original_shape.height());
         // 32, 128
-        let n = 512;
-        let limit = 2048;
+        let n = 1024;
+        let limit = 4096;
 
         let res= Clone::clone(&self.smallest_observed_plate);
 
@@ -343,14 +343,16 @@ impl<'a, Shape: PlateShape> Placer<'a, Shape> {
                 }
             }
 
+            let mut should_align_to_bed = false;
             self.current_bounding_box = None;
 
-            let shape = if i < n  {
-                shape.intersect_square(m + (i as f64 - n as f64 + 1.0) * expand_mm)?
+            let mut shape = if i < n  {
+                original_shape.intersect_square(m + (i as f64 - n as f64 + 1.0) * expand_mm)?
             } else if i == n {
-                shape.clone()
+                original_shape.clone()
             } else {
-                shape.expand( f64::powf((i - n) as f64, 1.0) as f64 * expand_mm)
+                should_align_to_bed = true;
+                original_shape.expand(original_shape.width()/self.request.precision)
             };
 
             // info!("For {}, width: {}, height: {}", i, shape.width(), shape.height());
@@ -367,6 +369,7 @@ impl<'a, Shape: PlateShape> Placer<'a, Shape> {
             if i <= n && !all_parts_can_be_attempted(&unlocked_parts, &shape) {
 
                 return None;
+                // Add special handling if some parts will never fit
             } else if i > n && !all_parts_can_eventually_be_attempted(&unlocked_parts, &shape) {
                 return None;
             }
@@ -375,11 +378,31 @@ impl<'a, Shape: PlateShape> Placer<'a, Shape> {
                 match self.place_unlocked_part(&mut plate, cur_part) {
                     None => {
                     }
-                    Some(_) => {
-                        return None;
+                    Some(part) => {
+                        if i <= n {
+                            return None;
+                        }
+                        should_align_to_bed = true;
+                        info!("RESIZING");
+                        unlocked_parts.push(part);
+                        shape = shape.expand(original_shape.width()/ original_shape.resolution());
+                        plate = Plate::make_from_shape(&mut plate, &shape)
                     }
                 }
             }
+
+            // Centering models is only correct if there are no locked parts
+            if self.locked_parts.is_empty() {
+                if should_align_to_bed {
+                    info!("ALIGN");
+                    let width = self.request.plate_shape.width();
+                    let height = self.request.plate_shape.height();
+                    plate.align( width, height);
+                } else {
+                    plate.center();
+                }
+            }
+
 
             info!("{} iteration complete", i);
             let mut solution = Solution::new();
@@ -388,7 +411,20 @@ impl<'a, Shape: PlateShape> Placer<'a, Shape> {
             Some(solution)
         };
 
-        exponential_search( limit + 1, f).map(|x| x.0)
+        let smaller = exponential_search( n + 1, &mut f).map(|x| x.0);
+        if smaller.is_some() {
+            return smaller;
+        }
+
+        for i in (n+1)..(n+50) {
+            info!("Attempt {}", i);
+            let res = f(i);
+            if res.is_some() {
+                return res;
+            }
+        }
+
+        None
     }
 
     fn place_multi_plate(&mut self) -> Solution {
