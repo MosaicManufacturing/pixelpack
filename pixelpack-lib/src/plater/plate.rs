@@ -42,22 +42,28 @@ impl<'a> Plate<'a> {
         }
     }
 
-    pub(crate) fn make_from<S: PlateShape>(mut self, shape: &S, precision: f64) -> Self {
-        let width = shape.width();
-        let height = shape.height();
+    pub(crate) fn make_from_shape<S: PlateShape>(&mut self, shape: &S) -> Self {
 
-        self.width = width;
-        self.height = height;
-        self.bitmap = Bitmap::new((width / precision) as i32, (height / precision) as i32);
+       let mut next_plate = Plate::new(shape
+                                        , self.precision
+                                        , self.center_x
+                                        , self.center_y);
 
         let mut new_parts = Vec::with_capacity(self.parts.len());
         std::mem::swap(&mut new_parts, &mut self.parts);
 
-        for part in new_parts {
-            self.place(part);
+        // Going to have to copy these bitmaps directly pixel by pixel
+        for mut part in new_parts {
+            let (x, y) = (part.get_x(), part.get_y());
+            part.set_offset(x, y);
+
+            next_plate.place(part);
         }
 
-        self
+        info!("{}", self.bitmap.to_ppm());
+        info!("{}", next_plate.bitmap.to_ppm());
+
+        next_plate
     }
 
     pub fn make_plate_with_placed_parts<S: PlateShape>(
