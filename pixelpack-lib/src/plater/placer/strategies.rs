@@ -34,7 +34,7 @@ impl<'a, Shape: PlateShape> Placer<'a, Shape> {
         if k.is_some() {
             return None;
         }
-        let rs = f64::ceil(PI * 2.0 / self.request.delta_r) as usize;
+        let rs = f64::ceil(PI * 2.0 / part.part.delta_r) as usize;
 
         let res =  match self.request.algorithm.strategy {
             Strategy::PixelPack => Placer::pixel_place(self, rs, plate, &mut part),
