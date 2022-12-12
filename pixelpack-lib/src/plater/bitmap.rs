@@ -355,4 +355,70 @@ impl Bitmap {
 
         expanded
     }
+
+
+    pub fn get_bound(&self) -> (f64, f64, f64, f64) {
+        let (width, height) = self.get_dims();
+
+        let bottom_space = {
+            let mut counter = 0;
+            'outer: for j in 0..height {
+                for i in 0..width {
+                    if self.get_point(i, j) != 0 {
+                        break 'outer;
+                    }
+                }
+
+                counter += 1;
+            }
+
+            counter as f64
+        };
+
+        let top_space = {
+            let mut counter = 0;
+            'outer: for j in (0..height).rev() {
+                for i in 0..width {
+                    if self.get_point(i, j) != 0 {
+                        break 'outer;
+                    }
+                }
+
+                counter += 1;
+            }
+
+            counter as f64
+        };
+
+
+        let left_space = {
+            let mut counter = 0;
+            'outer: for i in 0..width {
+                for j in 0..height {
+                    if self.get_point(i, j) != 0 {
+                        break 'outer;
+                    }
+                }
+
+                counter += 1;
+            }
+            counter as f64
+        };
+
+        let right_space = {
+            let mut counter = 0;
+            'outer: for i in (0..width).rev() {
+                for j in 0..height {
+                    if self.get_point(i, j) != 0 {
+                        break 'outer;
+                    }
+                }
+
+                counter += 1;
+            }
+            counter as f64
+        };
+
+        (bottom_space, top_space, left_space, right_space)
+    }
 }
