@@ -374,6 +374,13 @@ impl<'a, Shape: PlateShape> Placer<'a, Shape> {
                 return None;
             }
 
+
+            // Determine current bounding box using pixel data from bitmap
+
+            // if !self.locked_parts.is_empty() {
+            //     plate
+            // }
+
             while let Some(cur_part) = unlocked_parts.pop() {
                 match self.place_unlocked_part(&mut plate, cur_part) {
                     None => {
