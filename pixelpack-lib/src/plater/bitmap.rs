@@ -160,8 +160,8 @@ impl Bitmap {
                 for x in 0..width {
                     if old_version.at(x as i32, y as i32) == 0 {
                         let mut score = 0;
-                        for dx in -1..1 {
-                            for dy in -1..1 {
+                        for dx in -1..=1 {
+                            for dy in -1..=1 {
                                 if dx == 0 && dy == 0 {
                                     continue;
                                 }
