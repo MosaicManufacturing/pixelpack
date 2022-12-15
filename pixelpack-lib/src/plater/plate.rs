@@ -69,13 +69,16 @@ impl<'a> Plate<'a> {
         let width = shape.width();
         let height = shape.height();
 
+        let mut bitmap = Bitmap::new((width / precision) as i32, (height / precision) as i32);
+        shape.mask_bitmap(&mut bitmap, precision);
+
         Plate {
             plate_id: generate_unique_plate_id(),
             precision,
             width,
             height,
             parts: vec![],
-            bitmap: Bitmap::new((width / precision) as i32, (height / precision) as i32),
+            bitmap,
             center_x,
             center_y
         }
