@@ -195,6 +195,10 @@ impl PlateShape for PlateCircle {
     }
 
     fn intersect_square(&self, size: f64) -> Option<Self> {
+        if size <= 0.0 {
+            return None;
+        }
+
         let diameter= self.diameter / self.resolution - size;
         if diameter <= 0.0 {
             None
