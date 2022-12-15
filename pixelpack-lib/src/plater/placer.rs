@@ -643,8 +643,7 @@ fn all_parts_can_eventually_be_attempted<S: PlateShape>(parts: &Vec<PlacedPart>,
             .bitmaps
             .iter()
             .map(|x| {
-                x.width as f64 <= plate_shape.width()
-                    || x.height as f64 <= plate_shape.height()
+                    x.height as f64 <= plate_shape.height()
             }).any(|x| x))
         .all(|x| x)
 }
