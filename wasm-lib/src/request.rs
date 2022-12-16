@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use anyhow::{ bail, Context};
 
 use log::info;
 use serde::{Deserialize, Serialize};
@@ -72,20 +73,7 @@ pub fn handle_request(
     models: Vec<ModelOptions>,
     bitmaps: Vec<&[u8]>,
     alg: Algorithm
-) -> Option<PlacingResult> {
-    // Each model has a bunch of orientations with different dimensions
-
-    // width and height are scaled by resolution param
-
-    // let (width, height) = models
-    //     .iter()
-    //     .map(|x| (x.width, x.height))
-    //     .reduce(|x, y| (i32::max(x.0, y.0), i32::max(x.1, y.1)))
-    //     .map(|(x, y)|  (x as f64/opts.resolution, y as f64/opts.resolution))
-    //     .map(|(x, y)| (f64::max(x, opts.width as f64), f64::max(y, opts.height as f64)))?;
-    //
-    // opts.width = 10;
-    // opts.height = 10;
+) -> anyhow::Result<PlacingResult> {
 
     // Use default
     let resolution = if opts.resolution > 0.0 {
@@ -120,13 +108,18 @@ pub fn handle_request(
     request.delta_r = deg_to_rad(opts.rotation_interval);
     request.sort_modes = default_sort_modes();
 
+    if models.len() != bitmaps.len() {
+        bail!("Models len {} != bitmaps len {}", models.len(), bitmaps.len())
+    }
+
+
     for (i, model) in models.iter().enumerate() {
         info!("Adding model {} {}", model.id, bitmaps[i].len());
         model_opts_map.insert(model.id.to_string(), model);
 
         let mut bmp =
-            Bitmap::new_bitmap_with_data(model.width, model.height, bitmaps[i]).unwrap();
-
+            Bitmap::new_bitmap_with_data(model.width, model.height, bitmaps[i])
+                .with_context(|| format!("Could not load bitmap[{}] with model {}", i, model.id))?;
 
         bmp.dilate((request.spacing/request.precision) as i32);
 
@@ -154,11 +147,13 @@ pub fn handle_request(
             plate_width,
             plate_height,
             model.locked,
-        );
+        ).with_context(|| format!("Could not create part for model {}", model.id))?;
 
         info!("Part loaded");
 
-        request.add_part(part).unwrap();
+        request
+            .add_part(part)
+            .with_context(|| format!("Could not add part {}", model.id.to_string()))?;
     }
 
     info!("Loaded all parts");
@@ -166,7 +161,10 @@ pub fn handle_request(
     let on_solution = |sol: &Solution| {
         let mut result = HashMap::new();
 
-        let plate = &sol.get_plates()[0];
+        let plate = (&sol)
+            .get_plates()
+            .get(0)
+            .with_context(|| format!("No plates found"))?;
 
 
         info!("{}", plate.get_ppm());
@@ -174,7 +172,9 @@ pub fn handle_request(
         for placement in plate.get_placements() {
             info!("{:#?}", placement);
             let id = placement.id.to_owned();
-            let model_opts = model_opts_map.get(&id).unwrap();
+            let model_opts = model_opts_map
+                .get(&id)
+                .with_context(|| format!("Could not find {} in placement", id))?;
             // Center x and center y are funky when in locked mode
             if !model_opts.locked {
                 result.insert(
@@ -190,39 +190,12 @@ pub fn handle_request(
         }
 
         let (plate_width, plate_height) = plate.get_size();
-        PlacingResult {
+        anyhow::Ok(PlacingResult {
             models: result,
             plate_width,
             plate_height
-        }
+        })
     };
 
-
-    // let mut all_results = vec![];
-    // for (i, tolerance) in [(10.0, 40), (5.0, 30), (2.5,20), (1.25,15), (0.75, 10)] {
-    //     info!("I {}, tolerance {}", i, tolerance);
-    //     request.delta = i as f64 * resolution;
-    //     let result = request.process(on_solution);
-    //     if result.plate_width <= plate_width {
-    //         info!("{:#?}", result);
-    //         return Some(result);
-    //     } else {
-    //         if result.plate_width - plate_width > tolerance as f64 {
-    //             info!("Fail {} {} tolerance {}", result.plate_width, plate_width, tolerance);
-    //             all_results.push(result);
-    //             break;
-    //         }
-    //         all_results.push(result);
-    //     }
-    //
-    // }
-    //
-    // all_results.sort_by(|x, y| f64::total_cmp(&y.plate_width, &x.plate_width));
-    // let result = all_results.pop();
-    // info!("{:#?}", result);
-    //
-    // result
-
-    Some(request.process(on_solution))
-
+    request.process(on_solution)
 }

@@ -1,4 +1,5 @@
 use std::f64::consts::PI;
+use log::info;
 
 use crate::plater::bitmap::Bitmap;
 
@@ -26,10 +27,10 @@ impl Part {
         precision: f64,
         delta_r: f64,
         spacing: f64,
-        _plate_width: f64,
-        _plate_height: f64,
+        plate_width: f64,
+        plate_height: f64,
         locked: bool,
-    ) -> Self {
+    ) ->  anyhow::Result<Self> {
         let mut num_bitmaps = f64::ceil(PI * 2.0 / delta_r) as i32;
         if locked {
             num_bitmaps = 1;
@@ -56,7 +57,7 @@ impl Part {
         let mut p = Part {
             precision,
             delta_r,
-            id,
+            id: id.to_string(),
             locked,
             bitmaps,
             center_y,
@@ -71,21 +72,22 @@ impl Part {
         for k in 0..num_bitmaps as usize {
             let Bitmap { width, height, .. } = &p.bitmaps[k];
 
-            p.surface += (width * height) as f64;
-            correct += 1;
-            //
-            // if *width as f64 * precision < plate_width && *height as f64 * precision < plate_height
-            // {
-            //     p.surface += (width * height) as f64;
-            //     correct += 1;
-            // } else {
-            //     p.bitmaps[k] = None;
-            // }
+            info!("WIDTH HEIGHT {} {}", width, height);
+
+            if *width as f64 * precision < plate_width + 2.0 * spacing
+                && *height as f64 * precision < plate_height + 2.0 * spacing
+            {
+                p.surface += (width * height) as f64;
+                correct += 1;
+            }
         }
 
+        if correct == 0 {
+            anyhow::bail!("None of the rotations of {} fit within Plate width {} height {}", id, plate_width, plate_height);
+        }
 
         p.surface /= correct as f64;
-        p
+        anyhow::Ok(p)
     }
 
     pub(crate) fn get_id(&self) -> &str {

@@ -11,6 +11,7 @@ rand = "0.8.5"
 itertools = "0.10.3"
 rayon = "1.5.3"
 byteorder = "1"
+anyhow = "1.0.66"
 
 log = "0.4.17"
 simple_logger = "2.3.0"

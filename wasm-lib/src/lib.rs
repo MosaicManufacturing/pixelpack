@@ -1,11 +1,30 @@
+use anyhow::{bail, Context};
 use js_sys::{Uint8Array};
 use log::{info, Level};
+use serde::Serialize;
 use wasm_bindgen::prelude::*;
 use pixelpack::plater::request::{Algorithm, BedExpansionMode, ConfigOrder, PointEnumerationMode, Strategy, ThreadingMode};
+use crate::PixelpackResult::{PackingError, Answer};
 
-use crate::request::{handle_request, WasmArgs};
+use crate::request::{handle_request, PlacingResult, WasmArgs};
 
 mod request;
+
+#[derive(Serialize)]
+#[serde(tag = "type", rename_all = "camelCase")]
+enum PixelpackResult {
+    PackingError { value: String},
+    Answer {value: PlacingResult}
+}
+
+impl From<anyhow::Result<PlacingResult>> for PixelpackResult {
+    fn from(value: anyhow::Result<PlacingResult>) -> Self {
+        match value {
+            Ok(value) => Answer {value},
+            Err(value) => PackingError {value: format!("{:?}", value)}
+        }
+    }
+}
 
 #[wasm_bindgen]
 pub fn decode_pixel_data(buf: &Uint8Array, options: JsValue) -> JsValue {
@@ -16,7 +35,9 @@ pub fn decode_pixel_data(buf: &Uint8Array, options: JsValue) -> JsValue {
         point_enumeration_mode: PointEnumerationMode::Row,
         bed_expansion_mode: BedExpansionMode::Exponential
     };
-    decode_pixel_data_generic(buf, options, alg)
+
+    let result: PixelpackResult = decode_pixel_data_generic(buf, options, alg).into();
+    serde_wasm_bindgen::to_value(&result).unwrap()
 }
 
 #[wasm_bindgen]
@@ -28,24 +49,27 @@ pub fn decode_pixel_spiral_pack(buf: &Uint8Array, options: JsValue) -> JsValue {
         point_enumeration_mode: PointEnumerationMode::Spiral,
         bed_expansion_mode: BedExpansionMode::Exponential
     };
-    decode_pixel_data_generic(buf, options, alg)
+
+    let result: PixelpackResult = decode_pixel_data_generic(buf, options, alg).into();
+    serde_wasm_bindgen::to_value(&result).unwrap()
 }
 
-pub fn decode_pixel_data_generic(buf: &Uint8Array, options: JsValue, alg: Algorithm) -> JsValue {
+pub fn decode_pixel_data_generic(buf: &Uint8Array, options: JsValue, alg: Algorithm) -> anyhow::Result<PlacingResult> {
     match console_log::init_with_level(Level::Debug) {
         Ok(_) => (),
         Err(e) => info!("Err occurred: {}",e)
     }
 
-    let args: WasmArgs = serde_wasm_bindgen::from_value(options)
-        .ok()
-        .expect("Couldn't parse WasmArgs");
+    let args: WasmArgs =
+        serde_wasm_bindgen::from_value(options)
+        .or_else(|x| bail!("{}", x.to_string()))
+            .with_context(|| format!("Could not parse WasmArgs"))?;
 
     let data: Vec<u8> = buf.to_vec();
 
     info!("{:#?}", args);
     let pixel_bufs = decode_pixel_maps(data.as_slice(), args.offsets.as_slice())
-        .expect("Couldn't read pixel buf data");
+        .with_context(|| format!("Could not decode pixel data from supplied offset list"))?;
 
     let WasmArgs {
         model_options,
@@ -53,26 +77,23 @@ pub fn decode_pixel_data_generic(buf: &Uint8Array, options: JsValue, alg: Algori
         ..
     } = args;
 
-    let result = handle_request(options, model_options, pixel_bufs, alg);
-    match serde_wasm_bindgen::to_value(&result) {
-        Ok(val) => val,
-        Err(err) => JsValue::from_str(err.to_string().as_str())
-    }
+     handle_request(options, model_options, pixel_bufs, alg)
+
 }
 
-fn decode_pixel_maps<'a, 'b>(buf: &'a [u8], offsets: &'b [u32]) -> Option<Vec<&'a [u8]>> {
+fn decode_pixel_maps<'a, 'b>(buf: &'a [u8], offsets: &'b [u32]) ->  anyhow::Result<Vec<&'a [u8]>> {
     let buf_len = buf.len() as u32;
 
     let offset_len = offsets.len();
     for i in 0..offset_len {
         if i < offset_len - 1 {
             if offsets[i] >= offsets[i + 1] {
-                return None;
+                bail!("Offsets must increase monotonically, yet offset[{}] ({}) >= offset[{}] ({})", i, offsets[i], i+1, offsets[i+1]);
             }
         }
 
         if offsets[i] > buf_len {
-            return None;
+            bail!("Offset[{}] {} exceeds the total buffer length of {} bytes", i, offsets[i], buf_len)
         }
     }
 
@@ -86,5 +107,5 @@ fn decode_pixel_maps<'a, 'b>(buf: &'a [u8], offsets: &'b [u32]) -> Option<Vec<&'
         }
     }
 
-    Some(result)
+    Ok(result)
 }

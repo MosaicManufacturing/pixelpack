@@ -1,3 +1,4 @@
+use anyhow::{anyhow, Context};
 use crate::plater;
 use crate::stl::model::Model;
 use crate::stl::orientation::Orientation;
@@ -43,7 +44,7 @@ pub(crate) fn load_model(
         plate_width,
         plate_height,
         locked,
-    );
+    ).ok()?;
 
     Some((part, next_model))
 }
