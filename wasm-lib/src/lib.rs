@@ -1,7 +1,8 @@
-use anyhow::{bail, Context};
+use anyhow::{bail, Context, Error};
 use js_sys::{Uint8Array};
 use log::{info, Level};
 use serde::Serialize;
+use thiserror::Error;
 use wasm_bindgen::prelude::*;
 use pixelpack::plater::request::{Algorithm, BedExpansionMode, ConfigOrder, PointEnumerationMode, Strategy, ThreadingMode};
 use crate::PixelpackResult::{PackingError, Answer};
@@ -13,18 +14,34 @@ mod request;
 #[derive(Serialize)]
 #[serde(tag = "type", rename_all = "camelCase")]
 enum PixelpackResult {
-    PackingError { value: String},
+    PackingError { value: String, reportable: bool},
     Answer {value: PlacingResult}
 }
 
-impl From<anyhow::Result<PlacingResult>> for PixelpackResult {
-    fn from(value: anyhow::Result<PlacingResult>) -> Self {
+#[derive(Error, Debug)]
+pub enum TaggedError {
+    #[error(transparent)]
+    Reportable(anyhow::Error),
+
+    #[error(transparent)]
+    Hidden(anyhow::Error)
+}
+
+impl From<Result<PlacingResult, TaggedError>> for PixelpackResult {
+    fn from(value: Result<PlacingResult, TaggedError>) -> Self {
         match value {
             Ok(value) => Answer {value},
-            Err(value) => PackingError {value: format!("{:?}", value)}
+            Err(value) => match value {
+                TaggedError::Reportable(err) => {
+                    PackingError {value: format!("{:?}", err), reportable: true}
+                }
+                TaggedError::Hidden(err) => {
+                    PackingError {value: format!("{:?}", err), reportable: false}
+                }
+            }}
         }
     }
-}
+
 
 #[wasm_bindgen]
 pub fn decode_pixel_data(buf: &Uint8Array, options: JsValue) -> JsValue {
@@ -54,7 +71,7 @@ pub fn decode_pixel_spiral_pack(buf: &Uint8Array, options: JsValue) -> JsValue {
     serde_wasm_bindgen::to_value(&result).unwrap()
 }
 
-pub fn decode_pixel_data_generic(buf: &Uint8Array, options: JsValue, alg: Algorithm) -> anyhow::Result<PlacingResult> {
+pub fn decode_pixel_data_generic(buf: &Uint8Array, options: JsValue, alg: Algorithm) -> Result<PlacingResult, TaggedError> {
     match console_log::init_with_level(Level::Debug) {
         Ok(_) => (),
         Err(e) => info!("Err occurred: {}",e)
@@ -63,13 +80,15 @@ pub fn decode_pixel_data_generic(buf: &Uint8Array, options: JsValue, alg: Algori
     let args: WasmArgs =
         serde_wasm_bindgen::from_value(options)
         .or_else(|x| bail!("{}", x.to_string()))
-            .with_context(|| format!("Could not parse WasmArgs"))?;
+            .with_context(|| format!("Could not parse WasmArgs"))
+            .map_err(TaggedError::Hidden)?;
 
     let data: Vec<u8> = buf.to_vec();
 
     info!("{:#?}", args);
     let pixel_bufs = decode_pixel_maps(data.as_slice(), args.offsets.as_slice())
-        .with_context(|| format!("Could not decode pixel data from supplied offset list"))?;
+        .with_context(|| format!("Could not decode pixel data from supplied offset list"))
+        .map_err(TaggedError::Hidden)?;
 
     let WasmArgs {
         model_options,

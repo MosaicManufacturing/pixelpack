@@ -1,5 +1,5 @@
 use std::collections::HashMap;
-use anyhow::{ bail, Context};
+use anyhow::{anyhow, bail, Context};
 
 use log::info;
 use serde::{Deserialize, Serialize};
@@ -10,6 +10,8 @@ use pixelpack::plater::plate_shape::{PlateShape, Shape};
 use pixelpack::plater::request::{Algorithm, default_sort_modes};
 use pixelpack::plater::solution::Solution;
 use pixelpack::stl::util::{deg_to_rad, rad_to_deg};
+use crate::TaggedError;
+use crate::TaggedError::{Hidden, Reportable};
 
 #[derive(Deserialize, Debug)]
 pub struct WasmArgs {
@@ -73,7 +75,7 @@ pub fn handle_request(
     models: Vec<ModelOptions>,
     bitmaps: Vec<&[u8]>,
     alg: Algorithm
-) -> anyhow::Result<PlacingResult> {
+) -> Result<PlacingResult, TaggedError> {
 
     // Use default
     let resolution = if opts.resolution > 0.0 {
@@ -109,7 +111,7 @@ pub fn handle_request(
     request.sort_modes = default_sort_modes();
 
     if models.len() != bitmaps.len() {
-        bail!("Models len {} != bitmaps len {}", models.len(), bitmaps.len())
+        return Err(Hidden(anyhow!("Models len {} != bitmaps len {}", models.len(), bitmaps.len())));
     }
 
 
@@ -119,7 +121,8 @@ pub fn handle_request(
 
         let mut bmp =
             Bitmap::new_bitmap_with_data(model.width, model.height, bitmaps[i])
-                .with_context(|| format!("Could not load bitmap[{}] with model {}", i, model.id))?;
+                .with_context(|| format!("Could not load bitmap[{}] with model {}", i, model.id))
+                .map_err(Hidden)?;
 
         bmp.dilate((request.spacing/request.precision) as i32);
 
@@ -147,13 +150,15 @@ pub fn handle_request(
             plate_width,
             plate_height,
             model.locked,
-        ).with_context(|| format!("Could not create part for model {}", model.id))?;
+        ).with_context(|| format!("Could not create part for model {}", model.id))
+            .map_err(Reportable)?;
 
         info!("Part loaded");
 
         request
             .add_part(part)
-            .with_context(|| format!("Could not add part {}", model.id.to_string()))?;
+            .with_context(|| format!("Could not add part {}", model.id.to_string()))
+            .map_err(Hidden)?;
     }
 
     info!("Loaded all parts");
@@ -164,8 +169,8 @@ pub fn handle_request(
         let plate = (&sol)
             .get_plates()
             .get(0)
-            .with_context(|| format!("No plates found"))?;
-
+            .with_context(|| format!("No plates found"))
+            .map_err(Reportable)?;
 
         info!("{}", plate.get_ppm());
 
@@ -174,7 +179,8 @@ pub fn handle_request(
             let id = placement.id.to_owned();
             let model_opts = model_opts_map
                 .get(&id)
-                .with_context(|| format!("Could not find {} in placement", id))?;
+                .with_context(|| format!("Could not find {} in placement", id))
+                .map_err(Hidden)?;
             // Center x and center y are funky when in locked mode
             if !model_opts.locked {
                 result.insert(
@@ -190,7 +196,7 @@ pub fn handle_request(
         }
 
         let (plate_width, plate_height) = plate.get_size();
-        anyhow::Ok(PlacingResult {
+        Ok(PlacingResult {
             models: result,
             plate_width,
             plate_height
