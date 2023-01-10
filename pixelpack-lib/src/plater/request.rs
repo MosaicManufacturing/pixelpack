@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 use std::f64::consts::PI;
+use itertools::Itertools;
 
 use log::info;
 use rand::prelude::SliceRandom;
@@ -136,7 +137,11 @@ impl<S: PlateShape> Request<S> {
         let mut placer = Placer::new(self);
         placer.sort_parts(SurfaceDec);
 
-        let mut placers = vec![placer];
+        let mut placers = default_sort_modes().into_iter().map(|mode| {
+            let mut p = Placer::new(self);
+            p.sort_parts(mode);
+            p
+        }).collect_vec();
 
         let place =  match &self.algorithm.threading_mode {
             ThreadingMode::SingleThreaded => Request::place_all_single_threaded,
