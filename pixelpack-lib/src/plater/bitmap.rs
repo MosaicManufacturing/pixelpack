@@ -84,7 +84,7 @@ impl Bitmap {
         self.data[self.index(x, y)]
     }
 
-    pub(crate) fn to_ppm(&self) -> String {
+    pub fn to_ppm(&self) -> String {
         let eol = '\n';
         let mut ppm = String::with_capacity(self.data.len());
 
