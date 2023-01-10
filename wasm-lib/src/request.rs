@@ -12,8 +12,10 @@ use pixelpack::plater::solution::Solution;
 use pixelpack::stl::util::{deg_to_rad, rad_to_deg};
 use crate::TaggedError;
 use crate::TaggedError::{Hidden, Reportable};
+use typeshare::typeshare;
 
 #[derive(Deserialize, Debug)]
+#[typeshare]
 pub struct WasmArgs {
     pub options: RequestOptions,
     pub model_options: Vec<ModelOptions>,
@@ -21,6 +23,7 @@ pub struct WasmArgs {
 }
 
 #[derive(Deserialize, Debug)]
+#[typeshare]
 pub struct RequestOptions {
     width: i32,
     height: i32,
@@ -37,6 +40,7 @@ pub struct RequestOptions {
 }
 
 #[derive(Deserialize, Debug)]
+#[typeshare]
 pub struct ModelOptions {
     id: String,
     locked: bool,
@@ -49,6 +53,7 @@ pub struct ModelOptions {
 }
 
 #[derive(Serialize, Debug)]
+#[typeshare]
 pub struct ModelResult {
     center_x: f64,
     center_y: f64,
@@ -56,6 +61,7 @@ pub struct ModelResult {
 }
 
 #[derive(Serialize, Debug)]
+#[typeshare]
 pub struct PlacingResult {
     models: HashMap<String, ModelResult>,
     plate_width: f64,
@@ -125,6 +131,9 @@ pub fn handle_request(
                 .map_err(Hidden)?;
 
         bmp.dilate((request.spacing/request.precision) as i32);
+
+
+        info!("{}", bmp.to_ppm());
 
         let delta_r = if model.rotation_interval > 0.0 {
             deg_to_rad(model.rotation_interval)

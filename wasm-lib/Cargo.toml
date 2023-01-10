@@ -23,6 +23,7 @@ js-sys = "0.3.60"
 console_error_panic_hook = { version = "0.1.6", optional = true }
 getrandom = { version = "0.2", features = ["js"] }
 console_log = "0.2.0"
+typeshare = "1.0.0"
 
 [dev-dependencies]
 wasm-bindgen-test = "0.3.13"
