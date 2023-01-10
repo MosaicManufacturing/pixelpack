@@ -12,7 +12,7 @@ use crate::request::{handle_request, PlacingResult, WasmArgs};
 mod request;
 
 #[derive(Serialize)]
-#[serde(tag = "type", rename_all = "camelCase")]
+#[serde(tag = "tag", rename_all = "camelCase")]
 enum PixelpackResult {
     PackingError { value: String, reportable: bool},
     Answer {value: PlacingResult}
