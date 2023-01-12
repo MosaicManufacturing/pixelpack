@@ -1,7 +1,8 @@
-use anyhow::{bail, Context, Error};
+use anyhow::{bail, Context };
 use js_sys::{Uint8Array};
 use log::{info, Level};
-use serde::Serialize;
+use serde::{Serialize};
+use serde_wasm_bindgen::{ Serializer };
 use thiserror::Error;
 use wasm_bindgen::prelude::*;
 use pixelpack::plater::request::{Algorithm, BedExpansionMode, ConfigOrder, PointEnumerationMode, Strategy, ThreadingMode};
@@ -42,6 +43,7 @@ impl From<Result<PlacingResult, TaggedError>> for PixelpackResult {
         }
     }
 
+const MAP_SERIALIZER: Serializer = Serializer::new().serialize_maps_as_objects(true);
 
 #[wasm_bindgen]
 pub fn decode_pixel_data(buf: &Uint8Array, options: JsValue) -> JsValue {
@@ -54,7 +56,7 @@ pub fn decode_pixel_data(buf: &Uint8Array, options: JsValue) -> JsValue {
     };
 
     let result: PixelpackResult = decode_pixel_data_generic(buf, options, alg).into();
-    serde_wasm_bindgen::to_value(&result).unwrap()
+    result.serialize(&MAP_SERIALIZER).unwrap()
 }
 
 #[wasm_bindgen]
@@ -68,7 +70,7 @@ pub fn decode_pixel_spiral_pack(buf: &Uint8Array, options: JsValue) -> JsValue {
     };
 
     let result: PixelpackResult = decode_pixel_data_generic(buf, options, alg).into();
-    serde_wasm_bindgen::to_value(&result).unwrap()
+    result.serialize(&MAP_SERIALIZER).unwrap()
 }
 
 pub fn decode_pixel_data_generic(buf: &Uint8Array, options: JsValue, alg: Algorithm) -> Result<PlacingResult, TaggedError> {
