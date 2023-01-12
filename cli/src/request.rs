@@ -84,15 +84,16 @@ pub fn run(opts: &CliOpts, filenames: Vec<String>) -> Option<()> {
 
     let mut request = stl::request::Request::new(plate_shape, resolution);
 
-    // TODO: none of this should be public outside of the package
-    request.request.spacing = opts.spacing * resolution;
-    request.request.delta = opts.delta * resolution;
-    request.request.delta_r = stl::util::deg_to_rad(opts.rotation_interval as f64);
-    request.request.precision = opts.precision * resolution;
-    request.request.sort_modes = get_sort_modes(opts.multiple_sort, opts.random_iterations);
+    request.request.set_spacing(opts.spacing);
+    request.request.set_delta(opts.delta);
+    request.request.set_delta_r(opts.rotation_interval as f64);
+    request.request.set_precision(opts.precision);
+
+    let sort_modes = get_sort_modes(opts.multiple_sort, opts.random_iterations);
+    request.request.set_sort_modes(sort_modes);
 
     if opts.threads > 0 {
-        request.request.max_threads = opts.threads as usize;
+        request.request.set_max_threads(opts.threads as usize);
     }
 
     filenames.iter().for_each(|filename| {

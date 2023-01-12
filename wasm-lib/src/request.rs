@@ -101,19 +101,20 @@ pub fn handle_request(
     let mut request = plater::request::Request::new(plate_shape, resolution, alg, opts.bed_center_x, opts.bed_center_y);
 
     if opts.precision > 0.0 {
-        request.precision = opts.precision * resolution;
+        request.set_precision(opts.precision);
     }
 
     if opts.spacing > 0.0 {
-        request.spacing = opts.spacing * resolution;
+        request.set_spacing(opts.spacing);
     }
 
     if opts.delta > 0.0 {
-        request.delta = opts.delta * resolution;
+        request.set_delta(opts.delta);
     }
 
-    request.delta_r = deg_to_rad(opts.rotation_interval);
-    request.sort_modes = default_sort_modes();
+    request.set_delta_r(opts.rotation_interval);
+    let sort_modes = default_sort_modes();
+    request.set_sort_modes(sort_modes);
 
     if models.len() != bitmaps.len() {
         return Err(Hidden(anyhow!("Models len {} != bitmaps len {}", models.len(), bitmaps.len())));
@@ -129,7 +130,7 @@ pub fn handle_request(
                 .with_context(|| format!("Could not load bitmap[{}] with model {}", i, model.id))
                 .map_err(Hidden)?;
 
-        bmp.dilate((request.spacing/request.precision) as i32);
+        bmp.dilate((request.get_spacing()/request.get_precision()) as i32);
 
 
         info!("{}", bmp.to_ppm());
@@ -137,13 +138,13 @@ pub fn handle_request(
         let delta_r = if model.rotation_interval > 0.0 {
             deg_to_rad(model.rotation_interval)
         } else {
-            request.delta_r
+            request.get_delta_r()
         };
 
         let spacing = if model.spacing > 0.0 {
             model.spacing * resolution
         } else {
-            request.spacing
+            request.get_spacing()
         };
 
         info!("Creating part");
@@ -152,7 +153,7 @@ pub fn handle_request(
             bmp,
             model.center_x,
             model.center_y,
-            request.precision,
+            request.get_precision(),
             delta_r,
             spacing,
             plate_width,
