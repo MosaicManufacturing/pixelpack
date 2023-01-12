@@ -1,7 +1,7 @@
 #[derive(Clone, Debug)]
 pub struct Point {
-    pub x: f64,
-    pub y: f64,
+    pub(crate) x: f64,
+    pub(crate) y: f64,
 }
 
 impl Point {
@@ -21,5 +21,13 @@ impl Point {
             x: self.y,
             y: -self.x,
         }
+    }
+
+    pub fn get_x(&self) -> f64 {
+        self.x
+    }
+
+    pub fn get_y(&self) -> f64 {
+        self.y
     }
 }

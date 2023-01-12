@@ -192,7 +192,7 @@ pub fn handle_request(
             // Center x and center y are funky when in locked mode
             if !model_opts.locked {
                 let center = placement.get_center();
-                let (center_x, center_y) = (center.x, center.y);
+                let (center_x, center_y) = (center.get_x(), center.get_y());
                 result.insert(
                     id,
                     ModelResult {
