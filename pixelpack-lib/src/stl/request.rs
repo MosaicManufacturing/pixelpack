@@ -96,14 +96,15 @@ impl Request {
         let x = placements
             .iter()
             .map(|placement| {
-                let id = placement.id.as_str();
-                let model = self.models.get(id).unwrap();
+                let id = placement.get_id();
+                let model = self.models.get(id.as_str()).unwrap();
+                let center = placement.get_center();
                 // info!("Model {} {}", mode)
                 model
                     .clone()
                     .center_consume()
-                    .rotate_z_consume(placement.rotation)
-                    .translate_consume(placement.center.x, placement.center.y, 0.0)
+                    .rotate_z_consume(placement.get_rotation())
+                    .translate_consume(center.x, center.y, 0.0)
             })
             .reduce(|mut x, mut y| {
                 let mut m = Model::new();

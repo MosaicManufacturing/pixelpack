@@ -104,10 +104,9 @@ impl<'a> PlacedPart<'a> {
     }
 
     pub(crate) fn get_placement(&self) -> Placement {
-        Placement {
-            id: self.get_id().to_owned(),
-            center: Point::new(self.get_center_x(), self.get_center_y()),
-            rotation: self.get_rotation(),
-        }
+        let id = self.get_id().to_string();
+        let center = Point::new(self.get_center_x(), self.get_center_y());
+        let rotation = self.get_rotation();
+        Placement::new(id, center, rotation)
     }
 }

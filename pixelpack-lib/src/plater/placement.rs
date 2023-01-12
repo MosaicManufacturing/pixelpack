@@ -2,9 +2,9 @@ use crate::plater::point::Point;
 
 #[derive(Debug)]
 pub struct Placement {
-    pub id: String,
-    pub center: Point,
-    pub rotation: f64,
+    id: String,
+    center: Point,
+    rotation: f64,
 }
 
 impl Clone for Placement {
@@ -14,5 +14,24 @@ impl Clone for Placement {
             center: Point::clone(&self.center),
             rotation: self.rotation,
         }
+    }
+}
+
+impl Placement {
+    pub fn new(id: String, center: Point, rotation: f64) -> Self {
+        Placement {
+            id, center, rotation
+        }
+    }
+    pub fn get_id(&self) -> String {
+        self.id.to_string()
+    }
+
+    pub fn get_center(&self) -> Point {
+        self.center.clone()
+    }
+
+    pub fn get_rotation(&self) -> f64 {
+        self.rotation
     }
 }

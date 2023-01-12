@@ -98,7 +98,6 @@ pub fn handle_request(
 
     info!("DIMS {} {}", plate_width, plate_height);
 
-    // TODO: There might be a missing scaling factor for the center
     let mut request = plater::request::Request::new(plate_shape, resolution, alg, opts.bed_center_x, opts.bed_center_y);
 
     if opts.precision > 0.0 {
@@ -185,31 +184,33 @@ pub fn handle_request(
 
         for placement in plate.get_placements() {
             info!("{:#?}", placement);
-            let id = placement.id.to_owned();
+            let id = placement.get_id();
             let model_opts = model_opts_map
                 .get(&id)
                 .with_context(|| format!("Could not find {} in placement", id))
                 .map_err(Hidden)?;
             // Center x and center y are funky when in locked mode
             if !model_opts.locked {
+                let center = placement.get_center();
+                let (center_x, center_y) = (center.x, center.y);
                 result.insert(
-                    placement.id.to_owned(),
+                    id,
                     ModelResult {
-                        // TODO: All of this should be made private
-                        center_x: placement.center.x,
-                        center_y: placement.center.y,
-                        rotation: rad_to_deg(placement.rotation),
+                        center_x,
+                        center_y,
+                        rotation: rad_to_deg(placement.get_rotation()),
                     },
                 );
             }
         }
 
         let (plate_width, plate_height) = plate.get_size();
-        Ok(PlacingResult {
+        let placing_result = PlacingResult {
             models: result,
             plate_width,
             plate_height
-        })
+        };
+        Ok(placing_result)
     };
 
     request.process(on_solution)
