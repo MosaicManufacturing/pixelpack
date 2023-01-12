@@ -150,6 +150,10 @@ impl<'a, Shape: PlateShape> Placer<'a, Shape> {
                     (x + plate.center_x - plate.width/2.0, y + plate.center_y - plate.height/2.0)
                 });
 
+        let max_penalty = f64::powf(self.request.plate_shape.width(), 2.0)
+            + f64::powf(self.request.plate_shape.height(), 2.0);
+
+        let cond = self.request.plate_shape.width() + (plate.center_x - plate.width/2.0);
         let mut dist = f64::MAX;
         for (x, y) in spiral {
             part.set_offset(x, y);
@@ -177,21 +181,20 @@ impl<'a, Shape: PlateShape> Placer<'a, Shape> {
                         cur.clone()
                     };
 
-
-                    // let area = {
-                    //     let mut acc = 0.0;
-                    //     for(x, y) in cur.get_points() {
-                    //         acc += f64::powf(x - self.request.center_x, 2.0)
-                    //             + f64::powf(y - self.request.center_y, 2.0);
-                    //     }
-                    //     acc
-                    // };
+                    // Penalty to make models fit in the first plate section
+                    let penalty =
+                        // Make placing outside the main plate expensive
+                        if x + bmp.width as f64 > cond {
+                        max_penalty
+                    } else {
+                        0.0
+                    };
 
 
                     let area = f64::powf(merged.height, 2.0) + f64::powf(merged.width, 2.0);
                     // let area = merged.width * merged.height;
                     cur_rect = Some(merged);
-                    area
+                    area + penalty
                 };
 
                 let cur_dist = f64::powf(x - plate.center_x, 2.0) +  f64::powf(y - plate.center_y, 2.0);
