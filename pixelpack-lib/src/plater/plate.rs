@@ -21,8 +21,8 @@ pub struct Plate<'a> {
     precision: f64,
     pub(crate) parts: Vec<PlacedPart<'a>>,
     bitmap: Bitmap,
-    pub center_x: f64,
-    pub center_y: f64
+    pub(crate) center_x: f64,
+    pub(crate) center_y: f64
 }
 
 impl<'a> Plate<'a> {
