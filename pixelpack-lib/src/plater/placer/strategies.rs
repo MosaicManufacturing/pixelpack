@@ -103,9 +103,7 @@ impl<'a, Shape: PlateShape> Placer<'a, Shape> {
 
                 if !found || score < better_score {
                     if plate.can_place(&part)  {
-                        // println!("Found {}", part.get_id());
                         found = true;
-                        // info!("Placing");
                         better_x = x;
                         better_y = y;
                         better_r = vr;

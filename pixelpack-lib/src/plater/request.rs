@@ -214,10 +214,6 @@ impl<S: PlateShape> Request<S> {
         placers.shuffle(&mut thread_rng());
 
         let mut subset = {
-            // info!("Placers len {}", placers.len());
-            // for i in 0..(placers.len() - 40) {
-            //     placers.swap_remove(0);
-            // }
             placers
         };
 
@@ -229,23 +225,15 @@ impl<S: PlateShape> Request<S> {
 
         let mut solutions = place_all_placers(&mut subset);
 
-        info!("Solutions length: {}", solutions.len());
         // TODO: propagate this up as an error
         let last = solutions.pop().unwrap();
 
         solutions.sort_by(|x, y| f64::partial_cmp(&x.plate_area(), &y.plate_area()).unwrap());
-        solutions.iter().for_each(|s| {
-            let (x, y) = s.dims();
-            info!("Width: {} Height:{}  area: {}", x, y, s.plate_area())
-        });
-
-
 
         on_solution_found(&last)
     }
 
     fn place_all_single_threaded<'a>(placers: &'a mut [Placer<'a, S>]) -> Vec<Solution<'a>> {
-        info!("Starting single threaded place new");
         let mut k = None;
         placers
             .into_iter()
@@ -263,11 +251,9 @@ impl<S: PlateShape> Request<S> {
     }
 
     fn place_all_multi_threaded<'a>(placers: &'a mut [Placer<'a, S>]) -> Vec<Solution<'a>> {
-        info!("Starting multi threaded place");
         placers
             .into_par_iter()
             .map(|placer| {
-                info!("Starting");
                 placer.place().unwrap()
             })
             .collect::<Vec<_>>()

@@ -356,7 +356,6 @@ impl<'a, Shape: PlateShape> Placer<'a, Shape> {
                 original_shape.expand(original_shape.width()/self.request.precision)
             };
 
-            // info!("For {}, width: {}, height: {}", i, shape.width(), shape.height());
             let mut unlocked_parts = Vec::clone(&self.unlocked_parts);
             let mut plate = Plate::make_plate_with_placed_parts(
                 &shape,
@@ -391,7 +390,6 @@ impl<'a, Shape: PlateShape> Placer<'a, Shape> {
                             return None;
                         }
                         should_align_to_bed = true;
-                        info!("RESIZING");
                         unlocked_parts.push(part);
                         shape = shape.expand(original_shape.width()/ original_shape.resolution());
                         plate = Plate::make_from_shape(&mut plate, &shape)
@@ -402,7 +400,6 @@ impl<'a, Shape: PlateShape> Placer<'a, Shape> {
             // Centering models is only correct if there are no locked parts
             if self.locked_parts.is_empty() {
                 if should_align_to_bed {
-                    info!("ALIGN");
                     let width = self.request.plate_shape.width();
                     let height = self.request.plate_shape.height();
                     plate.align( width, height);
@@ -411,8 +408,6 @@ impl<'a, Shape: PlateShape> Placer<'a, Shape> {
                 }
             }
 
-
-            info!("{} iteration complete", i);
             let mut solution = Solution::new();
             solution.add_plate(plate);
             solution.best_so_far = Some(i);
@@ -425,7 +420,6 @@ impl<'a, Shape: PlateShape> Placer<'a, Shape> {
         }
 
         for i in (n+1)..(n+50) {
-            info!("Attempt {}", i);
             let res = f(i);
             if res.is_some() {
                 return res;
@@ -450,11 +444,6 @@ impl<'a, Shape: PlateShape> Placer<'a, Shape> {
 
         let mut unlocked_parts = vec![];
         std::mem::swap(&mut unlocked_parts, &mut self.unlocked_parts);
-
-        info!("Unlocked parts len {}", unlocked_parts.len());
-
-        info!("Multi part");
-
         for part in unlocked_parts {
             let mut i = 0;
             let mut current_part = part;
@@ -541,7 +530,6 @@ pub(crate) fn exponential_search<T: Clone + Debug>(limit: usize, mut run: impl F
         .for_each(|x| *x = ToCompute);
 
     if results.len() < i + 1 {
-        info!("Failed {} {}", results.len(), i + 1);
         unreachable!()
     }
 
@@ -566,9 +554,6 @@ pub(crate) fn exponential_search<T: Clone + Debug>(limit: usize, mut run: impl F
     while lo <= hi {
         let gap = hi - lo;
         let mid = lo + gap/2;
-
-        info!("LO: {}, HI: {}, MID: {}", lo, hi, mid);
-
         if let ToCompute = results[mid] {
             results[mid] = match run(mid) {
                 None => Failure,
@@ -605,11 +590,6 @@ pub(crate) fn exponential_search<T: Clone + Debug>(limit: usize, mut run: impl F
         }
 
     }
-
-    info!("Boundary index {}", boundary_index);
-
-
-    // info!("tag {:#?}", results);
 
     let mut ans = ToCompute;
     std::mem::swap(&mut ans, &mut results[boundary_index as usize]);

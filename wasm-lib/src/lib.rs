@@ -74,11 +74,8 @@ pub fn decode_pixel_spiral_pack(buf: &Uint8Array, options: JsValue) -> JsValue {
 }
 
 pub fn decode_pixel_data_generic(buf: &Uint8Array, options: JsValue, alg: Algorithm) -> Result<PlacingResult, TaggedError> {
-    match console_log::init_with_level(Level::Debug) {
-        Ok(_) => (),
-        Err(e) => info!("Err occurred: {}",e)
-    }
-
+    // logger reinit is not fatal
+    console_log::init_with_level(Level::Debug).unwrap_or(());
     let args: WasmArgs =
         serde_wasm_bindgen::from_value(options)
         .or_else(|x| bail!("{}", x.to_string()))
@@ -87,7 +84,6 @@ pub fn decode_pixel_data_generic(buf: &Uint8Array, options: JsValue, alg: Algori
 
     let data: Vec<u8> = buf.to_vec();
 
-    info!("{:#?}", args);
     let pixel_bufs = decode_pixel_maps(data.as_slice(), args.offsets.as_slice())
         .with_context(|| format!("Could not decode pixel data from supplied offset list"))
         .map_err(TaggedError::Hidden)?;

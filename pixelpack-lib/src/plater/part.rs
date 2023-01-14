@@ -72,8 +72,6 @@ impl Part {
         for k in 0..num_bitmaps as usize {
             let Bitmap { width, height, .. } = &p.bitmaps[k];
 
-            info!("WIDTH HEIGHT {} {}", width, height);
-
             if *width as f64 * precision < plate_width + 2.0 * spacing
                 && *height as f64 * precision < plate_height + 2.0 * spacing
             {

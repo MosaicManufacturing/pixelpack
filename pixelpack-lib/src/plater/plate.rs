@@ -44,20 +44,12 @@ impl<'a> Plate<'a> {
         let (bottom_space, top_space, left_space, right_space) = self.bitmap.get_bound();
         let (width, height) = self.bitmap.get_dims();
 
-        info!("Centering factors {} {} {} {}", bottom_space, top_space, left_space, right_space);
-
         let new_ref = (left_space, bottom_space);
         let (new_width, new_height) = (width as f64 - left_space - right_space, height as f64 - bottom_space - top_space);
         let new_center = (new_ref.0 + new_width/2.0, new_ref.1 + new_height/2.0);
 
-        info!("Bounding {} {}", new_width, new_height);
-
-
-
         let (tr_x, tr_y) = ((width as f64)/2.0 - new_center.0, (height as f64)/2.0 - new_center.1);
 
-
-        info!("The translation is {} {}", tr_x, tr_y);
         for part in &mut self.parts {
             let (x, y) = (part.get_x(), part.get_y());
             part.set_offset(x + tr_x, y + tr_y);
@@ -101,10 +93,6 @@ impl<'a> Plate<'a> {
 
             next_plate.place(part);
         }
-
-        info!("{}", self.bitmap.to_ppm());
-        info!("{}", next_plate.bitmap.to_ppm());
-
         next_plate
     }
 
@@ -175,7 +163,6 @@ impl<'a> Plate<'a> {
 
     pub fn get_placements(&self) -> Vec<Placement> {
         let mut result = vec![];
-        info!("Parts len {}", self.parts.len());
         for part in &self.parts {
             result.push(part.get_placement());
         }

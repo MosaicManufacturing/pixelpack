@@ -55,8 +55,6 @@ impl Model {
             .map(|vol| (&vol.faces).len())
             .sum::<usize>() as u32;
 
-        info!("Volume count {}", self.volumes.len());
-
         writer.write_u32::<LittleEndian>(face_count)?;
 
         let flag: [u8; 2] = [0, 0];
@@ -210,8 +208,6 @@ impl Model {
 
         let prefix = "solid".as_bytes();
 
-        info!("{}", n);
-
         if n >= 5 {
             let x = &bytes[0..5];
             if x == prefix {
@@ -220,8 +216,6 @@ impl Model {
         }
 
         let printable_count = bytes.iter().filter(|x| **x < 127).count();
-
-        info!("COUNTS {} {}", n, printable_count);
 
         if (printable_count as f64) / (n as f64) < 0.95 {
             Model::load_stl_file_binary(filename, resolution)

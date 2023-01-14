@@ -20,19 +20,12 @@ struct Args {
 
 fn main() {
     SimpleLogger::new().init().unwrap();
-
-    //  "cube.stl".into()
     let args = request::CliOpts::parse();
     let xs = (0..args.threads)
         .into_iter()
         .flat_map(|_| ["Gimbal_snowflake_small_and_flat.STL".into()])
         .collect();
-    info!("Going to start run");
-
-    let t1 = Instant::now();
     request::run(&args, xs).unwrap();
-
-    info!("{} ms", t1.elapsed().as_millis());
 }
 
 // fn main() -> std::io::Result<()> {
@@ -55,18 +48,15 @@ fn main() {
 //         ASCII => Model::save_to_file_ascii::<PathBuf>,
 //     };
 //
-//     println!("Going to load model");
 //     let model = load_file(args.source, 1.0)?;
 //
 //
-//     println!("Loaded model");
 //     let triangles = model
 //         .volumes
 //         .iter()
 //         .map(|x| x.faces.len())
 //         .sum::<usize>();
 //
-//     println!("{}", triangles);
 //     write_file(&model, args.dest, 1.0)?;
 //     Ok(())
 // }

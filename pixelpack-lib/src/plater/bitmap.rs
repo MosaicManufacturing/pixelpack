@@ -44,7 +44,6 @@ impl Bitmap {
     }
 
     pub(crate) fn new(width: i32, height: i32) -> Self {
-        // println!("DIMS {} {}", width, height);
         Bitmap {
             width,
             height,

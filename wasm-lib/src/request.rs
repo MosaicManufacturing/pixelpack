@@ -1,7 +1,6 @@
 use std::collections::HashMap;
 use anyhow::{anyhow, bail, Context};
 
-use log::info;
 use serde::{Deserialize, Serialize};
 
 use pixelpack::plater;
@@ -95,9 +94,6 @@ pub fn handle_request(
     let plate_shape = get_plate_shape(&opts, resolution);
     let plate_width = plate_shape.width();
     let plate_height = plate_shape.height();
-
-    info!("DIMS {} {}", plate_width, plate_height);
-
     let mut request = plater::request::Request::new(plate_shape, resolution, alg, opts.bed_center_x, opts.bed_center_y);
 
     if opts.precision > 0.0 {
@@ -122,7 +118,6 @@ pub fn handle_request(
 
 
     for (i, model) in models.iter().enumerate() {
-        info!("Adding model {} {}", model.id, bitmaps[i].len());
         model_opts_map.insert(model.id.to_string(), model);
 
         let mut bmp =
@@ -131,9 +126,6 @@ pub fn handle_request(
                 .map_err(Hidden)?;
 
         bmp.dilate((request.get_spacing()/request.get_precision()) as i32);
-
-
-        info!("{}", bmp.to_ppm());
 
         let delta_r = if model.rotation_interval > 0.0 {
             deg_to_rad(model.rotation_interval)
@@ -147,7 +139,6 @@ pub fn handle_request(
             request.get_spacing()
         };
 
-        info!("Creating part");
         let part = plater::part::Part::new(
             model.id.to_owned(),
             bmp,
@@ -161,16 +152,11 @@ pub fn handle_request(
             model.locked,
         ).with_context(|| format!("Could not create part for model {}", model.id))
             .map_err(Reportable)?;
-
-        info!("Part loaded");
-
         request
             .add_part(part)
             .with_context(|| format!("Could not add part {}", model.id.to_string()))
             .map_err(Hidden)?;
     }
-
-    info!("Loaded all parts");
 
     let on_solution = |sol: &Solution| {
         let mut result = HashMap::new();
@@ -181,10 +167,7 @@ pub fn handle_request(
             .with_context(|| format!("No plates found"))
             .map_err(Reportable)?;
 
-        info!("{}", plate.get_ppm());
-
         for placement in plate.get_placements() {
-            info!("{:#?}", placement);
             let id = placement.get_id();
             let model_opts = model_opts_map
                 .get(&id)

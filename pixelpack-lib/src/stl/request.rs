@@ -65,7 +65,6 @@ impl Request {
         }
 
         let n = filename.to_owned();
-        info!("Going to load {}", &n);
 
         let (part, model) = load_model(
             filename,
@@ -87,11 +86,6 @@ impl Request {
     }
 
     fn create_model(&self, p: &plater::plate::Plate) -> Option<Model> {
-        info!("DIMS {} {}",p.width, p.height);
-        for dims in &p.parts {
-            info!("{} {}", dims.part.center_x, dims.part.center_y)
-        }
-
         let placements = p.get_placements();
         let x = placements
             .iter()
@@ -99,7 +93,6 @@ impl Request {
                 let id = placement.get_id();
                 let model = self.models.get(id.as_str()).unwrap();
                 let center = placement.get_center();
-                // info!("Model {} {}", mode)
                 model
                     .clone()
                     .center_consume()
@@ -121,9 +114,7 @@ impl Request {
         p: &plater::plate::Plate,
         filename: String,
     ) -> Option<std::io::Result<()>> {
-        info!("Going to make model");
         let model = self.create_model(p)?;
-        info!("Created model");
         Some(model.save_to_file_binary(filename, self.resolution))
     }
 }
