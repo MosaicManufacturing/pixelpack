@@ -20,7 +20,9 @@ impl Clone for Placement {
 impl Placement {
     pub fn new(id: String, center: Point, rotation: f64) -> Self {
         Placement {
-            id, center, rotation
+            id,
+            center,
+            rotation,
         }
     }
     pub fn get_id(&self) -> String {

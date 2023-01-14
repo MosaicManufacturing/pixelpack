@@ -1,5 +1,3 @@
-use log::info;
-
 use crate::plater;
 use crate::plater::bitmap::Bitmap;
 use crate::plater::point::Point;

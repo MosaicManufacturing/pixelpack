@@ -4,7 +4,6 @@ use std::path::Path;
 
 use byteorder::{LittleEndian, ReadBytesExt, WriteBytesExt};
 use itertools::Itertools;
-use log::info;
 
 use crate::stl::face::Face;
 use crate::stl::model::Model;

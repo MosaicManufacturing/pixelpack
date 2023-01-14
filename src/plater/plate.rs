@@ -1,7 +1,5 @@
 use std::sync::atomic::{AtomicUsize, Ordering};
 
-use log::info;
-
 use crate::plater::bitmap::Bitmap;
 use crate::plater::placed_part::PlacedPart;
 use crate::plater::placement::Placement;
@@ -22,7 +20,7 @@ pub struct Plate<'a> {
     pub(crate) parts: Vec<PlacedPart<'a>>,
     bitmap: Bitmap,
     pub(crate) center_x: f64,
-    pub(crate) center_y: f64
+    pub(crate) center_y: f64,
 }
 
 impl<'a> Plate<'a> {
@@ -31,13 +29,12 @@ impl<'a> Plate<'a> {
         self.center();
 
         let centered_width = self.width - left_space - right_space;
-        let tr_x = (original_width - centered_width)/2.0;
+        let tr_x = (original_width - centered_width) / 2.0;
 
         for part in &mut self.parts {
             let (x, y) = (part.get_x(), part.get_y());
             part.set_offset(x - tr_x, y);
         }
-
     }
 
     pub(crate) fn center(&mut self) {
@@ -46,15 +43,14 @@ impl<'a> Plate<'a> {
 
         let new_ref = (left_space, bottom_space);
         let (new_width, new_height) = (width as f64 - left_space - right_space, height as f64 - bottom_space - top_space);
-        let new_center = (new_ref.0 + new_width/2.0, new_ref.1 + new_height/2.0);
+        let new_center = (new_ref.0 + new_width / 2.0, new_ref.1 + new_height / 2.0);
 
-        let (tr_x, tr_y) = ((width as f64)/2.0 - new_center.0, (height as f64)/2.0 - new_center.1);
+        let (tr_x, tr_y) = ((width as f64) / 2.0 - new_center.0, (height as f64) / 2.0 - new_center.1);
 
         for part in &mut self.parts {
             let (x, y) = (part.get_x(), part.get_y());
             part.set_offset(x + tr_x, y + tr_y);
         }
-
     }
 
     pub(crate) fn new<S: PlateShape>(shape: &S, precision: f64, center_x: f64, center_y: f64) -> Self {
@@ -72,13 +68,12 @@ impl<'a> Plate<'a> {
             parts: vec![],
             bitmap,
             center_x,
-            center_y
+            center_y,
         }
     }
 
     pub(crate) fn make_from_shape<S: PlateShape>(&mut self, shape: &S) -> Self {
-
-       let mut next_plate = Plate::new(shape
+        let mut next_plate = Plate::new(shape
                                         , self.precision
                                         , self.center_x
                                         , self.center_y);
@@ -101,7 +96,7 @@ impl<'a> Plate<'a> {
         precision: f64,
         placed_parts: &mut Vec<PlacedPart<'a>>,
         center_x: f64,
-        center_y: f64
+        center_y: f64,
     ) -> Option<Self> {
         let mut plate = Self::new(shape, precision, center_x, center_y);
 
@@ -114,8 +109,8 @@ impl<'a> Plate<'a> {
     pub(crate) fn place(&mut self, placed_part: PlacedPart<'a>) {
         let bitmap = placed_part.get_bitmap();
         // TODO: Scaling factor with precision is probably wrong
-        let off_x = (placed_part.get_x() - (self.center_x - self.width/2.0))/ self.precision ;
-        let off_y = (placed_part.get_y() - ( self.center_y - self.height/2.0))/ self.precision ;
+        let off_x = (placed_part.get_x() - (self.center_x - self.width / 2.0)) / self.precision;
+        let off_y = (placed_part.get_y() - (self.center_y - self.height / 2.0)) / self.precision;
         self.bitmap.write(bitmap, off_x as i32, off_y as i32);
 
         self.parts.push(placed_part);
@@ -141,8 +136,8 @@ impl<'a> Plate<'a> {
         let part_bmp = placed_part.get_bitmap();
 
         // TODO: Scaling factor with precision is probably wrong
-        let x = placed_part.get_x() - (self.center_x - self.width/2.0);
-        let y = placed_part.get_y() - ( self.center_y - self.height/2.0);
+        let x = placed_part.get_x() - (self.center_x - self.width / 2.0);
+        let y = placed_part.get_y() - (self.center_y - self.height / 2.0);
 
         if (x + (part_bmp.width as f64) * self.precision) > self.width
             || (y + (part_bmp.height as f64) * self.precision) > self.height

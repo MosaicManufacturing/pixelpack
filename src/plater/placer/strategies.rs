@@ -1,5 +1,3 @@
-
-
 use std::collections::HashMap;
 use std::f64::consts::PI;
 
@@ -7,9 +5,8 @@ use crate::plater::placed_part::PlacedPart;
 use crate::plater::placer::Rect;
 use crate::plater::plate::Plate;
 use crate::plater::plate_shape::PlateShape;
-use crate::plater::request::{Strategy};
+use crate::plater::request::Strategy;
 use crate::plater::spiral::spiral_iterator;
-
 
 use super::Placer;
 
@@ -36,7 +33,7 @@ impl<'a, Shape: PlateShape> Placer<'a, Shape> {
         }
         let rs = f64::ceil(PI * 2.0 / part.part.delta_r) as usize;
 
-        let res =  match self.request.algorithm.strategy {
+        let res = match self.request.algorithm.strategy {
             Strategy::PixelPack => Placer::pixel_place(self, rs, plate, &mut part),
             Strategy::SpiralPlace => Placer::spiral_place(self, rs, plate, &mut part)
         };
@@ -58,9 +55,8 @@ impl<'a, Shape: PlateShape> Placer<'a, Shape> {
     }
 
 
-    fn pixel_place<'b>(&mut self, rs: usize,plate: &mut Plate<'b>,
-                        part: &mut PlacedPart<'b>) -> Option<(f64, f64, usize)> {
-
+    fn pixel_place<'b>(&mut self, rs: usize, plate: &mut Plate<'b>,
+                       part: &mut PlacedPart<'b>) -> Option<(f64, f64, usize)> {
         let mut better_x = 0.0;
         let mut better_y = 0.0;
         let mut better_score = 0.0;
@@ -84,13 +80,12 @@ impl<'a, Shape: PlateShape> Placer<'a, Shape> {
                     .map(move |y| (x, y))
             })
             .flatten()
-            .map(|(x, y)|{
-                (x + self.request.center_x - plate.width/2.0, y + self.request.center_y - plate.height/2.0)
-        });
+            .map(|(x, y)| {
+                (x + self.request.center_x - plate.width / 2.0, y + self.request.center_y - plate.height / 2.0)
+            });
 
 
-
-        for (x, y) in make_iter(){
+        for (x, y) in make_iter() {
             part.set_offset(x, y);
             for r in make_rot_iter() {
                 let vr = (r + self.rotate_offset as usize) % rs;
@@ -102,7 +97,7 @@ impl<'a, Shape: PlateShape> Placer<'a, Shape> {
                 };
 
                 if !found || score < better_score {
-                    if plate.can_place(&part)  {
+                    if plate.can_place(&part) {
                         found = true;
                         better_x = x;
                         better_y = y;
@@ -111,7 +106,6 @@ impl<'a, Shape: PlateShape> Placer<'a, Shape> {
                         // break 'outer;
                     }
                 }
-
             }
         }
 
@@ -123,9 +117,8 @@ impl<'a, Shape: PlateShape> Placer<'a, Shape> {
         }
     }
 
-    fn spiral_place<'b>(&mut self, rs: usize,plate: &mut Plate<'b>,
+    fn spiral_place<'b>(&mut self, rs: usize, plate: &mut Plate<'b>,
                         part: &mut PlacedPart<'b>) -> Option<(f64, f64, usize)> {
-
         let mut better_x = 0.0;
         let mut better_y = 0.0;
         let mut better_score = 0.0;
@@ -144,14 +137,14 @@ impl<'a, Shape: PlateShape> Placer<'a, Shape> {
 
         let spiral =
             spiral_iterator(self.request.delta, plate.width, plate.height, self.request.plate_shape.width(), self.request.plate_shape.height())
-                .map(|(x,y) | {
-                    (x + plate.center_x - plate.width/2.0, y + plate.center_y - plate.height/2.0)
+                .map(|(x, y)| {
+                    (x + plate.center_x - plate.width / 2.0, y + plate.center_y - plate.height / 2.0)
                 });
 
         let max_penalty = f64::powf(self.request.plate_shape.width(), 2.0)
             + f64::powf(self.request.plate_shape.height(), 2.0);
 
-        let cond = self.request.plate_shape.width() + (plate.center_x - plate.width/2.0);
+        let cond = self.request.plate_shape.width() + (plate.center_x - plate.width / 2.0);
         let mut dist = f64::MAX;
         for (x, y) in spiral {
             part.set_offset(x, y);
@@ -169,8 +162,8 @@ impl<'a, Shape: PlateShape> Placer<'a, Shape> {
                     let cur = Rect {
                         width: w2 as f64,
                         height: h2 as f64,
-                        center_x: c2_x + x/self.request.precision,
-                        center_y: c2_y + y/self.request.precision,
+                        center_x: c2_x + x / self.request.precision,
+                        center_y: c2_y + y / self.request.precision,
                     };
 
                     let merged = if let Some(r) = &initial_box {
@@ -183,10 +176,10 @@ impl<'a, Shape: PlateShape> Placer<'a, Shape> {
                     let penalty =
                         // Make placing outside the main plate expensive
                         if x + bmp.width as f64 > cond {
-                        max_penalty
-                    } else {
-                        0.0
-                    };
+                            max_penalty
+                        } else {
+                            0.0
+                        };
 
 
                     let area = f64::powf(merged.height, 2.0) + f64::powf(merged.width, 2.0);
@@ -195,10 +188,10 @@ impl<'a, Shape: PlateShape> Placer<'a, Shape> {
                     area + penalty
                 };
 
-                let cur_dist = f64::powf(x - plate.center_x, 2.0) +  f64::powf(y - plate.center_y, 2.0);
+                let cur_dist = f64::powf(x - plate.center_x, 2.0) + f64::powf(y - plate.center_y, 2.0);
 
                 if !found || score < better_score || (f64::abs(score - better_score) < 0.001 && cur_dist < dist) {
-                    if plate.can_place(&part)  {
+                    if plate.can_place(&part) {
                         found = true;
                         better_x = x;
                         better_y = y;
@@ -217,10 +210,6 @@ impl<'a, Shape: PlateShape> Placer<'a, Shape> {
         } else {
             Some((better_x, better_y, better_r))
         }
-
     }
-
-
-
 }
 

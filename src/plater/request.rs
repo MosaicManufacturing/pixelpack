@@ -1,15 +1,14 @@
 use std::collections::HashMap;
 use std::f64::consts::PI;
-use itertools::Itertools;
 
-use log::info;
+use itertools::Itertools;
 use rand::prelude::SliceRandom;
 use rand::thread_rng;
 use rayon::prelude::{IntoParallelIterator, ParallelIterator};
 
 use crate::plater::part::Part;
+use crate::plater::placer::{GRAVITY_MODE_LIST, Placer, SortMode};
 use crate::plater::placer::SortMode::{HeightDec, Shuffle, SurfaceDec, SurfaceInc, WidthDec};
-use crate::plater::placer::{Placer, SortMode, GRAVITY_MODE_LIST};
 use crate::plater::plate_shape::PlateShape;
 use crate::plater::solution::Solution;
 use crate::stl;
@@ -37,11 +36,12 @@ pub struct Request<S: PlateShape> {
 
     // Parts to place (TODO: revise, can this become vec)
     pub(crate) parts: HashMap<String, Part>,
-    resolution: f64, // internal resolution (pixels per mm)
+    resolution: f64,
+    // internal resolution (pixels per mm)
     pub(crate) algorithm: Algorithm,
 
     pub(crate) center_x: f64,
-    pub(crate) center_y: f64
+    pub(crate) center_y: f64,
 }
 
 #[derive(Clone)]
@@ -53,25 +53,25 @@ pub enum ThreadingMode {
 #[derive(Clone)]
 pub enum Strategy {
     PixelPack,
-    SpiralPlace
+    SpiralPlace,
 }
 
 #[derive(Clone)]
 pub enum ConfigOrder {
     PointFirst,
-    RotationFirst
+    RotationFirst,
 }
 
 #[derive(Clone)]
 pub enum PointEnumerationMode {
     Row,
-    Spiral
+    Spiral,
 }
 
 #[derive(Clone)]
 pub enum BedExpansionMode {
     Linear,
-    Exponential
+    Exponential,
 }
 
 #[derive(Clone)]
@@ -80,7 +80,7 @@ pub struct Algorithm {
     pub strategy: Strategy,
     pub order_config: ConfigOrder,
     pub point_enumeration_mode: PointEnumerationMode,
-    pub bed_expansion_mode: BedExpansionMode
+    pub bed_expansion_mode: BedExpansionMode,
 }
 
 // TODO: Don't understand the original version
@@ -108,31 +108,32 @@ impl<S: PlateShape> Request<S> {
             resolution,
             algorithm,
             center_x: center_x * resolution,
-            center_y: center_y * resolution
+            center_y: center_y * resolution,
         }
     }
 
-    pub fn set_spacing(&mut self, spacing: f64)  {
+    pub fn set_spacing(&mut self, spacing: f64) {
         self.spacing = spacing * self.resolution;
     }
 
-    pub fn set_delta(&mut self, delta: f64)  {
+    pub fn set_delta(&mut self, delta: f64) {
         self.delta = delta * self.resolution;
     }
 
-    pub fn set_delta_r(&mut self, rotation_interval:f64)  {
-        self.delta_r = stl::util::deg_to_rad(rotation_interval as f64);;
+    pub fn set_delta_r(&mut self, rotation_interval: f64) {
+        self.delta_r = stl::util::deg_to_rad(rotation_interval as f64);
+        ;
     }
 
-    pub fn set_precision(&mut self, precision: f64)  {
+    pub fn set_precision(&mut self, precision: f64) {
         self.precision = precision * self.resolution;
     }
 
-    pub fn set_sort_modes(&mut self, sort_modes: Vec<SortMode>)  {
+    pub fn set_sort_modes(&mut self, sort_modes: Vec<SortMode>) {
         self.sort_modes = sort_modes;
     }
 
-    pub fn set_max_threads(&mut self, max_threads: usize)  {
+    pub fn set_max_threads(&mut self, max_threads: usize) {
         self.max_threads = max_threads;
     }
 
@@ -180,7 +181,7 @@ impl<S: PlateShape> Request<S> {
             p
         }).collect_vec();
 
-        let place =  match &self.algorithm.threading_mode {
+        let place = match &self.algorithm.threading_mode {
             ThreadingMode::SingleThreaded => Request::place_all_single_threaded,
             ThreadingMode::MultiThreaded => Request::place_all_multi_threaded,
         };

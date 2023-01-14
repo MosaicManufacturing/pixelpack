@@ -1,5 +1,4 @@
 use std::f64::consts::PI;
-use log::info;
 
 use crate::plater::bitmap::Bitmap;
 
@@ -30,7 +29,7 @@ impl Part {
         plate_width: f64,
         plate_height: f64,
         locked: bool,
-    ) ->  anyhow::Result<Self> {
+    ) -> anyhow::Result<Self> {
         let mut num_bitmaps = f64::ceil(PI * 2.0 / delta_r) as i32;
         if locked {
             num_bitmaps = 1;
@@ -97,7 +96,7 @@ impl Part {
         self.delta_r
     }
 
-    pub(crate) fn get_bitmap(&self, index: usize) -> &Bitmap{
+    pub(crate) fn get_bitmap(&self, index: usize) -> &Bitmap {
         &self.bitmaps[index]
     }
 

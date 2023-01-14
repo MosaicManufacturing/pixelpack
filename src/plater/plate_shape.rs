@@ -1,4 +1,3 @@
-
 use crate::plater::bitmap::Bitmap;
 
 pub trait PlateShape: Clone + Send + Sync {
@@ -126,14 +125,12 @@ impl PlateShape for PlateRectangle {
     }
 
     fn intersect_square(&self, size: f64) -> Option<Self> {
-
         if size <= 0.0 {
             return None;
         }
 
         let width = self.width / self.resolution;
         let height = self.height / self.resolution;
-
 
 
         Some(PlateRectangle::new(f64::min(size, width), f64::min(size, height), self.resolution))
@@ -199,7 +196,7 @@ impl PlateShape for PlateCircle {
             return None;
         }
 
-        let diameter= self.diameter / self.resolution - size;
+        let diameter = self.diameter / self.resolution - size;
         if diameter <= 0.0 {
             None
         } else {

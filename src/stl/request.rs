@@ -1,9 +1,6 @@
 use std::collections::HashMap;
 
-use log::info;
-
 use crate::plater;
-
 use crate::plater::plate_shape::PlateShape;
 use crate::plater::request::{Algorithm, BedExpansionMode, ConfigOrder, PointEnumerationMode, Strategy, ThreadingMode};
 use crate::plater::solution::Solution;
@@ -23,16 +20,15 @@ impl Request {
     }
 
     pub fn new(plate_shape: plater::plate_shape::Shape, resolution: f64) -> Self {
-
         let alg = Algorithm {
             threading_mode: ThreadingMode::MultiThreaded,
             strategy: Strategy::SpiralPlace,
             order_config: ConfigOrder::PointFirst,
             point_enumeration_mode: PointEnumerationMode::Row,
-            bed_expansion_mode: BedExpansionMode::Exponential
+            bed_expansion_mode: BedExpansionMode::Exponential,
         };
 
-        let (width, height) = (plate_shape.width()/ resolution, plate_shape.height()/ resolution);
+        let (width, height) = (plate_shape.width() / resolution, plate_shape.height() / resolution);
 
         // There might be a missing scaling factor for the center
         let request = plater::request::Request::new(plate_shape, resolution, alg, width, height);

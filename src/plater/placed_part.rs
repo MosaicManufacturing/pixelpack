@@ -80,14 +80,14 @@ impl<'a> PlacedPart<'a> {
 
         for bmp in &self.part.bitmaps {
             // TODO: this really needs to filter out plates that don't fit, PlacedPart, Plate
-                let g_x = (bmp.s_x as f64) / (bmp.pixels as f64);
-                let g_y = (bmp.s_y as f64) / (bmp.pixels as f64);
-                let s = g_x * g_x + g_y * g_y;
-                if !has_score || s < score {
-                    score = s;
-                    has_score = true;
-                }
+            let g_x = (bmp.s_x as f64) / (bmp.pixels as f64);
+            let g_y = (bmp.s_y as f64) / (bmp.pixels as f64);
+            let s = g_x * g_x + g_y * g_y;
+            if !has_score || s < score {
+                score = s;
+                has_score = true;
             }
+        }
 
 
         score

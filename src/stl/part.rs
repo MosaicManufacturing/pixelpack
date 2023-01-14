@@ -1,4 +1,3 @@
-use anyhow::{anyhow, Context};
 use crate::plater;
 use crate::stl::model::Model;
 use crate::stl::orientation::Orientation;

@@ -2,9 +2,8 @@ use std::cmp::Ordering;
 use std::collections::HashMap;
 use std::error::Error;
 use std::fmt::Debug;
-
 use std::vec;
-use log::{info};
+
 use rand::seq::SliceRandom;
 use rand::thread_rng;
 
@@ -22,29 +21,29 @@ pub struct Rect {
     width: f64,
     height: f64,
     center_x: f64,
-    center_y: f64
+    center_y: f64,
 }
 
 
 impl Rect {
-    fn combine(&self, other: &Self)  -> Self {
-        let top_height = f64::max(self.height/2.0 + self.center_y, other.height/2.0 + other.center_y);
-        let bottom_height = f64::min(-self.height/2.0 + self.center_y, -other.height/2.0 + other.center_y);
+    fn combine(&self, other: &Self) -> Self {
+        let top_height = f64::max(self.height / 2.0 + self.center_y, other.height / 2.0 + other.center_y);
+        let bottom_height = f64::min(-self.height / 2.0 + self.center_y, -other.height / 2.0 + other.center_y);
 
-        let left_width = f64::min(-self.width/2.0 + self.center_x, -other.width/2.0 + other.center_x);
-        let right_width = f64::max(self.width/2.0 + self.center_x, other.width/2.0 + other.center_x);
+        let left_width = f64::min(-self.width / 2.0 + self.center_x, -other.width / 2.0 + other.center_x);
+        let right_width = f64::max(self.width / 2.0 + self.center_x, other.width / 2.0 + other.center_x);
 
         Rect {
             width: right_width - left_width,
             height: top_height - bottom_height,
-            center_x: (right_width + left_width)/2.0,
-            center_y: (top_height + bottom_height)/2.0
+            center_x: (right_width + left_width) / 2.0,
+            center_y: (top_height + bottom_height) / 2.0,
         }
     }
 
     fn get_points(&self) -> [(f64, f64); 4] {
-        let w2 = self.width/2.0;
-        let h2 = self.height/2.0;
+        let w2 = self.width / 2.0;
+        let h2 = self.height / 2.0;
         [
             (self.center_x + w2, self.center_y + h2),
             (self.center_x - w2, self.center_y + h2),
@@ -123,7 +122,7 @@ pub(crate) struct Placer<'a, S: PlateShape> {
     pub(crate) request: &'a Request<S>,
     // center_x, center_y, width, height
     current_bounding_box: Option<Rect>,
-    pub smallest_observed_plate: Option<usize>
+    pub smallest_observed_plate: Option<usize>,
 }
 
 impl<'a, Shape: PlateShape> Placer<'a, Shape> {
@@ -138,7 +137,7 @@ impl<'a, Shape: PlateShape> Placer<'a, Shape> {
             unlocked_parts: vec![],
             request,
             current_bounding_box: None,
-            smallest_observed_plate: None
+            smallest_observed_plate: None,
         };
 
         for part in request.parts.values() {
@@ -178,20 +177,20 @@ impl<'a, Shape: PlateShape> Placer<'a, Shape> {
                 let mut rng = thread_rng();
                 self.unlocked_parts.shuffle(&mut rng)
             }
-            SortMode::WidthDec =>  {
+            SortMode::WidthDec => {
                 self.unlocked_parts.sort_by(|x, y| {
                     let s1 = x.part.get_bitmap(0).width;
                     let s2 = y.part.get_bitmap(0).width;
                     i32::partial_cmp(&s1, &s2).unwrap()
                 });
-            },
+            }
             SortMode::HeightDec => {
                 self.unlocked_parts.sort_by(|x, y| {
                     let s1 = x.part.get_bitmap(0).width;
                     let s2 = y.part.get_bitmap(0).width;
                     i32::partial_cmp(&s2, &s1).unwrap()
                 });
-            },
+            }
         }
     }
 
@@ -215,7 +214,6 @@ impl<'a, Shape: PlateShape> Placer<'a, Shape> {
     }
 
 
-
     fn place_single_plate_linear(&mut self) -> Solution<'a> {
         let mut shape = Clone::clone(&self.request.plate_shape);
         // TODO
@@ -224,7 +222,7 @@ impl<'a, Shape: PlateShape> Placer<'a, Shape> {
             self.request.precision,
             &mut Vec::clone(&self.locked_parts),
             self.request.center_x,
-            self.request.center_y
+            self.request.center_y,
         ).unwrap();
 
 
@@ -243,13 +241,13 @@ impl<'a, Shape: PlateShape> Placer<'a, Shape> {
                     self.request.precision,
                     &mut Vec::clone(&self.locked_parts),
                     self.request.center_x,
-                    self.request.center_y
+                    self.request.center_y,
                 ).unwrap();
                 expansion_needed = false;
             }
 
             // TODO: this will not handle locked parts correctly as locked parts were drained out
-            if  !all_parts_can_be_attempted(&self.unlocked_parts, &shape) {
+            if !all_parts_can_be_attempted(&self.unlocked_parts, &shape) {
                 expansion_needed = true;
                 continue;
             }
@@ -300,9 +298,9 @@ impl<'a, Shape: PlateShape> Placer<'a, Shape> {
         let n = 1024;
         let limit = 4096;
 
-        let res= Clone::clone(&self.smallest_observed_plate);
+        let res = Clone::clone(&self.smallest_observed_plate);
 
-        let mut f=  |i| {
+        let mut f = |i| {
             if let Some(x) = res {
                 if i >= x {
                     return None;
@@ -312,13 +310,13 @@ impl<'a, Shape: PlateShape> Placer<'a, Shape> {
             let mut should_align_to_bed = false;
             self.current_bounding_box = None;
 
-            let mut shape = if i < n  {
+            let mut shape = if i < n {
                 original_shape.intersect_square(m + (i as f64 - n as f64 + 1.0) * expand_mm)?
             } else if i == n {
                 original_shape.clone()
             } else {
                 should_align_to_bed = true;
-                original_shape.expand(original_shape.width()/self.request.precision)
+                original_shape.expand(original_shape.width() / self.request.precision)
             };
 
             let mut unlocked_parts = Vec::clone(&self.unlocked_parts);
@@ -327,12 +325,11 @@ impl<'a, Shape: PlateShape> Placer<'a, Shape> {
                 self.request.precision,
                 &mut Vec::clone(&self.locked_parts),
                 self.request.center_x,
-                self.request.center_y
+                self.request.center_y,
             )?;
 
 
             if i <= n && !all_parts_can_be_attempted(&unlocked_parts, &shape) {
-
                 return None;
                 // Add special handling if some parts will never fit
             } else if i > n && !all_parts_can_eventually_be_attempted(&unlocked_parts, &shape) {
@@ -348,15 +345,14 @@ impl<'a, Shape: PlateShape> Placer<'a, Shape> {
 
             while let Some(cur_part) = unlocked_parts.pop() {
                 match self.place_unlocked_part(&mut plate, cur_part) {
-                    None => {
-                    }
+                    None => {}
                     Some(part) => {
                         if i <= n {
                             return None;
                         }
                         should_align_to_bed = true;
                         unlocked_parts.push(part);
-                        shape = shape.expand(original_shape.width()/ original_shape.resolution());
+                        shape = shape.expand(original_shape.width() / original_shape.resolution());
                         plate = Plate::make_from_shape(&mut plate, &shape)
                     }
                 }
@@ -367,7 +363,7 @@ impl<'a, Shape: PlateShape> Placer<'a, Shape> {
                 if should_align_to_bed {
                     let width = self.request.plate_shape.width();
                     let height = self.request.plate_shape.height();
-                    plate.align( width, height);
+                    plate.align(width, height);
                 } else {
                     plate.center();
                 }
@@ -379,12 +375,12 @@ impl<'a, Shape: PlateShape> Placer<'a, Shape> {
             Some(solution)
         };
 
-        let smaller = exponential_search( n + 1, &mut f).map(|x| x.0);
+        let smaller = exponential_search(n + 1, &mut f).map(|x| x.0);
         if smaller.is_some() {
             return smaller;
         }
 
-        for i in (n+1)..(n+50) {
+        for i in (n + 1)..(n + 50) {
             let res = f(i);
             if res.is_some() {
                 return res;
@@ -403,7 +399,7 @@ impl<'a, Shape: PlateShape> Placer<'a, Shape> {
             self.request.precision,
             &mut Vec::clone(&self.locked_parts),
             self.request.center_x,
-            self.request.center_y
+            self.request.center_y,
         ).unwrap();
         solution.add_plate(plate);
 
@@ -429,7 +425,7 @@ impl<'a, Shape: PlateShape> Placer<'a, Shape> {
                                 self.request.precision,
                                 &mut Vec::clone(&self.locked_parts),
                                 self.request.center_x,
-                                self.request.center_y
+                                self.request.center_y,
                             ).unwrap();
                             solution.add_plate(next_plate);
                         }
@@ -460,9 +456,8 @@ impl<'a, Shape: PlateShape> Placer<'a, Shape> {
 pub enum Attempts<T> {
     ToCompute,
     Solved(T),
-    Failure
+    Failure,
 }
-
 
 
 pub(crate) fn exponential_search<T: Clone + Debug>(limit: usize, mut run: impl FnMut(usize) -> Option<T>) -> Option<(T, usize)> {
@@ -518,7 +513,7 @@ pub(crate) fn exponential_search<T: Clone + Debug>(limit: usize, mut run: impl F
 
     while lo <= hi {
         let gap = hi - lo;
-        let mid = lo + gap/2;
+        let mid = lo + gap / 2;
         if let ToCompute = results[mid] {
             results[mid] = match run(mid) {
                 None => Failure,
@@ -528,20 +523,19 @@ pub(crate) fn exponential_search<T: Clone + Debug>(limit: usize, mut run: impl F
 
         match results[mid] {
             Solved(_) => {
-
                 if mid == 1 {
                     boundary_index = mid as i32;
                     break;
                 }
 
-                if let ToCompute = results[mid-1] {
-                    results[mid-1] = match run(mid-1) {
+                if let ToCompute = results[mid - 1] {
+                    results[mid - 1] = match run(mid - 1) {
                         None => Failure,
                         Some(x) => Solved(x)
                     }
                 }
 
-                if let Failure = results[mid-1] {
+                if let Failure = results[mid - 1] {
                     boundary_index = mid as i32;
                     break;
                 }
@@ -553,7 +547,6 @@ pub(crate) fn exponential_search<T: Clone + Debug>(limit: usize, mut run: impl F
             }
             ToCompute => unreachable!()
         }
-
     }
 
     let mut ans = ToCompute;
@@ -589,27 +582,25 @@ fn all_parts_can_eventually_be_attempted<S: PlateShape>(parts: &Vec<PlacedPart>,
             .bitmaps
             .iter()
             .map(|x| {
-                    x.height as f64 <= plate_shape.height()
+                x.height as f64 <= plate_shape.height()
             }).any(|x| x))
         .all(|x| x)
 }
 
 
-
-enum CombinedIterator<A: Copy, B:Iterator> {
-    XFixed {x: A, it: B},
-    YFixed {y: A, it: B}
-
+enum CombinedIterator<A: Copy, B: Iterator> {
+    XFixed { x: A, it: B },
+    YFixed { y: A, it: B },
 }
 
 #[derive(Copy, Clone)]
 struct FloatIterator {
     start: f64,
     end: f64,
-    dx: f64
+    dx: f64,
 }
 
-impl Iterator for FloatIterator{
+impl Iterator for FloatIterator {
     type Item = f64;
     fn next(&mut self) -> Option<Self::Item> {
         if self.start <= self.end {
@@ -624,7 +615,7 @@ impl Iterator for FloatIterator{
 
 enum Alt<A, B> {
     Fst(A, B),
-    Snd(B, A)
+    Snd(B, A),
 }
 
 impl<A> Into<(A, A)> for Alt<A, A> {
@@ -636,12 +627,11 @@ impl<A> Into<(A, A)> for Alt<A, A> {
     }
 }
 
-impl<A: Copy, B:Iterator> Iterator for CombinedIterator<A, B> {
-    type Item =  Alt<A, B::Item>;
+impl<A: Copy, B: Iterator> Iterator for CombinedIterator<A, B> {
+    type Item = Alt<A, B::Item>;
 
     fn next(&mut self) -> Option<Self::Item> {
-
-        match self{
+        match self {
             CombinedIterator::XFixed { x, it } => {
                 match it.next() {
                     None => None,
@@ -663,20 +653,19 @@ fn test(dx: f64, width: f64, height: f64) -> impl Iterator<Item=(f64, f64)> {
     let x = FloatIterator {
         start: 0.0,
         end: width,
-        dx
+        dx,
     };
 
     let y = FloatIterator {
         start: 0.0,
         end: height,
-        dx
+        dx,
     };
 
     x
         .into_iter()
-        .flat_map(move |x| CombinedIterator::XFixed {x, it: y })
+        .flat_map(move |x| CombinedIterator::XFixed { x, it: y })
         .map(|x: Alt<f64, f64>| x.into())
-
 }
 
 mod strategies;
