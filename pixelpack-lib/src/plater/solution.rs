@@ -5,7 +5,7 @@ use crate::plater::plate::Plate;
 #[derive(Clone)]
 pub struct Solution<'a> {
     plates: Vec<Plate<'a>>,
-    pub best_so_far: Option<usize>
+    pub(crate) best_so_far: Option<usize>
 }
 
 
