@@ -17,41 +17,6 @@ use crate::plater::plate_shape::PlateShape;
 use crate::plater::request::{BedExpansionMode, Request};
 use crate::plater::solution::Solution;
 
-
-// #[cfg(test)]
-// mod tests {
-//     use log::info;
-//     use crate::plater::placer::Rect;
-//
-//     #[test]
-//     fn exploration() {
-//
-//         let fst = Rect {
-//             width: 2.0,
-//             height: 2.0,
-//             center_x: 0.0,
-//             center_y: 0.0
-//         };
-//         let snd = Rect {
-//             width: 2.0,
-//             height: 2.0,
-//             center_x: 1.0,
-//             center_y: 0.0
-//         };
-//         let trd = Rect {
-//             width: 3.0,
-//             height: 2.0,
-//             center_x: 1.5,
-//             center_y: 0.0
-//         };
-//
-//
-//         let res = fst.combine(&snd);
-//         assert_eq!(res, trd);
-//     }
-// }
-
-
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct Rect {
     width: f64,
