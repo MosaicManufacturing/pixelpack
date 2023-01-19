@@ -186,30 +186,6 @@ impl<A, T: Iterator<Item=A>, const N: usize> Iterator for WindowIter<A, T, N> {
     }
 }
 
-pub struct RepeatIter<T, const N: usize> {
-    values: [T; N],
-    index: usize,
-}
-
-impl<T, const N: usize> RepeatIter<T, N> {
-    pub fn new(values: [T; N]) -> Self {
-        if values.is_empty() {
-            panic!("Provided an empty array");
-        }
-        RepeatIter { values, index: 0 }
-    }
-}
-
-impl<T: Copy, const N: usize> Iterator for RepeatIter<T, N> {
-    type Item = T;
-
-    fn next(&mut self) -> Option<Self::Item> {
-        let cur = self.values[self.index];
-        self.index = (self.index + 1) % N;
-        Some(cur)
-    }
-}
-
 #[derive(Ord, Eq, PartialOrd, PartialEq)]
 struct PairWrapper<A, B> ((A, B));
 
@@ -245,8 +221,7 @@ pub(crate) fn spiral_iterator(delta: f64, width: f64, height: f64, original_widt
     let distances = (1..)
         .flat_map(|n| [n, n]);
 
-
-    let direction_vectors = RepeatIter::new([(1, 0), (0, -1), (-1, 0), (0, 1)]);
+    let direction_vectors = [(1, 0), (0, -1), (-1, 0), (0, 1)].into_iter().cycle();
 
     let points = distances
         .zip(direction_vectors)
