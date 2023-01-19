@@ -227,78 +227,6 @@ impl<A, T: Iterator<Item=A>> Iterator for Cons<A, T> {
     }
 }
 
-struct NoConsecutiveDuplicates<A: Eq, T: Iterator<Item=A>> {
-    fst: Option<A>,
-    snd: Option<A>,
-    it: T,
-}
-
-impl<A: Eq, T: Iterator<Item=A>> NoConsecutiveDuplicates<A, T> {
-    fn new(mut iter: T) -> Self {
-        let fst = iter.next();
-        let mut snd = iter.next();
-
-        if fst == snd {
-            if fst.is_none() {
-                return NoConsecutiveDuplicates {
-                    fst,
-                    snd,
-                    it: iter,
-                };
-            }
-
-            snd = None;
-
-            while let Some(x) = iter.next() {
-                if x.eq(fst.as_ref().unwrap()) {
-                    continue;
-                } else {
-                    snd = Some(x);
-                    break;
-                }
-            }
-
-            NoConsecutiveDuplicates {
-                fst,
-                snd,
-                it: iter,
-            }
-        } else {
-            NoConsecutiveDuplicates {
-                fst,
-                snd,
-                it: iter,
-            }
-        }
-    }
-}
-
-impl<A: Eq, T: Iterator<Item=A>> Iterator for NoConsecutiveDuplicates<A, T> {
-    type Item = A;
-
-    fn next(&mut self) -> Option<Self::Item> {
-        if self.fst.is_none() {
-            return None;
-        }
-
-        if self.fst != self.snd {
-            let res = self.fst.take();
-            std::mem::swap(&mut self.fst, &mut self.snd);
-
-            while let Some(x) = self.it.next() {
-                if x.eq(self.fst.as_ref().unwrap()) {
-                    continue;
-                } else {
-                    self.snd = Some(x);
-                    break;
-                }
-            }
-            return res;
-        }
-        unreachable!()
-    }
-}
-
 #[derive(Ord, Eq, PartialOrd, PartialEq)]
 struct PairWrapper<A, B> ((A, B));
 
@@ -379,7 +307,7 @@ pub(crate) fn spiral_iterator(delta: f64, width: f64, height: f64, original_widt
         .map(|x| x.unwrap())
         .flatten();
 
-    let spiral = NoConsecutiveDuplicates::new(Cons {
+    let spiral = itertools::Itertools::dedup(Cons {
         initial: Some(origin),
         it: grouped_lines.flat_map(|x| {
             x.into_iter()
