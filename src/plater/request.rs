@@ -1,5 +1,7 @@
 use std::collections::HashMap;
 use std::f64::consts::PI;
+use thiserror::Error;
+
 
 use itertools::Itertools;
 use rand::prelude::SliceRandom;
