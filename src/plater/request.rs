@@ -1,5 +1,7 @@
 use std::collections::HashMap;
 use std::f64::consts::PI;
+use thiserror::Error;
+
 
 use itertools::Itertools;
 use rand::prelude::SliceRandom;
@@ -72,6 +74,12 @@ pub enum PointEnumerationMode {
 pub enum BedExpansionMode {
     Linear,
     Exponential,
+}
+
+#[derive(Error, Debug)]
+pub enum PlacingError {
+    #[error("No solutions found")]
+    NoSolutionFound
 }
 
 #[derive(Clone)]
@@ -161,7 +169,7 @@ impl<S: PlateShape> Request<S> {
         Some(())
     }
 
-    pub fn process<T>(&self, on_solution_found: impl Fn(&Solution) -> T) -> T {
+    pub fn process<T>(&self, on_solution_found: impl Fn(&Solution) -> T) -> Result<T, PlacingError> {
         let strategy = match self.algorithm.strategy {
             Strategy::PixelPack => Request::pixelpack,
             Strategy::SpiralPlace => Request::spiral_place,
@@ -171,7 +179,7 @@ impl<S: PlateShape> Request<S> {
     }
 
     // Replace with explicit error handling
-    pub fn spiral_place<T>(&self, on_solution_found: impl Fn(&Solution) -> T) -> T {
+    pub fn spiral_place<T>(&self, on_solution_found: impl Fn(&Solution) -> T) -> Result<T, PlacingError> {
         let mut placer = Placer::new(self);
         placer.sort_parts(SurfaceDec);
 
@@ -186,15 +194,18 @@ impl<S: PlateShape> Request<S> {
             ThreadingMode::MultiThreaded => Request::place_all_multi_threaded,
         };
 
+        let solutions = place(&mut placers);
 
-        let solution = place(&mut placers);
+        let solution = solutions
+            .get(0)
+            .ok_or(PlacingError::NoSolutionFound)?;
 
-        on_solution_found(&solution[0])
+        Ok(on_solution_found(solution))
     }
 
 
     // Replace with explicit error handling
-    pub fn pixelpack<T>(&self, on_solution_found: impl Fn(&Solution) -> T) -> T {
+    pub fn pixelpack<T>(&self, on_solution_found: impl Fn(&Solution) -> T) -> Result<T, PlacingError> {
         let mut placers = vec![];
         let sort_modes = Vec::clone(&self.sort_modes);
 
@@ -226,12 +237,11 @@ impl<S: PlateShape> Request<S> {
 
         let mut solutions = place_all_placers(&mut subset);
 
-        // TODO: propagate this up as an error
-        let last = solutions.pop().unwrap();
+
+        let last = solutions.pop().ok_or(PlacingError::NoSolutionFound)?;
 
         solutions.sort_by(|x, y| f64::partial_cmp(&x.plate_area(), &y.plate_area()).unwrap());
-
-        on_solution_found(&last)
+        Ok(on_solution_found(&last))
     }
 
     fn place_all_single_threaded<'a>(placers: &'a mut [Placer<'a, S>]) -> Vec<Solution<'a>> {
