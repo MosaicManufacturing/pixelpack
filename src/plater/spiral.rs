@@ -1,4 +1,5 @@
 use std::cmp::{max, min};
+use itertools::Itertools;
 
 enum StraightLineIter {
     XIter { cur: InclusiveRange, x: isize },
@@ -209,24 +210,6 @@ impl<T: Copy, const N: usize> Iterator for RepeatIter<T, N> {
     }
 }
 
-
-struct Cons<A, T: Iterator<Item=A>> {
-    initial: Option<A>,
-    it: T,
-}
-
-impl<A, T: Iterator<Item=A>> Iterator for Cons<A, T> {
-    type Item = A;
-
-    fn next(&mut self) -> Option<Self::Item> {
-        if self.initial.is_none() {
-            self.it.next()
-        } else {
-            self.initial.take()
-        }
-    }
-}
-
 #[derive(Ord, Eq, PartialOrd, PartialEq)]
 struct PairWrapper<A, B> ((A, B));
 
@@ -274,7 +257,7 @@ pub(crate) fn spiral_iterator(delta: f64, width: f64, height: f64, original_widt
             Some(*st)
         });
 
-    let points_with_origin = Cons { initial: Some(origin), it: points };
+    let points_with_origin = Some(origin).into_iter().chain(points.into_iter());
 
     let duplicated_points = points_with_origin
         .flat_map(|p| [p, p]).skip(1);
@@ -307,14 +290,16 @@ pub(crate) fn spiral_iterator(delta: f64, width: f64, height: f64, original_widt
         .map(|x| x.unwrap())
         .flatten();
 
-    let spiral = itertools::Itertools::dedup(Cons {
-        initial: Some(origin),
-        it: grouped_lines.flat_map(|x| {
-            x.into_iter()
-        }),
-    });
+    let spiral_with_origin_at_head = Some(origin)
+        .into_iter()
+        .chain(grouped_lines.
+            flat_map(|line| {
+                line.into_iter()
+            }));
 
-    spiral.map(move |(x, y)| {
+    let spiral = Itertools::dedup(spiral_with_origin_at_head.into_iter());
+
+    spiral.into_iter().map(move |(x, y)| {
         (x as f64 * delta, y as f64 * delta)
     })
 }
