@@ -53,7 +53,7 @@ impl<'a> Plate<'a> {
         }
     }
 
-    pub(crate) fn new<S: PlateShape>(shape: &S, precision: f64, center_x: f64, center_y: f64) -> Self {
+    pub(crate) fn new(shape: &dyn PlateShape, precision: f64, center_x: f64, center_y: f64) -> Self {
         let width = shape.width();
         let height = shape.height();
 
@@ -72,7 +72,7 @@ impl<'a> Plate<'a> {
         }
     }
 
-    pub(crate) fn make_from_shape<S: PlateShape>(&mut self, shape: &S) -> Self {
+    pub(crate) fn make_from_shape(&mut self, shape: &dyn PlateShape) -> Self {
         let mut next_plate = Plate::new(shape
                                         , self.precision
                                         , self.center_x
@@ -91,8 +91,8 @@ impl<'a> Plate<'a> {
         next_plate
     }
 
-    pub fn make_plate_with_placed_parts<S: PlateShape>(
-        shape: &S,
+    pub fn make_plate_with_placed_parts(
+        shape: &dyn PlateShape,
         precision: f64,
         placed_parts: &mut Vec<PlacedPart<'a>>,
         center_x: f64,

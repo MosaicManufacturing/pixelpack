@@ -9,7 +9,7 @@ use crate::stl::orientation::Orientation;
 use crate::stl::part::load_model;
 
 pub struct Request {
-    pub request: plater::request::Request<plater::plate_shape::Shape>,
+    pub request: plater::request::Request,
     resolution: f64,
     models: HashMap<String, Model>,
 }
@@ -19,7 +19,7 @@ impl Request {
         self.request.process(on_solution_found)
     }
 
-    pub fn new(plate_shape: plater::plate_shape::Shape, resolution: f64) -> Self {
+    pub fn new(plate_shape: Box<dyn PlateShape>, resolution: f64) -> Self {
         let alg = Algorithm {
             threading_mode: ThreadingMode::MultiThreaded,
             strategy: Strategy::SpiralPlace,
