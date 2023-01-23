@@ -1,12 +1,11 @@
 use std::collections::HashMap;
 use std::f64::consts::PI;
-use thiserror::Error;
-
 
 use itertools::Itertools;
 use rand::prelude::SliceRandom;
 use rand::thread_rng;
 use rayon::prelude::{IntoParallelIterator, ParallelIterator};
+use thiserror::Error;
 
 use crate::plater::part::Part;
 use crate::plater::placer::{GRAVITY_MODE_LIST, Placer, SortMode};
@@ -236,12 +235,13 @@ impl<S: PlateShape> Request<S> {
         };
 
         let mut solutions = place_all_placers(&mut subset);
-
-
-        let last = solutions.pop().ok_or(PlacingError::NoSolutionFound)?;
-
         solutions.sort_by(|x, y| f64::partial_cmp(&x.plate_area(), &y.plate_area()).unwrap());
-        Ok(on_solution_found(&last))
+
+        let solution = solutions
+            .get(0)
+            .ok_or(PlacingError::NoSolutionFound)?;
+
+        Ok(on_solution_found(solution))
     }
 
     fn place_all_single_threaded<'a>(placers: &'a mut [Placer<'a, S>]) -> Vec<Solution<'a>> {
