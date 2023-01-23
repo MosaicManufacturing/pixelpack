@@ -214,16 +214,15 @@ impl<'a, Shape: PlateShape> Placer<'a, Shape> {
     }
 
 
-    fn place_single_plate_linear(&mut self) -> Solution<'a> {
+    fn place_single_plate_linear(&mut self) -> Option<Solution> {
         let mut shape = Clone::clone(&self.request.plate_shape);
-        // TODO
         let mut plate = Plate::make_plate_with_placed_parts(
             &shape,
             self.request.precision,
             &mut Vec::clone(&self.locked_parts),
             self.request.center_x,
             self.request.center_y,
-        ).unwrap();
+        )?;
 
 
         for (i, part) in self.unlocked_parts.iter_mut().enumerate() {
@@ -242,7 +241,7 @@ impl<'a, Shape: PlateShape> Placer<'a, Shape> {
                     &mut Vec::clone(&self.locked_parts),
                     self.request.center_x,
                     self.request.center_y,
-                ).unwrap();
+                )?;
                 expansion_needed = false;
             }
 
@@ -281,10 +280,10 @@ impl<'a, Shape: PlateShape> Placer<'a, Shape> {
 
         let mut solution = Solution::new();
         solution.add_plate(plate);
-        solution
+        Some(solution)
     }
 
-    fn place_single_plate_exp(&mut self) -> Option<Solution<'a>> {
+    fn place_single_plate_exp(&mut self) -> Option<Solution> {
         let original_shape = Clone::clone(&self.request.plate_shape);
 
         for (i, part) in self.unlocked_parts.iter_mut().enumerate() {
@@ -390,7 +389,7 @@ impl<'a, Shape: PlateShape> Placer<'a, Shape> {
         None
     }
 
-    fn place_multi_plate(&mut self) -> Solution {
+    fn place_multi_plate(&mut self) -> Option<Solution> {
         let mut solution = Solution::new();
 
         let plate_shape = Clone::clone(&self.request.plate_shape);
@@ -400,7 +399,7 @@ impl<'a, Shape: PlateShape> Placer<'a, Shape> {
             &mut Vec::clone(&self.locked_parts),
             self.request.center_x,
             self.request.center_y,
-        ).unwrap();
+        )?;
         solution.add_plate(plate);
 
         let mut unlocked_parts = vec![];
@@ -437,17 +436,17 @@ impl<'a, Shape: PlateShape> Placer<'a, Shape> {
         }
 
         self.unlocked_parts.clear();
-        solution
+        Some(solution)
     }
 
     pub(crate) fn place(&mut self) -> Option<Solution> {
         if self.request.single_plate_mode {
             match self.request.algorithm.bed_expansion_mode {
-                BedExpansionMode::Linear => Some(self.place_single_plate_linear()),
+                BedExpansionMode::Linear => self.place_single_plate_linear(),
                 BedExpansionMode::Exponential => self.place_single_plate_exp()
             }
         } else {
-            Some(self.place_multi_plate())
+           self.place_multi_plate()
         }
     }
 }
