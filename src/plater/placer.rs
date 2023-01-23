@@ -446,7 +446,7 @@ impl<'a, Shape: PlateShape> Placer<'a, Shape> {
                 BedExpansionMode::Exponential => self.place_single_plate_exp()
             }
         } else {
-           self.place_multi_plate()
+            self.place_multi_plate()
         }
     }
 }

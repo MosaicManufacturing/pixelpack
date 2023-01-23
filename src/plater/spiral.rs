@@ -1,4 +1,5 @@
 use std::cmp::{max, min};
+
 use itertools::Itertools;
 
 enum StraightLineIter {
