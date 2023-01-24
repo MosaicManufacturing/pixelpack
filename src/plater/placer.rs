@@ -446,7 +446,7 @@ impl<'a, Shape: PlateShape> Placer<'a, Shape> {
                 BedExpansionMode::Exponential => self.place_single_plate_exp()
             }
         } else {
-           self.place_multi_plate()
+            self.place_multi_plate()
         }
     }
 }
@@ -592,26 +592,6 @@ enum CombinedIterator<A: Copy, B: Iterator> {
     YFixed { y: A, it: B },
 }
 
-#[derive(Copy, Clone)]
-struct FloatIterator {
-    start: f64,
-    end: f64,
-    dx: f64,
-}
-
-impl Iterator for FloatIterator {
-    type Item = f64;
-    fn next(&mut self) -> Option<Self::Item> {
-        if self.start <= self.end {
-            let res = Some(self.start);
-            self.start += self.dx;
-            res
-        } else {
-            None
-        }
-    }
-}
-
 enum Alt<A, B> {
     Fst(A, B),
     Snd(B, A),
@@ -647,24 +627,5 @@ impl<A: Copy, B: Iterator> Iterator for CombinedIterator<A, B> {
     }
 }
 
-
-fn test(dx: f64, width: f64, height: f64) -> impl Iterator<Item=(f64, f64)> {
-    let x = FloatIterator {
-        start: 0.0,
-        end: width,
-        dx,
-    };
-
-    let y = FloatIterator {
-        start: 0.0,
-        end: height,
-        dx,
-    };
-
-    x
-        .into_iter()
-        .flat_map(move |x| CombinedIterator::XFixed { x, it: y })
-        .map(|x: Alt<f64, f64>| x.into())
-}
 
 mod strategies;

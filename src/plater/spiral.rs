@@ -1,5 +1,7 @@
 use std::cmp::{max, min};
 
+use itertools::Itertools;
+
 enum StraightLineIter {
     XIter { cur: InclusiveRange, x: isize },
     YIter { cur: InclusiveRange, y: isize },
@@ -185,120 +187,6 @@ impl<A, T: Iterator<Item=A>, const N: usize> Iterator for WindowIter<A, T, N> {
     }
 }
 
-pub struct RepeatIter<T, const N: usize> {
-    values: [T; N],
-    index: usize,
-}
-
-impl<T, const N: usize> RepeatIter<T, N> {
-    pub fn new(values: [T; N]) -> Self {
-        if values.is_empty() {
-            panic!("Provided an empty array");
-        }
-        RepeatIter { values, index: 0 }
-    }
-}
-
-impl<T: Copy, const N: usize> Iterator for RepeatIter<T, N> {
-    type Item = T;
-
-    fn next(&mut self) -> Option<Self::Item> {
-        let cur = self.values[self.index];
-        self.index = (self.index + 1) % N;
-        Some(cur)
-    }
-}
-
-
-struct Cons<A, T: Iterator<Item=A>> {
-    initial: Option<A>,
-    it: T,
-}
-
-impl<A, T: Iterator<Item=A>> Iterator for Cons<A, T> {
-    type Item = A;
-
-    fn next(&mut self) -> Option<Self::Item> {
-        if self.initial.is_none() {
-            self.it.next()
-        } else {
-            self.initial.take()
-        }
-    }
-}
-
-struct NoConsecutiveDuplicates<A: Eq, T: Iterator<Item=A>> {
-    fst: Option<A>,
-    snd: Option<A>,
-    it: T,
-}
-
-impl<A: Eq, T: Iterator<Item=A>> NoConsecutiveDuplicates<A, T> {
-    fn new(mut iter: T) -> Self {
-        let fst = iter.next();
-        let mut snd = iter.next();
-
-        if fst == snd {
-            if fst.is_none() {
-                return NoConsecutiveDuplicates {
-                    fst,
-                    snd,
-                    it: iter,
-                };
-            }
-
-            snd = None;
-
-            while let Some(x) = iter.next() {
-                if x.eq(fst.as_ref().unwrap()) {
-                    continue;
-                } else {
-                    snd = Some(x);
-                    break;
-                }
-            }
-
-            NoConsecutiveDuplicates {
-                fst,
-                snd,
-                it: iter,
-            }
-        } else {
-            NoConsecutiveDuplicates {
-                fst,
-                snd,
-                it: iter,
-            }
-        }
-    }
-}
-
-impl<A: Eq, T: Iterator<Item=A>> Iterator for NoConsecutiveDuplicates<A, T> {
-    type Item = A;
-
-    fn next(&mut self) -> Option<Self::Item> {
-        if self.fst.is_none() {
-            return None;
-        }
-
-        if self.fst != self.snd {
-            let res = self.fst.take();
-            std::mem::swap(&mut self.fst, &mut self.snd);
-
-            while let Some(x) = self.it.next() {
-                if x.eq(self.fst.as_ref().unwrap()) {
-                    continue;
-                } else {
-                    self.snd = Some(x);
-                    break;
-                }
-            }
-            return res;
-        }
-        unreachable!()
-    }
-}
-
 #[derive(Ord, Eq, PartialOrd, PartialEq)]
 struct PairWrapper<A, B> ((A, B));
 
@@ -334,8 +222,7 @@ pub(crate) fn spiral_iterator(delta: f64, width: f64, height: f64, original_widt
     let distances = (1..)
         .flat_map(|n| [n, n]);
 
-
-    let direction_vectors = RepeatIter::new([(1, 0), (0, -1), (-1, 0), (0, 1)]);
+    let direction_vectors = [(1, 0), (0, -1), (-1, 0), (0, 1)].into_iter().cycle();
 
     let points = distances
         .zip(direction_vectors)
@@ -346,7 +233,7 @@ pub(crate) fn spiral_iterator(delta: f64, width: f64, height: f64, original_widt
             Some(*st)
         });
 
-    let points_with_origin = Cons { initial: Some(origin), it: points };
+    let points_with_origin = Some(origin).into_iter().chain(points.into_iter());
 
     let duplicated_points = points_with_origin
         .flat_map(|p| [p, p]).skip(1);
@@ -379,14 +266,16 @@ pub(crate) fn spiral_iterator(delta: f64, width: f64, height: f64, original_widt
         .map(|x| x.unwrap())
         .flatten();
 
-    let spiral = NoConsecutiveDuplicates::new(Cons {
-        initial: Some(origin),
-        it: grouped_lines.flat_map(|x| {
-            x.into_iter()
-        }),
-    });
+    let spiral_with_origin_at_head = Some(origin)
+        .into_iter()
+        .chain(grouped_lines.
+            flat_map(|line| {
+                line.into_iter()
+            }));
 
-    spiral.map(move |(x, y)| {
+    let spiral = Itertools::dedup(spiral_with_origin_at_head.into_iter());
+
+    spiral.into_iter().map(move |(x, y)| {
         (x as f64 * delta, y as f64 * delta)
     })
 }
