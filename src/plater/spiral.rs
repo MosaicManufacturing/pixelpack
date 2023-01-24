@@ -2,8 +2,6 @@ use std::cmp::{max, min};
 
 use itertools::Itertools;
 
-use itertools::Itertools;
-
 enum StraightLineIter {
     XIter { cur: InclusiveRange, x: isize },
     YIter { cur: InclusiveRange, y: isize },
