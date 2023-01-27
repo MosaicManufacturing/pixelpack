@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use crate::plater;
-use crate::plater::plate_shape::PlateShape;
+use crate::plater::plate_shape::{PlateShape, Shape};
 use crate::plater::request::{Algorithm, BedExpansionMode, ConfigOrder, PlacingError, PointEnumerationMode, Strategy, ThreadingMode};
 use crate::plater::solution::Solution;
 use crate::stl::model::Model;
@@ -19,7 +19,7 @@ impl Request {
         self.request.process(on_solution_found)
     }
 
-    pub fn new(plate_shape: Box<dyn PlateShape>, resolution: f64) -> Self {
+    pub fn new(plate_shape: Shape, resolution: f64) -> Self {
         let alg = Algorithm {
             threading_mode: ThreadingMode::MultiThreaded,
             strategy: Strategy::SpiralPlace,
@@ -28,7 +28,12 @@ impl Request {
             bed_expansion_mode: BedExpansionMode::Exponential,
         };
 
-        let (width, height) = (plate_shape.width() / resolution, plate_shape.height() / resolution);
+        let (plate_width, plate_height) = match &plate_shape {
+            Shape::Rectangle(r) => (r.width(), r.height()),
+            Shape::Circle(c) => (c.width(), c.height())
+        };
+
+        let (width, height) = (plate_width / resolution, plate_height / resolution);
 
         // There might be a missing scaling factor for the center
         let request = plater::request::Request::new(plate_shape, resolution, alg, width, height);

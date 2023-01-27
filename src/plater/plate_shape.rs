@@ -1,4 +1,5 @@
 use crate::plater::bitmap::Bitmap;
+use crate::plater::plate_shape::Shape::{Circle, Rectangle};
 
 pub trait PlateShape: Send + Sync {
     fn resolution(&self) -> f64;
@@ -23,6 +24,35 @@ pub struct PlateRectangle {
     resolution: f64,
     width: f64,
     height: f64,
+}
+
+pub enum Shape {
+    Rectangle(PlateRectangle),
+    Circle(PlateCircle),
+}
+
+impl Shape {
+    pub fn new_circle(diameter: f64, resolution: f64) -> Self {
+        Circle(PlateCircle::new(diameter, resolution))
+    }
+
+    pub fn new_rectangle(width: f64, height: f64, resolution: f64) -> Self {
+        Rectangle(PlateRectangle::new(width, height, resolution))
+    }
+
+    pub fn width(&self) -> f64 {
+        match self {
+            Rectangle(r) => r.width(),
+            Circle(c) => c.width()
+        }
+    }
+
+    pub fn height(&self) -> f64 {
+        match self {
+            Rectangle(r) => r.height(),
+            Circle(c) => c.height()
+        }
+    }
 }
 
 impl PlateRectangle {
@@ -57,7 +87,7 @@ impl PlateShape for PlateRectangle {
     }
 
     fn expand(&self, size: f64) -> Box<dyn PlateShape> {
-       Box::new(PlateRectangle::new(
+        Box::new(PlateRectangle::new(
             self.width / self.resolution + size,
             self.height / self.resolution,
             self.resolution,
