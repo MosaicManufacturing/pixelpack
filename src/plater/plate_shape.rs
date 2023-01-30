@@ -1,79 +1,20 @@
 use crate::plater::bitmap::Bitmap;
+use crate::plater::plate_shape::Shape::{Circle, Rectangle};
 
-pub trait PlateShape: Clone + Send + Sync {
+pub trait PlateShape: Send + Sync {
     fn resolution(&self) -> f64;
     fn width(&self) -> f64;
     fn height(&self) -> f64;
     fn string(&self) -> String;
     fn mask_bitmap(&self, bitmap: &mut Bitmap, precision: f64);
-    fn expand(&self, size: f64) -> Self;
-    fn intersect_square(&self, size: f64) -> Option<Self>;
+    fn expand(&self, size: f64) -> Box<dyn PlateShape>;
+    fn dyn_clone(&self) -> Box<dyn PlateShape>;
+    fn intersect_square(&self, size: f64) -> Option<Box<dyn PlateShape>>;
 }
 
-#[derive(Clone)]
-pub enum Shape {
-    Rectangle(PlateRectangle),
-    Circle(PlateCircle),
-}
-
-impl Shape {
-    pub fn new_rectangle(width: f64, height: f64, resolution: f64) -> Self {
-        Shape::Rectangle(PlateRectangle::new(width, height, resolution))
-    }
-
-    pub fn new_circle(diameter: f64, resolution: f64) -> Self {
-        Shape::Circle(PlateCircle::new(diameter, resolution))
-    }
-}
-
-impl PlateShape for Shape {
-    fn resolution(&self) -> f64 {
-        match self {
-            Shape::Rectangle(r) => PlateShape::resolution(r),
-            Shape::Circle(c) => PlateShape::resolution(c),
-        }
-    }
-
-    fn width(&self) -> f64 {
-        match self {
-            Shape::Rectangle(r) => PlateShape::width(r),
-            Shape::Circle(c) => PlateShape::width(c),
-        }
-    }
-
-    fn height(&self) -> f64 {
-        match self {
-            Shape::Rectangle(r) => PlateShape::height(r),
-            Shape::Circle(c) => PlateShape::height(c),
-        }
-    }
-
-    fn string(&self) -> String {
-        match self {
-            Shape::Rectangle(r) => PlateShape::string(r),
-            Shape::Circle(c) => PlateShape::string(c),
-        }
-    }
-
-    fn mask_bitmap(&self, bitmap: &mut Bitmap, precision: f64) {
-        match self {
-            Shape::Rectangle(r) => PlateShape::mask_bitmap(r, bitmap, precision),
-            Shape::Circle(c) => PlateShape::mask_bitmap(c, bitmap, precision),
-        }
-    }
-
-    fn expand(&self, size: f64) -> Self {
-        match self {
-            Shape::Rectangle(r) => Shape::Rectangle(PlateShape::expand(r, size)),
-            Shape::Circle(c) => Shape::Circle(PlateShape::expand(c, size)),
-        }
-    }
-
-    fn intersect_square(&self, size: f64) -> Option<Self> {
-        match self {
-            Shape::Rectangle(r) => r.intersect_square(size).map(|x| Shape::Rectangle(x)),
-            Shape::Circle(c) => c.intersect_square(size).map(|x| Shape::Circle(x)),
-        }
+impl Clone for Box<dyn PlateShape> {
+    fn clone(&self) -> Self {
+        self.dyn_clone()
     }
 }
 
@@ -85,8 +26,37 @@ pub struct PlateRectangle {
     height: f64,
 }
 
+pub enum Shape {
+    Rectangle(PlateRectangle),
+    Circle(PlateCircle),
+}
+
+impl Shape {
+    pub fn new_circle(diameter: f64, resolution: f64) -> Self {
+        Circle(PlateCircle::new(diameter, resolution))
+    }
+
+    pub fn new_rectangle(width: f64, height: f64, resolution: f64) -> Self {
+        Rectangle(PlateRectangle::new(width, height, resolution))
+    }
+
+    pub fn width(&self) -> f64 {
+        match self {
+            Rectangle(r) => r.width(),
+            Circle(c) => c.width()
+        }
+    }
+
+    pub fn height(&self) -> f64 {
+        match self {
+            Rectangle(r) => r.height(),
+            Circle(c) => c.height()
+        }
+    }
+}
+
 impl PlateRectangle {
-    pub(crate) fn new(width: f64, height: f64, resolution: f64) -> Self {
+    pub fn new(width: f64, height: f64, resolution: f64) -> Self {
         PlateRectangle {
             resolution,
             width: width * resolution,
@@ -116,15 +86,23 @@ impl PlateShape for PlateRectangle {
         // no-op for rectangular piece
     }
 
-    fn expand(&self, size: f64) -> Self {
-        PlateRectangle::new(
+    fn expand(&self, size: f64) -> Box<dyn PlateShape> {
+        Box::new(PlateRectangle::new(
             self.width / self.resolution + size,
             self.height / self.resolution,
             self.resolution,
-        )
+        ))
     }
 
-    fn intersect_square(&self, size: f64) -> Option<Self> {
+    fn dyn_clone(&self) -> Box<dyn PlateShape> {
+        Box::new(PlateRectangle {
+            resolution: self.resolution,
+            width: self.width,
+            height: self.height,
+        })
+    }
+
+    fn intersect_square(&self, size: f64) -> Option<Box<dyn PlateShape>> {
         if size <= 0.0 {
             return None;
         }
@@ -133,7 +111,7 @@ impl PlateShape for PlateRectangle {
         let height = self.height / self.resolution;
 
 
-        Some(PlateRectangle::new(f64::min(size, width), f64::min(size, height), self.resolution))
+        Some(Box::new(PlateRectangle::new(f64::min(size, width), f64::min(size, height), self.resolution)))
     }
 }
 
@@ -144,7 +122,7 @@ pub struct PlateCircle {
 }
 
 impl PlateCircle {
-    fn new(diameter: f64, resolution: f64) -> Self {
+    pub fn new(diameter: f64, resolution: f64) -> Self {
         PlateCircle {
             resolution,
             diameter: diameter * resolution,
@@ -187,11 +165,18 @@ impl PlateShape for PlateCircle {
 
     // Expand returns a new PlateCircle with the diameter
     // of the receiver increased by size.
-    fn expand(&self, size: f64) -> Self {
-        PlateCircle::new(self.diameter / self.resolution + size, self.resolution)
+    fn expand(&self, size: f64) -> Box<dyn PlateShape> {
+        Box::new(PlateCircle::new(self.diameter / self.resolution + size, self.resolution))
     }
 
-    fn intersect_square(&self, size: f64) -> Option<Self> {
+    fn dyn_clone(&self) -> Box<dyn PlateShape> {
+        Box::new(PlateCircle {
+            resolution: self.resolution,
+            diameter: self.diameter,
+        })
+    }
+
+    fn intersect_square(&self, size: f64) -> Option<Box<dyn PlateShape>> {
         if size <= 0.0 {
             return None;
         }
@@ -200,7 +185,7 @@ impl PlateShape for PlateCircle {
         if diameter <= 0.0 {
             None
         } else {
-            Some(PlateCircle::new(diameter, self.resolution))
+            Some(Box::new(PlateCircle::new(diameter, self.resolution)))
         }
     }
 }

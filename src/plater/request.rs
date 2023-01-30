@@ -10,16 +10,16 @@ use thiserror::Error;
 use crate::plater::part::Part;
 use crate::plater::placer::{GRAVITY_MODE_LIST, Placer, SortMode};
 use crate::plater::placer::SortMode::{HeightDec, Shuffle, SurfaceDec, SurfaceInc, WidthDec};
-use crate::plater::plate_shape::PlateShape;
+use crate::plater::plate_shape::{PlateShape, Shape};
 use crate::plater::solution::Solution;
 use crate::stl;
 
 // DEFAULT_RESOLUTION is the default bitmap resolution, in pixels per mm.
 pub const DEFAULT_RESOLUTION: f64 = 1000.0;
 
-pub struct Request<S: PlateShape> {
+pub struct Request {
     // plate_shape represents the size and shape of the build plate.
-    pub(crate) plate_shape: S,
+    pub(crate) plate_shape: Box<dyn PlateShape>,
     // single_plate_mode uses a single, expandable plate
     pub(crate) single_plate_mode: bool,
     // sort_modes is a list of sort modes to attempt when placing.
@@ -100,10 +100,15 @@ pub fn default_sort_modes() -> Vec<SortMode> {
     vec![SurfaceDec, SurfaceInc, Shuffle, WidthDec, HeightDec]
 }
 
-impl<S: PlateShape> Request<S> {
-    pub fn new(plate_shape: S, resolution: f64, algorithm: Algorithm, center_x: f64, center_y: f64) -> Self {
+impl Request {
+    pub fn new(plate_shape: Shape, resolution: f64, algorithm: Algorithm, center_x: f64, center_y: f64) -> Self {
+        let boxed_plate_shape: Box<dyn PlateShape> = match plate_shape {
+            Shape::Rectangle(r) => Box::new(r),
+            Shape::Circle(c) => Box::new(c)
+        };
+
         Request {
-            plate_shape,
+            plate_shape: boxed_plate_shape,
             single_plate_mode: true,
             sort_modes: default_sort_modes(),
             max_threads: 1,
@@ -244,7 +249,7 @@ impl<S: PlateShape> Request<S> {
         Ok(on_solution_found(solution))
     }
 
-    fn place_all_single_threaded<'a>(placers: &'a mut [Placer<'a, S>]) -> Vec<Solution<'a>> {
+    fn place_all_single_threaded<'a>(placers: &'a mut [Placer<'a>]) -> Vec<Solution<'a>> {
         let mut k = None;
         placers
             .into_iter()
@@ -261,7 +266,7 @@ impl<S: PlateShape> Request<S> {
             .collect::<Vec<_>>()
     }
 
-    fn place_all_multi_threaded<'a>(placers: &'a mut [Placer<'a, S>]) -> Vec<Solution<'a>> {
+    fn place_all_multi_threaded<'a>(placers: &'a mut [Placer<'a>]) -> Vec<Solution<'a>> {
         placers
             .into_par_iter()
             .map(|placer| {

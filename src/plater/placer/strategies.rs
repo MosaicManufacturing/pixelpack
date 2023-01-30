@@ -10,7 +10,7 @@ use crate::plater::spiral::spiral_iterator;
 
 use super::Placer;
 
-impl<'a, Shape: PlateShape> Placer<'a, Shape> {
+impl<'a> Placer<'a> {
     pub fn place_unlocked_part<'b>(
         &mut self,
         plate: &mut Plate<'b>,

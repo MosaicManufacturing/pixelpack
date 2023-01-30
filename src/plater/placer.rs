@@ -107,7 +107,7 @@ impl From<GravityMode> for usize {
 
 type PlateId = usize;
 
-pub(crate) struct Placer<'a, S: PlateShape> {
+pub(crate) struct Placer<'a> {
     rotate_offset: i32,
     rotate_direction: i32,
     // 0 = CCW, 1 = CW, TODO: make an enum
@@ -119,14 +119,14 @@ pub(crate) struct Placer<'a, S: PlateShape> {
     // input data
     locked_parts: Vec<PlacedPart<'a>>,
     pub(crate) unlocked_parts: Vec<PlacedPart<'a>>,
-    pub(crate) request: &'a Request<S>,
+    pub(crate) request: &'a Request,
     // center_x, center_y, width, height
     current_bounding_box: Option<Rect>,
     pub smallest_observed_plate: Option<usize>,
 }
 
-impl<'a, Shape: PlateShape> Placer<'a, Shape> {
-    pub(crate) fn new(request: &'a Request<Shape>) -> Self {
+impl<'a> Placer<'a> {
+    pub(crate) fn new(request: &'a Request) -> Self {
         let mut p = Placer {
             rotate_offset: 0,
             rotate_direction: 0,
@@ -217,7 +217,7 @@ impl<'a, Shape: PlateShape> Placer<'a, Shape> {
     fn place_single_plate_linear(&mut self) -> Option<Solution> {
         let mut shape = Clone::clone(&self.request.plate_shape);
         let mut plate = Plate::make_plate_with_placed_parts(
-            &shape,
+            shape.as_ref(),
             self.request.precision,
             &mut Vec::clone(&self.locked_parts),
             self.request.center_x,
@@ -236,7 +236,7 @@ impl<'a, Shape: PlateShape> Placer<'a, Shape> {
                 // Expand and try again
                 shape = shape.expand(expand_mm);
                 plate = Plate::make_plate_with_placed_parts(
-                    &shape,
+                    shape.as_ref(),
                     self.request.precision,
                     &mut Vec::clone(&self.locked_parts),
                     self.request.center_x,
@@ -246,7 +246,7 @@ impl<'a, Shape: PlateShape> Placer<'a, Shape> {
             }
 
             // TODO: this will not handle locked parts correctly as locked parts were drained out
-            if !all_parts_can_be_attempted(&self.unlocked_parts, &shape) {
+            if !all_parts_can_be_attempted(&self.unlocked_parts, shape.as_ref()) {
                 expansion_needed = true;
                 continue;
             }
@@ -320,7 +320,7 @@ impl<'a, Shape: PlateShape> Placer<'a, Shape> {
 
             let mut unlocked_parts = Vec::clone(&self.unlocked_parts);
             let mut plate = Plate::make_plate_with_placed_parts(
-                &shape,
+                shape.as_ref(),
                 self.request.precision,
                 &mut Vec::clone(&self.locked_parts),
                 self.request.center_x,
@@ -328,10 +328,10 @@ impl<'a, Shape: PlateShape> Placer<'a, Shape> {
             )?;
 
 
-            if i <= n && !all_parts_can_be_attempted(&unlocked_parts, &shape) {
+            if i <= n && !all_parts_can_be_attempted(&unlocked_parts, shape.as_ref()) {
                 return None;
                 // Add special handling if some parts will never fit
-            } else if i > n && !all_parts_can_eventually_be_attempted(&unlocked_parts, &shape) {
+            } else if i > n && !all_parts_can_eventually_be_attempted(&unlocked_parts, shape.as_ref()) {
                 return None;
             }
 
@@ -352,7 +352,7 @@ impl<'a, Shape: PlateShape> Placer<'a, Shape> {
                         should_align_to_bed = true;
                         unlocked_parts.push(part);
                         shape = shape.expand(original_shape.width() / original_shape.resolution());
-                        plate = Plate::make_from_shape(&mut plate, &shape)
+                        plate = Plate::make_from_shape(&mut plate, shape.as_ref())
                     }
                 }
             }
@@ -394,7 +394,7 @@ impl<'a, Shape: PlateShape> Placer<'a, Shape> {
 
         let plate_shape = Clone::clone(&self.request.plate_shape);
         let plate = Plate::make_plate_with_placed_parts(
-            &plate_shape,
+            plate_shape.as_ref(),
             self.request.precision,
             &mut Vec::clone(&self.locked_parts),
             self.request.center_x,
@@ -420,7 +420,7 @@ impl<'a, Shape: PlateShape> Placer<'a, Shape> {
 
                             // Multi plates and ownership of locked parts
                             let next_plate = Plate::make_plate_with_placed_parts(
-                                &shape,
+                                shape.as_ref(),
                                 self.request.precision,
                                 &mut Vec::clone(&self.locked_parts),
                                 self.request.center_x,
@@ -558,7 +558,7 @@ pub(crate) fn exponential_search<T: Clone + Debug>(limit: usize, mut run: impl F
 
 
 // If for every model, there exists some rotation that fits try it
-fn all_parts_can_be_attempted<S: PlateShape>(parts: &Vec<PlacedPart>, plate_shape: &S) -> bool {
+fn all_parts_can_be_attempted(parts: &Vec<PlacedPart>, plate_shape: &dyn PlateShape) -> bool {
     parts
         .iter()
         .map(|part| part
@@ -573,7 +573,7 @@ fn all_parts_can_be_attempted<S: PlateShape>(parts: &Vec<PlacedPart>, plate_shap
 }
 
 // If for every model, there exists some rotation that fits try it
-fn all_parts_can_eventually_be_attempted<S: PlateShape>(parts: &Vec<PlacedPart>, plate_shape: &S) -> bool {
+fn all_parts_can_eventually_be_attempted(parts: &Vec<PlacedPart>, plate_shape: &dyn PlateShape) -> bool {
     parts
         .iter()
         .map(|part| part
