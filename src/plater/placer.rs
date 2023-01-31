@@ -291,11 +291,8 @@ impl<'a> Placer<'a> {
         }
 
         let expand_mm = 5.0;
-
-        let m = f64::min(original_shape.width(), original_shape.height());
         // 32, 128
         let n = 1024;
-        let limit = 4096;
 
         let res = Clone::clone(&self.smallest_observed_plate);
 
@@ -310,7 +307,7 @@ impl<'a> Placer<'a> {
             self.current_bounding_box = None;
 
             let mut shape = if i < n {
-                original_shape.intersect_square(m + (i as f64 - n as f64 + 1.0) * expand_mm)?
+                original_shape.contract((n - i) as f64 * expand_mm)?
             } else if i == n {
                 original_shape.clone()
             } else {
