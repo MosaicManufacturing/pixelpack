@@ -181,10 +181,10 @@ impl PlateShape for PlateCircle {
         }
     }
 
-    // Expand returns a new PlateCircle with the diameter
-    // of the receiver increased by size.
+    // We return a rectangle when expanding a circle
     fn expand(&self, size: f64) -> Box<dyn PlateShape> {
-        Box::new(PlateCircle::new(self.diameter / self.resolution + size, self.resolution))
+        let width = self.diameter / self.resolution + size;
+        Box::new(PlateRectangle::new(width, width, self.resolution))
     }
 
     fn dyn_clone(&self) -> Box<dyn PlateShape> {
