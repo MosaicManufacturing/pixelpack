@@ -10,6 +10,7 @@ pub trait PlateShape: Send + Sync {
     fn expand(&self, size: f64) -> Box<dyn PlateShape>;
     fn dyn_clone(&self) -> Box<dyn PlateShape>;
     fn intersect_square(&self, size: f64) -> Option<Box<dyn PlateShape>>;
+    fn contract(&self, size: f64) -> Option<Box<dyn PlateShape>>;
 }
 
 impl Clone for Box<dyn PlateShape> {
@@ -113,6 +114,23 @@ impl PlateShape for PlateRectangle {
 
         Some(Box::new(PlateRectangle::new(f64::min(size, width), f64::min(size, height), self.resolution)))
     }
+
+    fn contract(&self, size: f64) -> Option<Box<dyn PlateShape>> {
+        if size <= 0.0 {
+            return None;
+        }
+
+        let width = self.width - size * self.resolution;
+
+        if width <= 0.0 {
+            return None;
+        }
+
+        let height = self.height * (width / self.width);
+
+        let rectangle = PlateRectangle::new(width / self.resolution, height / self.resolution, self.resolution);
+        Some(Box::new(rectangle))
+    }
 }
 
 #[derive(Clone)]
@@ -163,10 +181,10 @@ impl PlateShape for PlateCircle {
         }
     }
 
-    // Expand returns a new PlateCircle with the diameter
-    // of the receiver increased by size.
+    // We return a rectangle when expanding a circle
     fn expand(&self, size: f64) -> Box<dyn PlateShape> {
-        Box::new(PlateCircle::new(self.diameter / self.resolution + size, self.resolution))
+        let width = self.diameter / self.resolution + size;
+        Box::new(PlateRectangle::new(width, width, self.resolution))
     }
 
     fn dyn_clone(&self) -> Box<dyn PlateShape> {
@@ -187,5 +205,21 @@ impl PlateShape for PlateCircle {
         } else {
             Some(Box::new(PlateCircle::new(diameter, self.resolution)))
         }
+    }
+
+    // Also mask bitmap
+    fn contract(&self, size: f64) -> Option<Box<dyn PlateShape>> {
+        if size <= 0.0 {
+            return None;
+        }
+
+        let width = self.width() - size * self.resolution;
+
+        if width <= 0.0 {
+            return None;
+        }
+
+        let circle = PlateCircle::new(width / self.resolution, self.resolution);
+        Some(Box::new(circle))
     }
 }
