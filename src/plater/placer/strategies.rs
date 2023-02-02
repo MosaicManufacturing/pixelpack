@@ -3,6 +3,10 @@ use std::f64::consts::PI;
 
 use crate::plater::placed_part::PlacedPart;
 use crate::plater::placer::Rect;
+use crate::plater::placer::score::{FloatWrapper, Score};
+use crate::plater::placer::score::Position::{Inside, Outside};
+use crate::plater::placer::score::Prefer;
+use crate::plater::placer::score::Preference::Second;
 use crate::plater::plate::Plate;
 use crate::plater::plate_shape::PlateShape;
 use crate::plater::request::Strategy;
@@ -121,10 +125,15 @@ impl<'a> Placer<'a> {
                         part: &mut PlacedPart<'b>) -> Option<(f64, f64, usize)> {
         let mut better_x = 0.0;
         let mut better_y = 0.0;
-        let mut better_score = 0.0;
         let mut better_r = 0;
         let mut found = false;
 
+        let mut better_score = Score {
+            position: Outside,
+            moment_of_inertial: FloatWrapper(f64::INFINITY),
+            x_pos: FloatWrapper(f64::INFINITY),
+            y_pos: FloatWrapper(f64::INFINITY),
+        };
 
         // Conditionally reverse iteration direction
         let make_rot_iter = || if self.rotate_direction != 0 {
@@ -141,11 +150,9 @@ impl<'a> Placer<'a> {
                     (x + plate.center_x - plate.width / 2.0, y + plate.center_y - plate.height / 2.0)
                 });
 
-        let max_penalty = f64::powf(self.request.plate_shape.width(), 2.0)
-            + f64::powf(self.request.plate_shape.height(), 2.0);
 
         let cond = self.request.plate_shape.width() + (plate.center_x - plate.width / 2.0);
-        let mut dist = f64::MAX;
+
         for (x, y) in spiral {
             part.set_offset(x, y);
             for r in make_rot_iter() {
@@ -172,25 +179,25 @@ impl<'a> Placer<'a> {
                         cur.clone()
                     };
 
-                    // Penalty to make models fit in the first plate section
-                    let penalty =
-                        // Make placing outside the main plate expensive
-                        if x + bmp.width as f64 > cond {
-                            max_penalty
-                        } else {
-                            0.0
-                        };
+                    let position = if x > cond {
+                        Outside
+                    } else {
+                        Inside
+                    };
 
 
-                    let area = f64::powf(merged.height, 2.0) + f64::powf(merged.width, 2.0);
-                    // let area = merged.width * merged.height;
+                    let moment_of_inertia = f64::powf(merged.height, 2.0) + f64::powf(merged.width, 2.0);
                     cur_rect = Some(merged);
-                    area + penalty
+
+                    Score {
+                        position,
+                        moment_of_inertial: FloatWrapper(moment_of_inertia),
+                        x_pos: FloatWrapper(x),
+                        y_pos: FloatWrapper(y),
+                    }
                 };
 
-                let cur_dist = f64::powf(x - plate.center_x, 2.0) + f64::powf(y - plate.center_y, 2.0);
-
-                if !found || score < better_score || (f64::abs(score - better_score) < 0.001 && cur_dist < dist) {
+                if !found || better_score.compare_prefer(score) == Second {
                     if plate.can_place(&part) {
                         found = true;
                         better_x = x;
@@ -198,8 +205,6 @@ impl<'a> Placer<'a> {
                         better_r = vr;
                         better_score = score;
                         self.current_bounding_box = cur_rect;
-                        dist = cur_dist;
-                        // break 'outer;
                     }
                 }
             }
