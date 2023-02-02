@@ -296,6 +296,9 @@ impl<'a> Placer<'a> {
 
         let res = Clone::clone(&self.smallest_observed_plate);
 
+        let bottom_left = (self.request.center_x - original_shape.width() / (2.0 * self.request.precision)
+                           , self.request.center_y - original_shape.height() / (2.0 * self.request.precision));
+
         let mut f = |i| {
             if let Some(x) = res {
                 if i >= x {
@@ -315,13 +318,19 @@ impl<'a> Placer<'a> {
                 original_shape.expand(original_shape.width() / self.request.precision)
             };
 
+            let center = if i <= n {
+                (self.request.center_x, self.request.center_y)
+            } else {
+                (bottom_left.0 + shape.width() / (2.0 * self.request.precision), bottom_left.1 + shape.height() / (2.0 * self.request.precision))
+            };
+
             let mut unlocked_parts = Vec::clone(&self.unlocked_parts);
             let mut plate = Plate::make_plate_with_placed_parts(
                 shape.as_ref(),
                 self.request.precision,
                 &mut Vec::clone(&self.locked_parts),
-                self.request.center_x,
-                self.request.center_y,
+                center.0,
+                center.1,
             )?;
 
 
@@ -349,7 +358,7 @@ impl<'a> Placer<'a> {
                         should_align_to_bed = true;
                         unlocked_parts.push(part);
                         shape = shape.expand(original_shape.width() / original_shape.resolution());
-                        plate = Plate::make_from_shape(&mut plate, shape.as_ref())
+                        plate = Plate::make_from_shape(&mut plate, shape.as_ref(), bottom_left)
                     }
                 }
             }
