@@ -25,15 +25,12 @@ pub struct Plate<'a> {
 
 impl<'a> Plate<'a> {
     pub(crate) fn align(&mut self, original_width: f64, original_height: f64) {
-        let (bottom_space, top_space, left_space, right_space) = self.bitmap.get_bound();
-        self.center();
-
-        let centered_width = self.width - left_space - right_space;
-        let tr_x = (original_width - centered_width) / 2.0;
+        let bound = self.bitmap.get_bound();
+        let (bottom_space, top_space, left_space, right_space) = bound;
 
         for part in &mut self.parts {
             let (x, y) = (part.get_x(), part.get_y());
-            part.set_offset(x - tr_x, y);
+            part.set_offset(x - left_space, y);
         }
     }
 
@@ -72,11 +69,14 @@ impl<'a> Plate<'a> {
         }
     }
 
-    pub(crate) fn make_from_shape(&mut self, shape: &dyn PlateShape) -> Self {
+    pub(crate) fn make_from_shape(&mut self, shape: &dyn PlateShape, bottom_left: (f64, f64)) -> Self {
+        let width = shape.width() / self.precision;
+        let height = shape.height() / self.precision;
+
         let mut next_plate = Plate::new(shape
                                         , self.precision
-                                        , self.center_x
-                                        , self.center_y);
+                                        , bottom_left.0 + width / 2.0
+                                        , bottom_left.1 + height / 2.0);
 
         let mut new_parts = Vec::with_capacity(self.parts.len());
         std::mem::swap(&mut new_parts, &mut self.parts);
