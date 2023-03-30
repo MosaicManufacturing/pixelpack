@@ -2,6 +2,13 @@ use std::cmp::{max, min};
 
 use crate::plater::util;
 
+const NEIGHBORS: [(i32, i32); 9] =
+    [
+        (-1, -1), (0, -1), (1, -1),
+        (-1, 0), (0, 0), (1, 0),
+        (-1, 1), (0, 1), (1, 1)
+    ];
+
 pub struct Bitmap {
     // Image dimensions
     pub(crate) width: i32,
@@ -277,13 +284,21 @@ impl Bitmap {
                 let c_x = f64::round((x as f64) - center_x);
                 let c_y = f64::round((y as f64) - center_y);
                 let (x_1, y_1) = util::apply_rotation_f64((c_x, c_y), r);
+
+                let center_x = f64::round(x_1 + old_center_x) as i32;
+                let center_y = f64::round(y_1 + old_center_y) as i32;
+
+                let max_of_neighbors = NEIGHBORS
+                    .iter()
+                    .map(|(off_x, off_y)| self.get_point(
+                        center_x + *off_x,
+                        center_y + *off_y,
+                    )).max().unwrap();
+
                 rotated.set_point(
                     x,
                     y,
-                    self.get_point(
-                        f64::round(x_1 + old_center_x) as i32,
-                        f64::round(y_1 + old_center_y) as i32,
-                    ),
+                    max_of_neighbors,
                 );
             }
         }
