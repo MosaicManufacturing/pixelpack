@@ -8,8 +8,8 @@ pub struct Part {
     pub(crate) id: String,
     pub(crate) precision: f64,
     pub(crate) delta_r: f64,
-    _width: f64,
-    _height: f64,
+    pub(crate) width: f64,
+    pub(crate) height: f64,
     pub(crate) center_x: f64,
     pub(crate) center_y: f64,
     surface: f64,
@@ -61,8 +61,8 @@ impl Part {
             bitmaps,
             center_y,
             center_x,
-            _width: width as f64 + 2.0 * spacing,
-            _height: height as f64 + 2.0 * spacing,
+            width: width as f64 + 2.0 * spacing,
+            height: height as f64 + 2.0 * spacing,
             surface: 0.0,
         };
 
