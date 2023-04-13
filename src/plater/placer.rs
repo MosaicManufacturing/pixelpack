@@ -141,11 +141,11 @@ impl<'a> Placer<'a> {
         };
 
         for part in request.parts.values() {
-            let (x, y) = (part.center_x, part.center_y);
+            let (off_x, off_y) = (part.center_x - part.width/2.0, part.center_y - part.height/2.0);
             let mut placed_part = PlacedPart::new_placed_part(part);
 
             if part.locked {
-                placed_part.set_offset(x, y);
+                placed_part.set_offset(off_x, off_y);
                 p.locked_parts.push(placed_part)
             } else {
                 p.unlocked_parts.push(placed_part);
