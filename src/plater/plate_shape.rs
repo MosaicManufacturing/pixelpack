@@ -88,11 +88,11 @@ impl PlateShape for PlateRectangle {
     }
 
     fn expand(&self, size: f64) -> Box<dyn PlateShape> {
-        Box::new(PlateRectangle::new(
-            self.width / self.resolution + size,
-            self.height / self.resolution,
-            self.resolution,
-        ))
+        Box::new(PlateRectangle {
+            resolution: self.resolution,
+            width: self.width * size,
+            height: self.height,
+        })
     }
 
     fn dyn_clone(&self) -> Box<dyn PlateShape> {
@@ -183,8 +183,10 @@ impl PlateShape for PlateCircle {
 
     // We return a rectangle when expanding a circle
     fn expand(&self, size: f64) -> Box<dyn PlateShape> {
-        let width = self.diameter / self.resolution + size;
-        Box::new(PlateRectangle::new(width, width, self.resolution))
+        Box::new(PlateCircle {
+            resolution: self.resolution,
+            diameter: self.diameter * size
+        })
     }
 
     fn dyn_clone(&self) -> Box<dyn PlateShape> {
