@@ -11,6 +11,7 @@ use crate::plater::placed_part::PlacedPart;
 use crate::plater::placer::Alt::{Fst, Snd};
 use crate::plater::placer::Attempts::{Failure, Solved, ToCompute};
 use crate::plater::placer::GravityMode::{GravityEQ, GravityXY, GravityYX};
+use crate::plater::placer::score::ScoreOrder;
 use crate::plater::plate::Plate;
 use crate::plater::plate_shape::PlateShape;
 use crate::plater::request::{BedExpansionMode, Request};
@@ -123,6 +124,7 @@ pub(crate) struct Placer<'a> {
     // center_x, center_y, width, height
     current_bounding_box: Option<Rect>,
     pub smallest_observed_plate: Option<usize>,
+    pub(crate) score_order: Option<ScoreOrder>
 }
 
 impl<'a> Placer<'a> {
@@ -138,6 +140,7 @@ impl<'a> Placer<'a> {
             request,
             current_bounding_box: None,
             smallest_observed_plate: None,
+            score_order: None
         };
 
         for part in request.parts.values() {
@@ -635,4 +638,4 @@ impl<A: Copy, B: Iterator> Iterator for CombinedIterator<A, B> {
 
 
 mod strategies;
-mod score;
+pub(crate) mod score;

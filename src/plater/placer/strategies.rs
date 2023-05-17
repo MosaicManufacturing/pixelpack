@@ -3,7 +3,7 @@ use std::f64::consts::PI;
 
 use crate::plater::placed_part::PlacedPart;
 use crate::plater::placer::Rect;
-use crate::plater::placer::score::{FloatWrapper, Score};
+use crate::plater::placer::score::{Default, Default1, Default2, Default3, Default4, FloatWrapper, Score, ScoreOrder, ScoreWrapper};
 use crate::plater::placer::score::Position::{Inside, Outside};
 use crate::plater::placer::score::Prefer;
 use crate::plater::placer::score::Preference::Second;
@@ -39,7 +39,13 @@ impl<'a> Placer<'a> {
 
         let res = match self.request.algorithm.strategy {
             Strategy::PixelPack => Placer::pixel_place(self, rs, plate, &mut part),
-            Strategy::SpiralPlace => Placer::spiral_place(self, rs, plate, &mut part)
+            Strategy::SpiralPlace => match self.score_order {
+                None =>  Placer::spiral_place::<Default>(self, rs, plate, &mut part),
+                Some(ScoreOrder::D1) =>  Placer::spiral_place::<Default1>(self, rs, plate, &mut part),
+                Some(ScoreOrder::D2)=>  Placer::spiral_place::<Default2>(self, rs, plate, &mut part),
+                Some(ScoreOrder::D3) =>  Placer::spiral_place::<Default3>(self, rs, plate, &mut part),
+                Some(ScoreOrder::D4) =>  Placer::spiral_place::<Default4>(self, rs, plate, &mut part),
+            }
         };
 
 
@@ -121,19 +127,19 @@ impl<'a> Placer<'a> {
         }
     }
 
-    fn spiral_place<'b>(&mut self, rs: usize, plate: &mut Plate<'b>,
+    fn spiral_place<'b, T: ScoreWrapper>(&mut self, rs: usize, plate: &mut Plate<'b>,
                         part: &mut PlacedPart<'b>) -> Option<(f64, f64, usize)> {
         let mut better_x = 0.0;
         let mut better_y = 0.0;
         let mut better_r = 0;
         let mut found = false;
 
-        let mut better_score = Score {
+        let mut better_score = T::from(Score {
             position: Outside,
             moment_of_inertial: FloatWrapper(f64::INFINITY),
             x_pos: FloatWrapper(f64::INFINITY),
             y_pos: FloatWrapper(f64::INFINITY),
-        };
+        });
 
         // Conditionally reverse iteration direction
         let make_rot_iter = || if self.rotate_direction != 0 {
@@ -189,12 +195,12 @@ impl<'a> Placer<'a> {
                     let moment_of_inertia = f64::powf(merged.height, 2.0) + f64::powf(merged.width, 2.0);
                     cur_rect = Some(merged);
 
-                    Score {
+                   T::from(Score {
                         position,
                         moment_of_inertial: FloatWrapper(moment_of_inertia),
                         x_pos: FloatWrapper(x),
                         y_pos: FloatWrapper(y),
-                    }
+                    })
                 };
 
                 if !found || better_score.compare_prefer(score) == Second {
