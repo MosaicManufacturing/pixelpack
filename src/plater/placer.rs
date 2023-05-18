@@ -8,6 +8,7 @@ use rand::seq::SliceRandom;
 use rand::thread_rng;
 
 use crate::plater::placed_part::PlacedPart;
+use crate::plater::placer::helpers::find_solution;
 use crate::plater::placer::score::ScoreOrder;
 use crate::plater::placer::search::exponential_search;
 use crate::plater::placer::GravityMode::{GravityEQ, GravityXY, GravityYX};
@@ -15,6 +16,8 @@ use crate::plater::plate::Plate;
 use crate::plater::plate_shape::PlateShape;
 use crate::plater::request::{BedExpansionMode, Request};
 use crate::plater::solution::Solution;
+
+pub(crate) const N: usize = 1024;
 
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct Rect {
@@ -305,10 +308,6 @@ impl<'a> Placer<'a> {
             part.insertion_index = i;
         }
 
-        let expand_mm = 5.0;
-        // 32, 128
-        let n = 1024;
-
         let res = Clone::clone(&self.smallest_observed_plate);
 
         let bottom_left = (
@@ -316,98 +315,21 @@ impl<'a> Placer<'a> {
             self.request.center_y - original_shape.height() / (2.0 * self.request.precision),
         );
 
-        let mut f = |i| {
-            if let Some(x) = res {
-                if i >= x {
-                    return None;
-                }
+        let mut search = {
+            let original_shape = &original_shape;
+            let res = &res;
+            |search_index: usize| {
+                find_solution(search_index, original_shape, res, self, bottom_left)
             }
-
-            let mut should_align_to_bed = false;
-            self.current_bounding_box = None;
-
-            let mut shape = if i < n {
-                original_shape.contract((n - i) as f64 * expand_mm)?
-            } else if i == n {
-                original_shape.clone()
-            } else {
-                should_align_to_bed = true;
-                original_shape.expand(original_shape.width() / self.request.precision)
-            };
-
-            let center = if i <= n {
-                (self.request.center_x, self.request.center_y)
-            } else {
-                (
-                    bottom_left.0 + shape.width() / (2.0 * self.request.precision),
-                    bottom_left.1 + shape.height() / (2.0 * self.request.precision),
-                )
-            };
-
-            let mut unlocked_parts = Vec::clone(&self.unlocked_parts);
-            let mut plate = Plate::make_plate_with_placed_parts(
-                shape.as_ref(),
-                self.request.precision,
-                &mut Vec::clone(&self.locked_parts),
-                center.0,
-                center.1,
-            )?;
-
-            if i <= n && !all_parts_can_be_attempted(&unlocked_parts, shape.as_ref()) {
-                return None;
-                // Add special handling if some parts will never fit
-            } else if i > n
-                && !all_parts_can_eventually_be_attempted(&unlocked_parts, shape.as_ref())
-            {
-                return None;
-            }
-
-            // Determine current bounding box using pixel data from bitmap
-
-            // if !self.locked_parts.is_empty() {
-            //     plate
-            // }
-
-            while let Some(cur_part) = unlocked_parts.pop() {
-                match self.place_unlocked_part(&mut plate, cur_part) {
-                    None => {}
-                    Some(part) => {
-                        return None;
-                        // if i <= n {
-                        //     return None;
-                        // }
-                        // should_align_to_bed = true;
-                        // unlocked_parts.push(part);
-                        // shape = shape.expand(original_shape.width() / original_shape.resolution());
-                        // plate = Plate::make_from_shape(&mut plate, shape.as_ref(), bottom_left)
-                    }
-                }
-            }
-
-            // Centering models is only correct if there are no locked parts
-            if self.locked_parts.is_empty() {
-                if should_align_to_bed {
-                    let width = self.request.plate_shape.width();
-                    let height = self.request.plate_shape.height();
-                    plate.align(width, height);
-                } else {
-                    plate.center();
-                }
-            }
-
-            let mut solution = Solution::new();
-            solution.add_plate(plate);
-            solution.best_so_far = Some(i);
-            Some(solution)
         };
 
-        let smaller = exponential_search(n + 1, &mut f).map(|x| x.0);
+        let smaller = exponential_search(N + 1, &mut search).map(|x| x.0);
         if smaller.is_some() {
             return smaller;
         }
 
-        for i in (n + 1)..(n + 50) {
-            let res = f(i);
+        for i in (N + 1)..(N + 50) {
+            let res = search(i);
             if res.is_some() {
                 return res;
             }
@@ -480,7 +402,10 @@ impl<'a> Placer<'a> {
 }
 
 // If for every model, there exists some rotation that fits try it
-fn all_parts_can_be_attempted(parts: &Vec<PlacedPart>, plate_shape: &dyn PlateShape) -> bool {
+pub(crate) fn all_parts_can_be_attempted(
+    parts: &Vec<PlacedPart>,
+    plate_shape: &dyn PlateShape,
+) -> bool {
     parts
         .iter()
         .map(|part| {
@@ -496,7 +421,7 @@ fn all_parts_can_be_attempted(parts: &Vec<PlacedPart>, plate_shape: &dyn PlateSh
 }
 
 // If for every model, there exists some rotation that fits try it
-fn all_parts_can_eventually_be_attempted(
+pub(crate) fn all_parts_can_eventually_be_attempted(
     parts: &Vec<PlacedPart>,
     plate_shape: &dyn PlateShape,
 ) -> bool {
