@@ -108,6 +108,7 @@ impl From<GravityMode> for usize {
 
 type PlateId = usize;
 
+#[derive(Clone)]
 pub(crate) struct Placer<'a> {
     rotate_offset: i32,
     rotate_direction: i32,
@@ -214,6 +215,10 @@ impl<'a> Placer<'a> {
 
     pub(crate) fn set_rotate_offset(&mut self, offset: i32) {
         self.rotate_offset = offset;
+    }
+
+    pub(crate) fn set_score_order(&mut self, score_order: ScoreOrder) {
+        self.score_order = Some(score_order);
     }
 
 
@@ -355,13 +360,14 @@ impl<'a> Placer<'a> {
                 match self.place_unlocked_part(&mut plate, cur_part) {
                     None => {}
                     Some(part) => {
-                        if i <= n {
-                            return None;
-                        }
-                        should_align_to_bed = true;
-                        unlocked_parts.push(part);
-                        shape = shape.expand(original_shape.width() / original_shape.resolution());
-                        plate = Plate::make_from_shape(&mut plate, shape.as_ref(), bottom_left)
+                        return None;
+                        // if i <= n {
+                        //     return None;
+                        // }
+                        // should_align_to_bed = true;
+                        // unlocked_parts.push(part);
+                        // shape = shape.expand(original_shape.width() / original_shape.resolution());
+                        // plate = Plate::make_from_shape(&mut plate, shape.as_ref(), bottom_left)
                     }
                 }
             }
