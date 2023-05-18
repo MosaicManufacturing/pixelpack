@@ -44,14 +44,14 @@ impl Shape {
     pub fn width(&self) -> f64 {
         match self {
             Rectangle(r) => r.width(),
-            Circle(c) => c.width()
+            Circle(c) => c.width(),
         }
     }
 
     pub fn height(&self) -> f64 {
         match self {
             Rectangle(r) => r.height(),
-            Circle(c) => c.height()
+            Circle(c) => c.height(),
         }
     }
 }
@@ -111,8 +111,11 @@ impl PlateShape for PlateRectangle {
         let width = self.width / self.resolution;
         let height = self.height / self.resolution;
 
-
-        Some(Box::new(PlateRectangle::new(f64::min(size, width), f64::min(size, height), self.resolution)))
+        Some(Box::new(PlateRectangle::new(
+            f64::min(size, width),
+            f64::min(size, height),
+            self.resolution,
+        )))
     }
 
     fn contract(&self, size: f64) -> Option<Box<dyn PlateShape>> {
@@ -128,7 +131,11 @@ impl PlateShape for PlateRectangle {
 
         let height = self.height * (width / self.width);
 
-        let rectangle = PlateRectangle::new(width / self.resolution, height / self.resolution, self.resolution);
+        let rectangle = PlateRectangle::new(
+            width / self.resolution,
+            height / self.resolution,
+            self.resolution,
+        );
         Some(Box::new(rectangle))
     }
 }
@@ -185,7 +192,7 @@ impl PlateShape for PlateCircle {
     fn expand(&self, size: f64) -> Box<dyn PlateShape> {
         Box::new(PlateCircle {
             resolution: self.resolution,
-            diameter: self.diameter * size
+            diameter: self.diameter * size,
         })
     }
 

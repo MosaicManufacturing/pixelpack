@@ -65,9 +65,9 @@ impl QuadTree {
                 &mut self.quad3,
                 &mut self.quad4,
             ]
-                .iter_mut()
-                .map(|x| (*x).as_deref_mut().unwrap())
-                .for_each(|x| x.add(Clone::clone(&triangle)));
+            .iter_mut()
+            .map(|x| (*x).as_deref_mut().unwrap())
+            .for_each(|x| x.add(Clone::clone(&triangle)));
         }
     }
 

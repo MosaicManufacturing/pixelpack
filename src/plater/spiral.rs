@@ -31,7 +31,6 @@ struct Rectangle {
     y_range: InclusiveRange,
 }
 
-
 // Just check four points
 
 impl Rectangle {
@@ -66,7 +65,7 @@ impl Rectangle {
                     StraightLine::Empty
                 }
             }
-            StraightLine::Empty => StraightLine::Empty
+            StraightLine::Empty => StraightLine::Empty,
         }
     }
 }
@@ -77,7 +76,6 @@ enum StraightLine {
     YFixed { y: isize, xs: InclusiveRange },
     Empty,
 }
-
 
 type Point = (isize, isize);
 
@@ -110,7 +108,7 @@ impl StraightLine {
         match self {
             StraightLine::XFixed { x, ys } => StraightLineIter::XIter { cur: ys, x },
             StraightLine::YFixed { y, xs } => StraightLineIter::YIter { cur: xs, y },
-            StraightLine::Empty => StraightLineIter::Empty
+            StraightLine::Empty => StraightLineIter::Empty,
         }
     }
 }
@@ -139,7 +137,6 @@ impl Iterator for StraightLineIter {
     }
 }
 
-
 impl Iterator for InclusiveRange {
     type Item = isize;
 
@@ -160,18 +157,17 @@ impl Iterator for InclusiveRange {
     }
 }
 
-struct WindowIter<A, T: Iterator<Item=A>, const N: usize> {
+struct WindowIter<A, T: Iterator<Item = A>, const N: usize> {
     iter: T,
 }
 
-
-impl<A, T: Iterator<Item=A>, const N: usize> WindowIter<A, T, N> {
+impl<A, T: Iterator<Item = A>, const N: usize> WindowIter<A, T, N> {
     fn new(iter: T) -> Self {
         WindowIter { iter }
     }
 }
 
-impl<A, T: Iterator<Item=A>, const N: usize> Iterator for WindowIter<A, T, N> {
+impl<A, T: Iterator<Item = A>, const N: usize> Iterator for WindowIter<A, T, N> {
     type Item = [Option<A>; N];
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -182,15 +178,21 @@ impl<A, T: Iterator<Item=A>, const N: usize> Iterator for WindowIter<A, T, N> {
 
         match xs.iter().any(|x| x.is_some()) {
             true => Some(xs),
-            _ => None
+            _ => None,
         }
     }
 }
 
 #[derive(Ord, Eq, PartialOrd, PartialEq)]
-struct PairWrapper<A, B> ((A, B));
+struct PairWrapper<A, B>((A, B));
 
-pub(crate) fn spiral_iterator(delta: f64, width: f64, height: f64, original_width: f64, original_height: f64) -> impl Iterator<Item=(f64, f64)> {
+pub(crate) fn spiral_iterator(
+    delta: f64,
+    width: f64,
+    height: f64,
+    original_width: f64,
+    original_height: f64,
+) -> impl Iterator<Item = (f64, f64)> {
     let d_width = f64::floor(width / delta) as isize;
     let d_height = f64::floor(height / delta) as isize;
 
@@ -203,9 +205,11 @@ pub(crate) fn spiral_iterator(delta: f64, width: f64, height: f64, original_widt
             }
         };
 
-        (f64::floor(w / delta) as isize, f64::floor(h / delta) as isize)
+        (
+            f64::floor(w / delta) as isize,
+            f64::floor(h / delta) as isize,
+        )
     };
-
 
     let rect = Rectangle {
         x_range: InclusiveRange {
@@ -219,8 +223,7 @@ pub(crate) fn spiral_iterator(delta: f64, width: f64, height: f64, original_widt
             step: 1,
         },
     };
-    let distances = (1..)
-        .flat_map(|n| [n, n]);
+    let distances = (1..).flat_map(|n| [n, n]);
 
     let direction_vectors = [(1, 0), (0, -1), (-1, 0), (0, 1)].into_iter().cycle();
 
@@ -235,20 +238,17 @@ pub(crate) fn spiral_iterator(delta: f64, width: f64, height: f64, original_widt
 
     let points_with_origin = Some(origin).into_iter().chain(points.into_iter());
 
-    let duplicated_points = points_with_origin
-        .flat_map(|p| [p, p]).skip(1);
+    let duplicated_points = points_with_origin.flat_map(|p| [p, p]).skip(1);
 
-    let windowed = WindowIter::new(duplicated_points)
-        .map(|[x, y]| [x.unwrap(), y.unwrap()]);
+    let windowed = WindowIter::new(duplicated_points).map(|[x, y]| [x.unwrap(), y.unwrap()]);
 
-    let spiral_lines = windowed.map(|[p1, p2]|
-        StraightLine::new(p1, p2));
-
+    let spiral_lines = windowed.map(|[p1, p2]| StraightLine::new(p1, p2));
 
     let grouped_lines = WindowIter::new(spiral_lines)
         .map(move |[a, b, c, d]| {
             let xs = [a.unwrap(), b.unwrap(), c.unwrap(), d.unwrap()];
-            let ys = xs.into_iter()
+            let ys = xs
+                .into_iter()
                 .map(|x| {
                     let res = rect.intersection(&x);
                     res
@@ -268,15 +268,11 @@ pub(crate) fn spiral_iterator(delta: f64, width: f64, height: f64, original_widt
 
     let spiral_with_origin_at_head = Some(origin)
         .into_iter()
-        .chain(grouped_lines.
-            flat_map(|line| {
-                line.into_iter()
-            }));
+        .chain(grouped_lines.flat_map(|line| line.into_iter()));
 
     let spiral = Itertools::dedup(spiral_with_origin_at_head.into_iter());
 
-    spiral.into_iter().map(move |(x, y)| {
-        (x as f64 * delta, y as f64 * delta)
-    })
+    spiral
+        .into_iter()
+        .map(move |(x, y)| (x as f64 * delta, y as f64 * delta))
 }
-

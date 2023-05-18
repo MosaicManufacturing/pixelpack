@@ -2,7 +2,10 @@ use std::collections::HashMap;
 
 use crate::plater;
 use crate::plater::plate_shape::{PlateShape, Shape};
-use crate::plater::request::{Algorithm, BedExpansionMode, ConfigOrder, PlacingError, PointEnumerationMode, Strategy, ThreadingMode};
+use crate::plater::request::{
+    Algorithm, BedExpansionMode, ConfigOrder, PlacingError, PointEnumerationMode, Strategy,
+    ThreadingMode,
+};
 use crate::plater::solution::Solution;
 use crate::stl::model::Model;
 use crate::stl::orientation::Orientation;
@@ -15,7 +18,10 @@ pub struct Request {
 }
 
 impl Request {
-    pub fn process<T>(&self, on_solution_found: impl Fn(&Solution) -> T) -> Result<T, PlacingError> {
+    pub fn process<T>(
+        &self,
+        on_solution_found: impl Fn(&Solution) -> T,
+    ) -> Result<T, PlacingError> {
         self.request.process(on_solution_found)
     }
 
@@ -30,7 +36,7 @@ impl Request {
 
         let (plate_width, plate_height) = match &plate_shape {
             Shape::Rectangle(r) => (r.width(), r.height()),
-            Shape::Circle(c) => (c.width(), c.height())
+            Shape::Circle(c) => (c.width(), c.height()),
         };
 
         let (width, height) = (plate_width / resolution, plate_height / resolution);

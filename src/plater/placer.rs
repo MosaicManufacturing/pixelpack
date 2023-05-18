@@ -8,10 +8,10 @@ use rand::seq::SliceRandom;
 use rand::thread_rng;
 
 use crate::plater::placed_part::PlacedPart;
+use crate::plater::placer::score::ScoreOrder;
 use crate::plater::placer::Alt::{Fst, Snd};
 use crate::plater::placer::Attempts::{Failure, Solved, ToCompute};
 use crate::plater::placer::GravityMode::{GravityEQ, GravityXY, GravityYX};
-use crate::plater::placer::score::ScoreOrder;
 use crate::plater::plate::Plate;
 use crate::plater::plate_shape::PlateShape;
 use crate::plater::request::{BedExpansionMode, Request};
@@ -25,14 +25,25 @@ pub struct Rect {
     center_y: f64,
 }
 
-
 impl Rect {
     fn combine(&self, other: &Self) -> Self {
-        let top_height = f64::max(self.height / 2.0 + self.center_y, other.height / 2.0 + other.center_y);
-        let bottom_height = f64::min(-self.height / 2.0 + self.center_y, -other.height / 2.0 + other.center_y);
+        let top_height = f64::max(
+            self.height / 2.0 + self.center_y,
+            other.height / 2.0 + other.center_y,
+        );
+        let bottom_height = f64::min(
+            -self.height / 2.0 + self.center_y,
+            -other.height / 2.0 + other.center_y,
+        );
 
-        let left_width = f64::min(-self.width / 2.0 + self.center_x, -other.width / 2.0 + other.center_x);
-        let right_width = f64::max(self.width / 2.0 + self.center_x, other.width / 2.0 + other.center_x);
+        let left_width = f64::min(
+            -self.width / 2.0 + self.center_x,
+            -other.width / 2.0 + other.center_x,
+        );
+        let right_width = f64::max(
+            self.width / 2.0 + self.center_x,
+            other.width / 2.0 + other.center_x,
+        );
 
         Rect {
             width: right_width - left_width,
@@ -49,11 +60,10 @@ impl Rect {
             (self.center_x + w2, self.center_y + h2),
             (self.center_x - w2, self.center_y + h2),
             (self.center_x + w2, self.center_y - h2),
-            (self.center_x - w2, self.center_y - h2)
+            (self.center_x - w2, self.center_y - h2),
         ]
     }
 }
-
 
 impl PartialOrd for Rect {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
@@ -125,7 +135,7 @@ pub(crate) struct Placer<'a> {
     // center_x, center_y, width, height
     current_bounding_box: Option<Rect>,
     pub smallest_observed_plate: Option<usize>,
-    pub(crate) score_order: Option<ScoreOrder>
+    pub(crate) score_order: Option<ScoreOrder>,
 }
 
 impl<'a> Placer<'a> {
@@ -141,11 +151,14 @@ impl<'a> Placer<'a> {
             request,
             current_bounding_box: None,
             smallest_observed_plate: None,
-            score_order: None
+            score_order: None,
         };
 
         for part in request.parts.values() {
-            let (off_x, off_y) = (part.center_x - part.width/2.0, part.center_y - part.height/2.0);
+            let (off_x, off_y) = (
+                part.center_x - part.width / 2.0,
+                part.center_y - part.height / 2.0,
+            );
             let mut placed_part = PlacedPart::new_placed_part(part);
 
             if part.locked {
@@ -221,7 +234,6 @@ impl<'a> Placer<'a> {
         self.score_order = Some(score_order);
     }
 
-
     fn place_single_plate_linear(&mut self) -> Option<Solution> {
         let mut shape = Clone::clone(&self.request.plate_shape);
         let mut plate = Plate::make_plate_with_placed_parts(
@@ -231,7 +243,6 @@ impl<'a> Placer<'a> {
             self.request.center_x,
             self.request.center_y,
         )?;
-
 
         for (i, part) in self.unlocked_parts.iter_mut().enumerate() {
             part.insertion_index = i;
@@ -274,9 +285,7 @@ impl<'a> Placer<'a> {
                             }
                         }
                         self.unlocked_parts
-                            .sort_by(|x, y| {
-                                x.insertion_index.cmp(&y.insertion_index)
-                            });
+                            .sort_by(|x, y| x.insertion_index.cmp(&y.insertion_index));
 
                         expansion_needed = true;
                         break;
@@ -284,7 +293,6 @@ impl<'a> Placer<'a> {
                 }
             }
         }
-
 
         let mut solution = Solution::new();
         solution.add_plate(plate);
@@ -304,8 +312,10 @@ impl<'a> Placer<'a> {
 
         let res = Clone::clone(&self.smallest_observed_plate);
 
-        let bottom_left = (self.request.center_x - original_shape.width() / (2.0 * self.request.precision)
-                           , self.request.center_y - original_shape.height() / (2.0 * self.request.precision));
+        let bottom_left = (
+            self.request.center_x - original_shape.width() / (2.0 * self.request.precision),
+            self.request.center_y - original_shape.height() / (2.0 * self.request.precision),
+        );
 
         let mut f = |i| {
             if let Some(x) = res {
@@ -329,7 +339,10 @@ impl<'a> Placer<'a> {
             let center = if i <= n {
                 (self.request.center_x, self.request.center_y)
             } else {
-                (bottom_left.0 + shape.width() / (2.0 * self.request.precision), bottom_left.1 + shape.height() / (2.0 * self.request.precision))
+                (
+                    bottom_left.0 + shape.width() / (2.0 * self.request.precision),
+                    bottom_left.1 + shape.height() / (2.0 * self.request.precision),
+                )
             };
 
             let mut unlocked_parts = Vec::clone(&self.unlocked_parts);
@@ -341,14 +354,14 @@ impl<'a> Placer<'a> {
                 center.1,
             )?;
 
-
             if i <= n && !all_parts_can_be_attempted(&unlocked_parts, shape.as_ref()) {
                 return None;
                 // Add special handling if some parts will never fit
-            } else if i > n && !all_parts_can_eventually_be_attempted(&unlocked_parts, shape.as_ref()) {
+            } else if i > n
+                && !all_parts_can_eventually_be_attempted(&unlocked_parts, shape.as_ref())
+            {
                 return None;
             }
-
 
             // Determine current bounding box using pixel data from bitmap
 
@@ -440,7 +453,8 @@ impl<'a> Placer<'a> {
                                 &mut Vec::clone(&self.locked_parts),
                                 self.request.center_x,
                                 self.request.center_y,
-                            ).unwrap();
+                            )
+                            .unwrap();
                             solution.add_plate(next_plate);
                         }
                         current_part = part;
@@ -458,7 +472,7 @@ impl<'a> Placer<'a> {
         if self.request.single_plate_mode {
             match self.request.algorithm.bed_expansion_mode {
                 BedExpansionMode::Linear => self.place_single_plate_linear(),
-                BedExpansionMode::Exponential => self.place_single_plate_exp()
+                BedExpansionMode::Exponential => self.place_single_plate_exp(),
             }
         } else {
             self.place_multi_plate()
@@ -473,8 +487,10 @@ pub enum Attempts<T> {
     Failure,
 }
 
-
-pub(crate) fn exponential_search<T: Clone + Debug>(limit: usize, mut run: impl FnMut(usize) -> Option<T>) -> Option<(T, usize)> {
+pub(crate) fn exponential_search<T: Clone + Debug>(
+    limit: usize,
+    mut run: impl FnMut(usize) -> Option<T>,
+) -> Option<(T, usize)> {
     let mut first_found_solution = None;
 
     let mut i = 1;
@@ -495,13 +511,9 @@ pub(crate) fn exponential_search<T: Clone + Debug>(limit: usize, mut run: impl F
         i *= 2;
     }
 
-
     let mut results = vec![ToCompute; 2 * limit];
 
-
-    results
-        .iter_mut()
-        .for_each(|x| *x = ToCompute);
+    results.iter_mut().for_each(|x| *x = ToCompute);
 
     if results.len() < i + 1 {
         unreachable!()
@@ -517,7 +529,6 @@ pub(crate) fn exponential_search<T: Clone + Debug>(limit: usize, mut run: impl F
         return None;
     }
 
-
     results[(i) as usize] = Solved(first_found_solution.unwrap());
 
     let mut lo = lower as usize;
@@ -531,7 +542,7 @@ pub(crate) fn exponential_search<T: Clone + Debug>(limit: usize, mut run: impl F
         if let ToCompute = results[mid] {
             results[mid] = match run(mid) {
                 None => Failure,
-                Some(x) => Solved(x)
+                Some(x) => Solved(x),
             }
         }
 
@@ -545,7 +556,7 @@ pub(crate) fn exponential_search<T: Clone + Debug>(limit: usize, mut run: impl F
                 if let ToCompute = results[mid - 1] {
                     results[mid - 1] = match run(mid - 1) {
                         None => Failure,
-                        Some(x) => Solved(x)
+                        Some(x) => Solved(x),
                     }
                 }
 
@@ -559,7 +570,7 @@ pub(crate) fn exponential_search<T: Clone + Debug>(limit: usize, mut run: impl F
             Failure => {
                 lo = mid + 1;
             }
-            ToCompute => unreachable!()
+            ToCompute => unreachable!(),
         }
     }
 
@@ -567,40 +578,42 @@ pub(crate) fn exponential_search<T: Clone + Debug>(limit: usize, mut run: impl F
     std::mem::swap(&mut ans, &mut results[boundary_index as usize]);
     match ans {
         Solved(x) => Some((x, boundary_index as usize)),
-        _ => None
+        _ => None,
     }
 }
-
 
 // If for every model, there exists some rotation that fits try it
 fn all_parts_can_be_attempted(parts: &Vec<PlacedPart>, plate_shape: &dyn PlateShape) -> bool {
     parts
         .iter()
-        .map(|part| part
-            .part
-            .bitmaps
-            .iter()
-            .map(|x| {
-                x.width as f64 <= plate_shape.width()
-                    && x.height as f64 <= plate_shape.height()
-            }).any(|x| x))
+        .map(|part| {
+            part.part
+                .bitmaps
+                .iter()
+                .map(|x| {
+                    x.width as f64 <= plate_shape.width() && x.height as f64 <= plate_shape.height()
+                })
+                .any(|x| x)
+        })
         .all(|x| x)
 }
 
 // If for every model, there exists some rotation that fits try it
-fn all_parts_can_eventually_be_attempted(parts: &Vec<PlacedPart>, plate_shape: &dyn PlateShape) -> bool {
+fn all_parts_can_eventually_be_attempted(
+    parts: &Vec<PlacedPart>,
+    plate_shape: &dyn PlateShape,
+) -> bool {
     parts
         .iter()
-        .map(|part| part
-            .part
-            .bitmaps
-            .iter()
-            .map(|x| {
-                x.height as f64 <= plate_shape.height()
-            }).any(|x| x))
+        .map(|part| {
+            part.part
+                .bitmaps
+                .iter()
+                .map(|x| x.height as f64 <= plate_shape.height())
+                .any(|x| x)
+        })
         .all(|x| x)
 }
-
 
 enum CombinedIterator<A: Copy, B: Iterator> {
     XFixed { x: A, it: B },
@@ -616,7 +629,7 @@ impl<A> Into<(A, A)> for Alt<A, A> {
     fn into(self) -> (A, A) {
         match self {
             Fst(x, y) => (x, y),
-            Snd(x, y) => (x, y)
+            Snd(x, y) => (x, y),
         }
     }
 }
@@ -626,22 +639,18 @@ impl<A: Copy, B: Iterator> Iterator for CombinedIterator<A, B> {
 
     fn next(&mut self) -> Option<Self::Item> {
         match self {
-            CombinedIterator::XFixed { x, it } => {
-                match it.next() {
-                    None => None,
-                    Some(y) => Some(Fst(*x, y))
-                }
-            }
-            CombinedIterator::YFixed { y, it } => {
-                match it.next() {
-                    None => None,
-                    Some(x) => Some(Snd(x, *y))
-                }
-            }
+            CombinedIterator::XFixed { x, it } => match it.next() {
+                None => None,
+                Some(y) => Some(Fst(*x, y)),
+            },
+            CombinedIterator::YFixed { y, it } => match it.next() {
+                None => None,
+                Some(x) => Some(Snd(x, *y)),
+            },
         }
     }
 }
 
-
-mod strategies;
+mod helpers;
 pub(crate) mod score;
+mod strategies;

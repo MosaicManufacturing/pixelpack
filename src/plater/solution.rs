@@ -9,7 +9,6 @@ pub struct Solution<'a> {
     pub(crate) best_so_far: Option<usize>,
 }
 
-
 impl<'a> Debug for Solution<'a> {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "{:#?}", self.best_so_far)
@@ -18,7 +17,10 @@ impl<'a> Debug for Solution<'a> {
 
 impl<'a> Solution<'a> {
     pub(crate) fn new() -> Self {
-        Solution { plates: vec![], best_so_far: None }
+        Solution {
+            plates: vec![],
+            best_so_far: None,
+        }
     }
 
     pub(crate) fn reclaim_placed_parts(self) -> Vec<PlacedPart<'a>> {

@@ -39,10 +39,16 @@ impl<'a> Plate<'a> {
         let (width, height) = self.bitmap.get_dims();
 
         let new_ref = (left_space, bottom_space);
-        let (new_width, new_height) = (width as f64 - left_space - right_space, height as f64 - bottom_space - top_space);
+        let (new_width, new_height) = (
+            width as f64 - left_space - right_space,
+            height as f64 - bottom_space - top_space,
+        );
         let new_center = (new_ref.0 + new_width / 2.0, new_ref.1 + new_height / 2.0);
 
-        let (tr_x, tr_y) = ((width as f64) / 2.0 - new_center.0, (height as f64) / 2.0 - new_center.1);
+        let (tr_x, tr_y) = (
+            (width as f64) / 2.0 - new_center.0,
+            (height as f64) / 2.0 - new_center.1,
+        );
 
         for part in &mut self.parts {
             let (x, y) = (part.get_x(), part.get_y());
@@ -50,7 +56,12 @@ impl<'a> Plate<'a> {
         }
     }
 
-    pub(crate) fn new(shape: &dyn PlateShape, precision: f64, center_x: f64, center_y: f64) -> Self {
+    pub(crate) fn new(
+        shape: &dyn PlateShape,
+        precision: f64,
+        center_x: f64,
+        center_y: f64,
+    ) -> Self {
         let width = shape.width();
         let height = shape.height();
 
@@ -69,14 +80,20 @@ impl<'a> Plate<'a> {
         }
     }
 
-    pub(crate) fn make_from_shape(&mut self, shape: &dyn PlateShape, bottom_left: (f64, f64)) -> Self {
+    pub(crate) fn make_from_shape(
+        &mut self,
+        shape: &dyn PlateShape,
+        bottom_left: (f64, f64),
+    ) -> Self {
         let width = shape.width() / self.precision;
         let height = shape.height() / self.precision;
 
-        let mut next_plate = Plate::new(shape
-                                        , self.precision
-                                        , bottom_left.0 + width / 2.0
-                                        , bottom_left.1 + height / 2.0);
+        let mut next_plate = Plate::new(
+            shape,
+            self.precision,
+            bottom_left.0 + width / 2.0,
+            bottom_left.1 + height / 2.0,
+        );
 
         let mut new_parts = Vec::with_capacity(self.parts.len());
         std::mem::swap(&mut new_parts, &mut self.parts);
@@ -131,7 +148,6 @@ impl<'a> Plate<'a> {
         return true;
     }
 
-
     pub(crate) fn can_place(&self, placed_part: &PlacedPart) -> bool {
         let part_bmp = placed_part.get_bitmap();
 
@@ -168,7 +184,6 @@ impl<'a> Plate<'a> {
     pub fn get_ppm(&self) -> String {
         self.bitmap.to_ppm()
     }
-
 
     pub fn get_size(&self) -> (f64, f64) {
         (self.width, self.height)

@@ -10,12 +10,12 @@ pub(crate) enum Preference {
 
 impl Preference {
     fn defer_to<F>(self, f: F) -> Preference
-        where
-            F: Fn() -> Preference
+    where
+        F: Fn() -> Preference,
     {
         match self {
             NoPreference => f(),
-            pref => pref
+            pref => pref,
         }
     }
 }
@@ -70,7 +70,10 @@ pub(crate) struct Score {
 impl Prefer for Score {
     fn compare_prefer(self, other: Self) -> Preference {
         let cmp_position = || self.position.compare_prefer(other.position);
-        let cmp_inertia = || self.moment_of_inertial.compare_prefer(other.moment_of_inertial);
+        let cmp_inertia = || {
+            self.moment_of_inertial
+                .compare_prefer(other.moment_of_inertial)
+        };
         let cmp_x = || self.x_pos.compare_prefer(other.x_pos);
         let cmp_y = || self.y_pos.compare_prefer(other.y_pos);
 
@@ -92,7 +95,11 @@ pub(crate) struct Default(Score);
 impl Prefer for Default {
     fn compare_prefer(self, other: Self) -> Preference {
         let cmp_position = || self.0.position.compare_prefer(other.0.position);
-        let cmp_inertia = || self.0.moment_of_inertial.compare_prefer(other.0.moment_of_inertial);
+        let cmp_inertia = || {
+            self.0
+                .moment_of_inertial
+                .compare_prefer(other.0.moment_of_inertial)
+        };
         let cmp_x = || self.0.x_pos.compare_prefer(other.0.x_pos);
         let cmp_y = || self.0.y_pos.compare_prefer(other.0.y_pos);
 
@@ -110,14 +117,17 @@ impl ScoreWrapper for Default {
     }
 }
 
-
 #[derive(Copy, Clone)]
 pub(crate) struct Default1(Score);
 
 impl Prefer for Default1 {
     fn compare_prefer(self, other: Self) -> Preference {
         let cmp_position = || self.0.position.compare_prefer(other.0.position);
-        let cmp_inertia = || self.0.moment_of_inertial.compare_prefer(other.0.moment_of_inertial);
+        let cmp_inertia = || {
+            self.0
+                .moment_of_inertial
+                .compare_prefer(other.0.moment_of_inertial)
+        };
         let cmp_x = || self.0.x_pos.compare_prefer(other.0.x_pos);
         let cmp_y = || self.0.y_pos.compare_prefer(other.0.y_pos);
 
@@ -126,7 +136,6 @@ impl Prefer for Default1 {
             .defer_to(cmp_inertia)
             .defer_to(cmp_x)
             .defer_to(cmp_y)
-
     }
 }
 
@@ -142,7 +151,11 @@ pub(crate) struct Default2(Score);
 impl Prefer for Default2 {
     fn compare_prefer(self, other: Self) -> Preference {
         let cmp_position = || self.0.position.compare_prefer(other.0.position);
-        let cmp_inertia = || self.0.moment_of_inertial.compare_prefer(other.0.moment_of_inertial);
+        let cmp_inertia = || {
+            self.0
+                .moment_of_inertial
+                .compare_prefer(other.0.moment_of_inertial)
+        };
         let cmp_x = || self.0.x_pos.compare_prefer(other.0.x_pos);
         let cmp_y = || self.0.y_pos.compare_prefer(other.0.y_pos);
 
@@ -151,7 +164,6 @@ impl Prefer for Default2 {
             .defer_to(cmp_x)
             .defer_to(cmp_inertia)
             .defer_to(cmp_y)
-
     }
 }
 
@@ -167,7 +179,11 @@ pub(crate) struct Default3(Score);
 impl Prefer for Default3 {
     fn compare_prefer(self, other: Self) -> Preference {
         let cmp_position = || self.0.position.compare_prefer(other.0.position);
-        let cmp_inertia = || self.0.moment_of_inertial.compare_prefer(other.0.moment_of_inertial);
+        let cmp_inertia = || {
+            self.0
+                .moment_of_inertial
+                .compare_prefer(other.0.moment_of_inertial)
+        };
         let cmp_x = || self.0.x_pos.compare_prefer(other.0.x_pos);
         let cmp_y = || self.0.y_pos.compare_prefer(other.0.y_pos);
 
@@ -176,7 +192,6 @@ impl Prefer for Default3 {
             .defer_to(cmp_y)
             .defer_to(cmp_inertia)
             .defer_to(cmp_x)
-
     }
 }
 
@@ -186,14 +201,17 @@ impl ScoreWrapper for Default3 {
     }
 }
 
-
 #[derive(Copy, Clone)]
 pub(crate) struct Default4(Score);
 
 impl Prefer for Default4 {
     fn compare_prefer(self, other: Self) -> Preference {
         let cmp_position = || self.0.position.compare_prefer(other.0.position);
-        let cmp_inertia = || self.0.moment_of_inertial.compare_prefer(other.0.moment_of_inertial);
+        let cmp_inertia = || {
+            self.0
+                .moment_of_inertial
+                .compare_prefer(other.0.moment_of_inertial)
+        };
         let cmp_x = || self.0.x_pos.compare_prefer(other.0.x_pos);
         let cmp_y = || self.0.y_pos.compare_prefer(other.0.y_pos);
 
@@ -202,7 +220,6 @@ impl Prefer for Default4 {
             .defer_to(cmp_inertia)
             .defer_to(cmp_y)
             .defer_to(cmp_x)
-
     }
 }
 
@@ -217,5 +234,5 @@ pub(crate) enum ScoreOrder {
     D1,
     D2,
     D3,
-    D4
+    D4,
 }

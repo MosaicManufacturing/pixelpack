@@ -2,11 +2,13 @@ use std::collections::HashMap;
 use std::f64::consts::PI;
 
 use crate::plater::placed_part::PlacedPart;
-use crate::plater::placer::Rect;
-use crate::plater::placer::score::{Default, Default1, Default2, Default3, Default4, FloatWrapper, Score, ScoreOrder, ScoreWrapper};
 use crate::plater::placer::score::Position::{Inside, Outside};
 use crate::plater::placer::score::Prefer;
 use crate::plater::placer::score::Preference::Second;
+use crate::plater::placer::score::{
+    Default, Default1, Default2, Default3, Default4, FloatWrapper, Score, ScoreOrder, ScoreWrapper,
+};
+use crate::plater::placer::Rect;
 use crate::plater::plate::Plate;
 use crate::plater::plate_shape::PlateShape;
 use crate::plater::request::Strategy;
@@ -40,14 +42,21 @@ impl<'a> Placer<'a> {
         let res = match self.request.algorithm.strategy {
             Strategy::PixelPack => Placer::pixel_place(self, rs, plate, &mut part),
             Strategy::SpiralPlace => match self.score_order {
-                None =>  Placer::spiral_place::<Default>(self, rs, plate, &mut part),
-                Some(ScoreOrder::D1) =>  Placer::spiral_place::<Default1>(self, rs, plate, &mut part),
-                Some(ScoreOrder::D2)=>  Placer::spiral_place::<Default2>(self, rs, plate, &mut part),
-                Some(ScoreOrder::D3) =>  Placer::spiral_place::<Default3>(self, rs, plate, &mut part),
-                Some(ScoreOrder::D4) =>  Placer::spiral_place::<Default4>(self, rs, plate, &mut part),
-            }
+                None => Placer::spiral_place::<Default>(self, rs, plate, &mut part),
+                Some(ScoreOrder::D1) => {
+                    Placer::spiral_place::<Default1>(self, rs, plate, &mut part)
+                }
+                Some(ScoreOrder::D2) => {
+                    Placer::spiral_place::<Default2>(self, rs, plate, &mut part)
+                }
+                Some(ScoreOrder::D3) => {
+                    Placer::spiral_place::<Default3>(self, rs, plate, &mut part)
+                }
+                Some(ScoreOrder::D4) => {
+                    Placer::spiral_place::<Default4>(self, rs, plate, &mut part)
+                }
+            },
         };
-
 
         if let Some((better_x, better_y, better_r)) = res {
             part.set_rotation(better_r as i32);
@@ -64,9 +73,12 @@ impl<'a> Placer<'a> {
         }
     }
 
-
-    fn pixel_place<'b>(&mut self, rs: usize, plate: &mut Plate<'b>,
-                       part: &mut PlacedPart<'b>) -> Option<(f64, f64, usize)> {
+    fn pixel_place<'b>(
+        &mut self,
+        rs: usize,
+        plate: &mut Plate<'b>,
+        part: &mut PlacedPart<'b>,
+    ) -> Option<(f64, f64, usize)> {
         let mut better_x = 0.0;
         let mut better_y = 0.0;
         let mut better_score = 0.0;
@@ -74,26 +86,32 @@ impl<'a> Placer<'a> {
         let mut found = false;
 
         // Conditionally reverse iteration direction
-        let make_rot_iter = || if self.rotate_direction != 0 {
-            itertools::Either::Left((0..rs).rev())
-        } else {
-            itertools::Either::Right(0..rs)
+        let make_rot_iter = || {
+            if self.rotate_direction != 0 {
+                itertools::Either::Left((0..rs).rev())
+            } else {
+                itertools::Either::Right(0..rs)
+            }
         };
 
-        let make_iter = || (0..)
-            .map(|x| (x as f64) * self.request.delta)
-            .take_while(|x| *x < plate.width)
-            .map(|x| {
-                (0..)
-                    .map(|y| (y as f64) * self.request.delta)
-                    .take_while(|y| *y < plate.height)
-                    .map(move |y| (x, y))
-            })
-            .flatten()
-            .map(|(x, y)| {
-                (x + self.request.center_x - plate.width / 2.0, y + self.request.center_y - plate.height / 2.0)
-            });
-
+        let make_iter = || {
+            (0..)
+                .map(|x| (x as f64) * self.request.delta)
+                .take_while(|x| *x < plate.width)
+                .map(|x| {
+                    (0..)
+                        .map(|y| (y as f64) * self.request.delta)
+                        .take_while(|y| *y < plate.height)
+                        .map(move |y| (x, y))
+                })
+                .flatten()
+                .map(|(x, y)| {
+                    (
+                        x + self.request.center_x - plate.width / 2.0,
+                        y + self.request.center_y - plate.height / 2.0,
+                    )
+                })
+        };
 
         for (x, y) in make_iter() {
             part.set_offset(x, y);
@@ -119,7 +137,6 @@ impl<'a> Placer<'a> {
             }
         }
 
-
         if !found {
             None
         } else {
@@ -127,8 +144,12 @@ impl<'a> Placer<'a> {
         }
     }
 
-    fn spiral_place<'b, T: ScoreWrapper>(&mut self, rs: usize, plate: &mut Plate<'b>,
-                        part: &mut PlacedPart<'b>) -> Option<(f64, f64, usize)> {
+    fn spiral_place<'b, T: ScoreWrapper>(
+        &mut self,
+        rs: usize,
+        plate: &mut Plate<'b>,
+        part: &mut PlacedPart<'b>,
+    ) -> Option<(f64, f64, usize)> {
         let mut better_x = 0.0;
         let mut better_y = 0.0;
         let mut better_r = 0;
@@ -142,20 +163,29 @@ impl<'a> Placer<'a> {
         });
 
         // Conditionally reverse iteration direction
-        let make_rot_iter = || if self.rotate_direction != 0 {
-            itertools::Either::Left((0..rs).rev())
-        } else {
-            itertools::Either::Right(0..rs)
+        let make_rot_iter = || {
+            if self.rotate_direction != 0 {
+                itertools::Either::Left((0..rs).rev())
+            } else {
+                itertools::Either::Right(0..rs)
+            }
         };
 
         let initial_box = self.current_bounding_box.clone();
 
-        let spiral =
-            spiral_iterator(self.request.delta, plate.width, plate.height, self.request.plate_shape.width(), self.request.plate_shape.height())
-                .map(|(x, y)| {
-                    (x + plate.center_x - plate.width / 2.0, y + plate.center_y - plate.height / 2.0)
-                });
-
+        let spiral = spiral_iterator(
+            self.request.delta,
+            plate.width,
+            plate.height,
+            self.request.plate_shape.width(),
+            self.request.plate_shape.height(),
+        )
+        .map(|(x, y)| {
+            (
+                x + plate.center_x - plate.width / 2.0,
+                y + plate.center_y - plate.height / 2.0,
+            )
+        });
 
         let cond = self.request.plate_shape.width() + (plate.center_x - plate.width / 2.0);
 
@@ -185,17 +215,13 @@ impl<'a> Placer<'a> {
                         cur.clone()
                     };
 
-                    let position = if x > cond {
-                        Outside
-                    } else {
-                        Inside
-                    };
+                    let position = if x > cond { Outside } else { Inside };
 
-
-                    let moment_of_inertia = f64::powf(merged.height, 2.0) + f64::powf(merged.width, 2.0);
+                    let moment_of_inertia =
+                        f64::powf(merged.height, 2.0) + f64::powf(merged.width, 2.0);
                     cur_rect = Some(merged);
 
-                   T::from(Score {
+                    T::from(Score {
                         position,
                         moment_of_inertial: FloatWrapper(moment_of_inertia),
                         x_pos: FloatWrapper(x),
@@ -223,4 +249,3 @@ impl<'a> Placer<'a> {
         }
     }
 }
-
