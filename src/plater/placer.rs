@@ -9,8 +9,7 @@ use rand::thread_rng;
 
 use crate::plater::placed_part::PlacedPart;
 use crate::plater::placer::score::ScoreOrder;
-use crate::plater::placer::Alt::{Fst, Snd};
-use crate::plater::placer::Attempts::{Failure, Solved, ToCompute};
+use crate::plater::placer::search::exponential_search;
 use crate::plater::placer::GravityMode::{GravityEQ, GravityXY, GravityYX};
 use crate::plater::plate::Plate;
 use crate::plater::plate_shape::PlateShape;
@@ -480,108 +479,6 @@ impl<'a> Placer<'a> {
     }
 }
 
-#[derive(Clone, Debug)]
-pub enum Attempts<T> {
-    ToCompute,
-    Solved(T),
-    Failure,
-}
-
-pub(crate) fn exponential_search<T: Clone + Debug>(
-    limit: usize,
-    mut run: impl FnMut(usize) -> Option<T>,
-) -> Option<(T, usize)> {
-    let mut first_found_solution = None;
-
-    let mut i = 1;
-    let mut lower = i;
-
-    while i < limit {
-        let res = run(i);
-        if res.is_some() {
-            first_found_solution = res;
-            break;
-        }
-
-        if i * 2 >= limit {
-            break;
-        }
-
-        lower = i;
-        i *= 2;
-    }
-
-    let mut results = vec![ToCompute; 2 * limit];
-
-    results.iter_mut().for_each(|x| *x = ToCompute);
-
-    if results.len() < i + 1 {
-        unreachable!()
-    }
-
-    let mut j = 1;
-    while j < i {
-        results[j] = Failure;
-        j *= 2;
-    }
-
-    if first_found_solution.is_none() {
-        return None;
-    }
-
-    results[(i) as usize] = Solved(first_found_solution.unwrap());
-
-    let mut lo = lower as usize;
-    let mut hi = (i) as usize;
-
-    let mut boundary_index = 1;
-
-    while lo <= hi {
-        let gap = hi - lo;
-        let mid = lo + gap / 2;
-        if let ToCompute = results[mid] {
-            results[mid] = match run(mid) {
-                None => Failure,
-                Some(x) => Solved(x),
-            }
-        }
-
-        match results[mid] {
-            Solved(_) => {
-                if mid == 1 {
-                    boundary_index = mid as i32;
-                    break;
-                }
-
-                if let ToCompute = results[mid - 1] {
-                    results[mid - 1] = match run(mid - 1) {
-                        None => Failure,
-                        Some(x) => Solved(x),
-                    }
-                }
-
-                if let Failure = results[mid - 1] {
-                    boundary_index = mid as i32;
-                    break;
-                }
-
-                hi = mid - 1;
-            }
-            Failure => {
-                lo = mid + 1;
-            }
-            ToCompute => unreachable!(),
-        }
-    }
-
-    let mut ans = ToCompute;
-    std::mem::swap(&mut ans, &mut results[boundary_index as usize]);
-    match ans {
-        Solved(x) => Some((x, boundary_index as usize)),
-        _ => None,
-    }
-}
-
 // If for every model, there exists some rotation that fits try it
 fn all_parts_can_be_attempted(parts: &Vec<PlacedPart>, plate_shape: &dyn PlateShape) -> bool {
     parts
@@ -615,42 +512,7 @@ fn all_parts_can_eventually_be_attempted(
         .all(|x| x)
 }
 
-enum CombinedIterator<A: Copy, B: Iterator> {
-    XFixed { x: A, it: B },
-    YFixed { y: A, it: B },
-}
-
-enum Alt<A, B> {
-    Fst(A, B),
-    Snd(B, A),
-}
-
-impl<A> Into<(A, A)> for Alt<A, A> {
-    fn into(self) -> (A, A) {
-        match self {
-            Fst(x, y) => (x, y),
-            Snd(x, y) => (x, y),
-        }
-    }
-}
-
-impl<A: Copy, B: Iterator> Iterator for CombinedIterator<A, B> {
-    type Item = Alt<A, B::Item>;
-
-    fn next(&mut self) -> Option<Self::Item> {
-        match self {
-            CombinedIterator::XFixed { x, it } => match it.next() {
-                None => None,
-                Some(y) => Some(Fst(*x, y)),
-            },
-            CombinedIterator::YFixed { y, it } => match it.next() {
-                None => None,
-                Some(x) => Some(Snd(x, *y)),
-            },
-        }
-    }
-}
-
 mod helpers;
 pub(crate) mod score;
+mod search;
 mod strategies;
