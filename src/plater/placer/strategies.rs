@@ -2,13 +2,13 @@ use std::collections::HashMap;
 use std::f64::consts::PI;
 
 use crate::plater::placed_part::PlacedPart;
+use crate::plater::placer::rect::Rect;
 use crate::plater::placer::score::Position::{Inside, Outside};
 use crate::plater::placer::score::Prefer;
 use crate::plater::placer::score::Preference::Second;
 use crate::plater::placer::score::{
     Default, Default1, Default2, Default3, Default4, FloatWrapper, Score, ScoreOrder, ScoreWrapper,
 };
-use crate::plater::placer::Rect;
 use crate::plater::plate::Plate;
 use crate::plater::plate_shape::PlateShape;
 use crate::plater::request::Strategy;
