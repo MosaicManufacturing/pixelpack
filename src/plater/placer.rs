@@ -212,11 +212,11 @@ impl<'a> Placer<'a> {
                 expansion_needed = false;
             }
 
-            // TODO: this will not handle locked parts correctly as locked parts were drained out
-            if !all_parts_can_be_attempted(&self.unlocked_parts, shape.as_ref()) {
-                expansion_needed = true;
-                continue;
-            }
+            // // TODO: this will not handle locked parts correctly as locked parts were drained out
+            // if !helpers::all_parts_can_be_attempted(&self.unlocked_parts, shape.as_ref()) {
+            //     expansion_needed = true;
+            //     continue;
+            // }
 
             while let Some(cur_part) = self.unlocked_parts.pop() {
                 match self.place_unlocked_part(&mut plate, cur_part) {
@@ -345,42 +345,6 @@ impl<'a> Placer<'a> {
             self.place_multi_plate()
         }
     }
-}
-
-// If for every model, there exists some rotation that fits try it
-pub(crate) fn all_parts_can_be_attempted(
-    parts: &Vec<PlacedPart>,
-    plate_shape: &dyn PlateShape,
-) -> bool {
-    parts
-        .iter()
-        .map(|part| {
-            part.part
-                .bitmaps
-                .iter()
-                .map(|x| {
-                    x.width as f64 <= plate_shape.width() && x.height as f64 <= plate_shape.height()
-                })
-                .any(|x| x)
-        })
-        .all(|x| x)
-}
-
-// If for every model, there exists some rotation that fits try it
-pub(crate) fn all_parts_can_eventually_be_attempted(
-    parts: &Vec<PlacedPart>,
-    plate_shape: &dyn PlateShape,
-) -> bool {
-    parts
-        .iter()
-        .map(|part| {
-            part.part
-                .bitmaps
-                .iter()
-                .map(|x| x.height as f64 <= plate_shape.height())
-                .any(|x| x)
-        })
-        .all(|x| x)
 }
 
 mod helpers;

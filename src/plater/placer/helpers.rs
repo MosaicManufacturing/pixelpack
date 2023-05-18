@@ -1,6 +1,5 @@
-use crate::plater::placer::{
-    all_parts_can_be_attempted, all_parts_can_eventually_be_attempted, Placer, N,
-};
+use crate::plater::placed_part::PlacedPart;
+use crate::plater::placer::{Placer, N};
 use crate::plater::plate::Plate;
 use crate::plater::plate_shape::PlateShape;
 use crate::plater::solution::Solution;
@@ -97,4 +96,37 @@ pub(crate) fn find_solution<'a, 'b>(
     solution.add_plate(plate);
     solution.best_so_far = Some(search_index);
     Some(solution)
+}
+
+// If for every model, there exists some rotation that fits try it
+fn all_parts_can_be_attempted(parts: &Vec<PlacedPart>, plate_shape: &dyn PlateShape) -> bool {
+    parts
+        .iter()
+        .map(|part| {
+            part.part
+                .bitmaps
+                .iter()
+                .map(|x| {
+                    x.width as f64 <= plate_shape.width() && x.height as f64 <= plate_shape.height()
+                })
+                .any(|x| x)
+        })
+        .all(|x| x)
+}
+
+// If for every model, there exists some rotation that fits try it
+fn all_parts_can_eventually_be_attempted(
+    parts: &Vec<PlacedPart>,
+    plate_shape: &dyn PlateShape,
+) -> bool {
+    parts
+        .iter()
+        .map(|part| {
+            part.part
+                .bitmaps
+                .iter()
+                .map(|x| x.height as f64 <= plate_shape.height())
+                .any(|x| x)
+        })
+        .all(|x| x)
 }
