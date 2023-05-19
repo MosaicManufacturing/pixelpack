@@ -6,6 +6,21 @@ use crate::plater::solution::Solution;
 
 const EXPAND_MM: f64 = 5.0; // cutoff index
 
+fn compute_scale_factor(
+    search_index: usize,
+    cutoff: usize,
+    increment_range: usize,
+    max_scale: f64,
+) -> f64 {
+    if search_index <= cutoff {
+        return 1.0;
+    }
+
+    f64::min((cutoff - search_index) as f64 / increment_range as f64, 1.0) * max_scale
+}
+
+const K: usize = 50;
+
 pub(crate) fn find_solution<'a, 'b>(
     search_index: usize,
     original_shape: &Box<dyn PlateShape>,
@@ -29,7 +44,7 @@ pub(crate) fn find_solution<'a, 'b>(
         original_shape.clone()
     } else {
         should_align_to_bed = true;
-        original_shape.expand(original_shape.width() / placer.request.precision)
+        original_shape.expand(compute_scale_factor(search_index, N, K, 5.0))
     };
 
     let center = if search_index <= N {
@@ -59,25 +74,10 @@ pub(crate) fn find_solution<'a, 'b>(
         return None;
     }
 
-    // Determine current bounding box using pixel data from bitmap
-
-    // if !self.locked_parts.is_empty() {
-    //     plate
-    // }
-
     while let Some(cur_part) = unlocked_parts.pop() {
         match placer.place_unlocked_part(&mut plate, cur_part) {
             None => {}
-            Some(part) => {
-                // return None;
-                if search_index <= N {
-                    return None;
-                }
-                should_align_to_bed = true;
-                unlocked_parts.push(part);
-                shape = shape.expand(original_shape.width() / original_shape.resolution());
-                plate = Plate::make_from_shape(&mut plate, shape.as_ref(), bottom_left)
-            }
+            Some(part) => return None,
         }
     }
 
