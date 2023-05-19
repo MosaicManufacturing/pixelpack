@@ -3,6 +3,7 @@ use std::error::Error;
 use std::fmt::Debug;
 use std::vec;
 
+use log::info;
 use rand::seq::SliceRandom;
 use rand::thread_rng;
 
@@ -10,7 +11,7 @@ use crate::plater::placed_part::PlacedPart;
 use crate::plater::placer::helpers::find_solution;
 use crate::plater::placer::rect::Rect;
 use crate::plater::placer::score::ScoreOrder;
-use crate::plater::placer::search::exponential_search;
+use crate::plater::placer::search::{exponential_search_simple, Attempts};
 use crate::plater::placer::GravityMode::{GravityEQ, GravityXY, GravityYX};
 use crate::plater::plate::Plate;
 use crate::plater::plate_shape::PlateShape;
@@ -261,24 +262,37 @@ impl<'a> Placer<'a> {
             self.request.center_y - original_shape.height() / (2.0 * self.request.precision),
         );
 
+        let mut hash_map: HashMap<usize, Attempts<Solution>> = HashMap::new();
         let mut search = {
             let original_shape = &original_shape;
             let res = &res;
+            let hash_map = &mut hash_map;
             |search_index: usize| {
-                find_solution(search_index, original_shape, res, self, bottom_left)
+                match hash_map.get(&search_index) {
+                    Some(Attempts::Failure | Attempts::Solved(_)) => {}
+                    Some(Attempts::ToCompute) | None => {
+                        let solution =
+                            find_solution(search_index, original_shape, res, self, bottom_left);
+                        let res = match solution {
+                            None => Attempts::Failure,
+                            Some(sol) => Attempts::Solved(sol),
+                        };
+                        info!("Insert at {}", search_index);
+                        hash_map.insert(search_index, res);
+                    }
+                };
+
+                match hash_map.get(&search_index) {
+                    Some(Attempts::Failure) => false,
+                    Some(Attempts::Solved(_)) => true,
+                    _ => panic!("Case should have been handled"),
+                }
             }
         };
 
-        let smaller = exponential_search(N + 1, &mut search).map(|x| x.0);
-        if smaller.is_some() {
-            return smaller;
-        }
-
-        for i in (N + 1)..(N + 50) {
-            let res = search(i);
-            if res.is_some() {
-                return res;
-            }
+        let smaller = exponential_search_simple(N + 1 + 50, &mut search);
+        if let Some(mut index) = smaller {
+            return hash_map.remove(&mut index).unwrap().into();
         }
 
         None
