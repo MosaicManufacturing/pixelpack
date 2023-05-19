@@ -9,6 +9,7 @@ pub enum Attempts<T> {
     Failure,
 }
 
+// TODO: move computation driving to the closure, the search function shouldn't care about how this happens
 pub(crate) fn exponential_search<T: Clone + Debug>(
     limit: usize,
     mut run: impl FnMut(usize) -> Option<T>,
@@ -34,9 +35,7 @@ pub(crate) fn exponential_search<T: Clone + Debug>(
     }
 
     let mut results = vec![ToCompute; 2 * limit];
-
     results.iter_mut().for_each(|x| *x = ToCompute);
-
     if results.len() < i + 1 {
         unreachable!()
     }
@@ -47,14 +46,15 @@ pub(crate) fn exponential_search<T: Clone + Debug>(
         j *= 2;
     }
 
-    if first_found_solution.is_none() {
-        return None;
-    }
-
-    results[(i) as usize] = Solved(first_found_solution.unwrap());
-
     let mut lo = lower as usize;
-    let mut hi = (i) as usize;
+    let mut hi;
+
+    if let Some(x) = first_found_solution {
+        results[(i) as usize] = Solved(x);
+        hi = (i) as usize;
+    } else {
+        hi = limit;
+    }
 
     let mut boundary_index = 1;
 
@@ -101,5 +101,51 @@ pub(crate) fn exponential_search<T: Clone + Debug>(
     match ans {
         Solved(x) => Some((x, boundary_index as usize)),
         _ => None,
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use std::ops::Range;
+
+    use itertools::Itertools;
+
+    use crate::plater::placer::search::exponential_search;
+
+    fn find_min_val_gt_cut_in_range(range: Range<i32>, cut: i32) -> Option<i32> {
+        let xs = &(range.clone()).collect_vec();
+        let result = exponential_search((&range.max().unwrap() + 1) as usize, |i| {
+            let res = xs.get(i);
+            if let Some(x) = res {
+                if *x > cut {
+                    Some(*x)
+                } else {
+                    None
+                }
+            } else {
+                None
+            }
+        })
+        .map(|x| (x.0));
+        result
+    }
+
+    #[test]
+    fn test() {
+        for i in 0..(10000 - 1) {
+            println!("{}", i);
+            assert_eq!(find_min_val_gt_cut_in_range(0..10000, i), Some(i + 1))
+        }
+    }
+
+    #[test]
+    fn test1() {
+        assert_eq!(find_min_val_gt_cut_in_range(0..1024, 2), Some(3));
+        assert_eq!(find_min_val_gt_cut_in_range(0..1024, 10), Some(11));
+        assert_eq!(find_min_val_gt_cut_in_range(0..1024, 63), Some(64));
+        assert_eq!(find_min_val_gt_cut_in_range(0..1024, 100), Some(101));
+        assert_eq!(find_min_val_gt_cut_in_range(0..1024, 128), Some(129));
+        assert_eq!(find_min_val_gt_cut_in_range(0..1024, 510), Some(511));
+        assert_eq!(find_min_val_gt_cut_in_range(0..1024, 600), Some(601));
     }
 }
