@@ -182,8 +182,8 @@ pub(crate) fn exponential_search_simple(
         i *= 2;
     }
 
-    let mut lo = lower as usize;
-    let mut hi;
+    let lo = lower as usize;
+    let hi;
 
     if let Some(x) = first_found_solution {
         hi = x;
@@ -191,11 +191,41 @@ pub(crate) fn exponential_search_simple(
         hi = limit;
     }
 
+    binary_search_with_cut(lo, hi, run, Some(5))
+}
+
+pub(crate) fn binary_search(
+    mut lo: usize,
+    mut hi: usize,
+    mut run: impl FnMut(usize) -> bool,
+) -> Option<usize> {
+    binary_search_with_cut(lo, hi, run, None)
+}
+
+pub(crate) fn binary_search_with_cut(
+    mut lo: usize,
+    mut hi: usize,
+    mut run: impl FnMut(usize) -> bool,
+    limit: Option<usize>,
+) -> Option<usize> {
+    let mut iter_count = 0;
+    let mut solution = None;
     while lo <= hi {
+        iter_count += 1;
+
+        if let Some(lim) = limit {
+            if iter_count > lim {
+                if solution.is_some() {
+                    return solution;
+                }
+            }
+        }
+
         let gap = hi - lo;
         let mid = lo + gap / 2;
 
         if run(mid) {
+            solution = Some(mid);
             if mid == 1 || !run(mid - 1) {
                 return Some(mid);
             }

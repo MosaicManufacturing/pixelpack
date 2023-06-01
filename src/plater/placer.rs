@@ -4,21 +4,22 @@ use std::fmt::Debug;
 use std::vec;
 
 use log::info;
+use rand::rngs::StdRng;
 use rand::seq::SliceRandom;
-use rand::thread_rng;
+use rand::SeedableRng;
 
 use crate::plater::placed_part::PlacedPart;
 use crate::plater::placer::helpers::find_solution;
 use crate::plater::placer::rect::Rect;
 use crate::plater::placer::score::ScoreOrder;
-use crate::plater::placer::search::{exponential_search_simple, Attempts};
+use crate::plater::placer::search::{binary_search, exponential_search_simple, Attempts};
 use crate::plater::placer::GravityMode::{GravityEQ, GravityXY, GravityYX};
 use crate::plater::plate::Plate;
 use crate::plater::plate_shape::PlateShape;
 use crate::plater::request::{BedExpansionMode, Request};
 use crate::plater::solution::Solution;
 
-pub(crate) const N: usize = 1024;
+pub(crate) const N: usize = 128;
 
 #[derive(Clone, Copy)]
 pub enum SortMode {
@@ -27,7 +28,7 @@ pub enum SortMode {
     // SortSurfaceInc sorts parts in ascending order of surface area.
     SurfaceInc,
     // SortShuffle sorts parts in random order.
-    Shuffle,
+    Shuffle(usize),
     WidthDec,
     HeightDec,
 }
@@ -37,7 +38,7 @@ impl From<SortMode> for usize {
         match x {
             SortMode::SurfaceDec => 0,
             SortMode::SurfaceInc => 1,
-            SortMode::Shuffle => 2,
+            SortMode::Shuffle(_) => 2,
             SortMode::WidthDec => 3,
             SortMode::HeightDec => 4,
         }
@@ -139,8 +140,8 @@ impl<'a> Placer<'a> {
                     f64::partial_cmp(&s2, &s1).unwrap()
                 });
             }
-            SortMode::Shuffle => {
-                let mut rng = thread_rng();
+            SortMode::Shuffle(seed) => {
+                let mut rng = StdRng::seed_from_u64(seed as u64);
                 self.unlocked_parts.shuffle(&mut rng)
             }
             SortMode::WidthDec => {
@@ -290,7 +291,12 @@ impl<'a> Placer<'a> {
             }
         };
 
-        let smaller = exponential_search_simple(N + 1 + 50, &mut search);
+        let smaller = if let Some(upper) = res {
+            binary_search(1, upper - 1, &mut search)
+        } else {
+            exponential_search_simple(N + 1 + 50, &mut search)
+        };
+
         if let Some(mut index) = smaller {
             return hash_map.remove(&mut index).unwrap().into();
         }

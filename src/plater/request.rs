@@ -2,15 +2,17 @@ use std::collections::HashMap;
 use std::f64::consts::PI;
 
 use itertools::Itertools;
+use log::info;
 use rand::prelude::SliceRandom;
-use rand::thread_rng;
 use rayon::prelude::{IntoParallelIterator, ParallelIterator};
 use thiserror::Error;
 
 use crate::plater::part::Part;
-use crate::plater::placer::SortMode::{HeightDec, Shuffle, SurfaceDec, SurfaceInc, WidthDec};
-use crate::plater::placer::{Placer, SortMode, GRAVITY_MODE_LIST};
+use crate::plater::placer::score::ScoreOrder;
+use crate::plater::placer::SortMode::{Shuffle, SurfaceDec};
+use crate::plater::placer::{Placer, SortMode, N};
 use crate::plater::plate_shape::{PlateShape, Shape};
+use crate::plater::recommender::{Recommender, Suggestion};
 use crate::plater::solution::Solution;
 use crate::stl;
 
@@ -90,14 +92,20 @@ pub struct Algorithm {
     pub bed_expansion_mode: BedExpansionMode,
 }
 
-// TODO: Don't understand the original version
 pub fn default_sort_modes() -> Vec<SortMode> {
-    // let random_shuffles: usize = 3;
-    // let sort_shuffle_as_usize: usize = SortShuffle.into();
-    // let last_sort: usize = sort_shuffle_as_usize + random_shuffles - 1;
+    let mut modes = Vec::with_capacity(201);
+    modes.push(SurfaceDec);
 
-    // TODO: too many shuffles dynamically use shuffles if all existing solutions do not fit on the plate
-    vec![SurfaceDec, SurfaceInc, Shuffle, WidthDec, HeightDec]
+    for i in 0..200 {
+        modes.push(Shuffle(i))
+    }
+
+    let xs: &mut [SortMode] = &mut (modes.as_mut_slice())[1..];
+
+    let mut rng = rand::thread_rng();
+    xs.shuffle(&mut rng);
+
+    modes
 }
 
 impl Request {
@@ -191,7 +199,7 @@ impl Request {
     }
 
     // Replace with explicit error handling
-    pub fn spiral_place<T>(
+    pub fn pixelpack<T>(
         &self,
         on_solution_found: impl Fn(&Solution) -> T,
     ) -> Result<T, PlacingError> {
@@ -220,7 +228,7 @@ impl Request {
     }
 
     // Replace with explicit error handling
-    pub fn pixelpack<T>(
+    pub fn spiral_place<T>(
         &self,
         on_solution_found: impl Fn(&Solution) -> T,
     ) -> Result<T, PlacingError> {
@@ -230,18 +238,29 @@ impl Request {
         for sort_mode in sort_modes {
             for rotate_offset in 0..2 {
                 for rotate_direction in 0..2 {
-                    for gravity_mode in GRAVITY_MODE_LIST {
+                    for score in [
+                        ScoreOrder::D1,
+                        ScoreOrder::D2,
+                        ScoreOrder::D3,
+                        ScoreOrder::D4,
+                    ] {
                         let mut placer = Placer::new(self);
                         placer.sort_parts(sort_mode);
-                        placer.set_gravity_mode(gravity_mode);
                         placer.set_rotate_direction(rotate_direction);
                         placer.set_rotate_offset(rotate_offset);
+                        placer.set_score_order(score);
                         placers.push(placer)
                     }
+
+                    let mut placer = Placer::new(self);
+                    placer.sort_parts(sort_mode);
+                    placer.set_rotate_direction(rotate_direction);
+                    placer.set_rotate_offset(rotate_offset);
+                    placers.push(placer)
                 }
             }
         }
-        placers.shuffle(&mut thread_rng());
+        // placers.shuffle(&mut thread_rng());
 
         let mut subset = { placers };
 
@@ -260,10 +279,29 @@ impl Request {
 
     fn place_all_single_threaded<'a>(placers: &'a mut [Placer<'a>]) -> Vec<Solution<'a>> {
         let mut k = None;
+        let max_duration = instant::Duration::from_secs(10);
+        let mut rec = Recommender::new(max_duration, placers.len());
+        let rec = &mut rec;
+
+        info!("Starting");
         placers
             .into_iter()
             .filter_map(|placer| {
+                if let Some(x) = k.clone() {
+                    if x <= N {
+                        return None;
+                    }
+                }
+
+                match rec.observe(k.clone()) {
+                    Suggestion::Stop => {
+                        return None;
+                    }
+                    Suggestion::Continue => {}
+                }
+
                 placer.smallest_observed_plate = k.clone();
+                info!("Smallest plate {:#?}", k);
                 let mut cur = placer.place();
 
                 // Update the best solution if we found something better
