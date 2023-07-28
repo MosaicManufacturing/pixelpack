@@ -278,7 +278,6 @@ impl<'a> Placer<'a> {
                             None => Attempts::Failure,
                             Some(sol) => Attempts::Solved(sol),
                         };
-                        info!("Insert at {}", search_index);
                         hash_map.insert(search_index, res);
                     }
                 };
