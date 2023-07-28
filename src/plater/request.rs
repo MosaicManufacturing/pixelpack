@@ -93,10 +93,10 @@ pub struct Algorithm {
 }
 
 pub fn default_sort_modes() -> Vec<SortMode> {
-    let mut modes = Vec::with_capacity(201);
+    let mut modes = Vec::with_capacity(1001);
     modes.push(SurfaceDec);
 
-    for i in 0..200 {
+    for i in 0..1000 {
         modes.push(Shuffle(i))
     }
 
