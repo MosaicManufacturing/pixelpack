@@ -53,8 +53,8 @@ impl Recommender {
             Some(_) => 5,
         };
 
-        // At least 30% of total placers should be attempted
-        if (self.attempts as f64) / (self.observation_count as f64) < 0.3 {
+        // At least 50% of total placers should be attempted
+        if (self.attempts as f64) / (self.observation_count as f64) < 0.5 {
             return Continue;
         }
 
