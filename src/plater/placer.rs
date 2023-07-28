@@ -293,7 +293,7 @@ impl<'a> Placer<'a> {
         let smaller = if let Some(upper) = res {
             binary_search(1, upper - 1, &mut search)
         } else {
-            exponential_search_simple(N + 1 + 50, &mut search)
+            exponential_search_simple(N + 1 + 50, &mut search, Some(5))
         };
 
         if let Some(mut index) = smaller {
