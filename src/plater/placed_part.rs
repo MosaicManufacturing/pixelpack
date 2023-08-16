@@ -89,7 +89,6 @@ impl<'a> PlacedPart<'a> {
             }
         }
 
-
         score
     }
 

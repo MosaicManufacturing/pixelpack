@@ -8,8 +8,8 @@ use rayon::prelude::{IntoParallelIterator, ParallelIterator};
 use thiserror::Error;
 
 use crate::plater::part::Part;
-use crate::plater::placer::{GRAVITY_MODE_LIST, Placer, SortMode};
 use crate::plater::placer::SortMode::{HeightDec, Shuffle, SurfaceDec, SurfaceInc, WidthDec};
+use crate::plater::placer::{Placer, SortMode, GRAVITY_MODE_LIST};
 use crate::plater::plate_shape::{PlateShape, Shape};
 use crate::plater::solution::Solution;
 use crate::stl;
@@ -78,7 +78,7 @@ pub enum BedExpansionMode {
 #[derive(Error, Debug)]
 pub enum PlacingError {
     #[error("No solutions found")]
-    NoSolutionFound
+    NoSolutionFound,
 }
 
 #[derive(Clone)]
@@ -101,10 +101,16 @@ pub fn default_sort_modes() -> Vec<SortMode> {
 }
 
 impl Request {
-    pub fn new(plate_shape: Shape, resolution: f64, algorithm: Algorithm, center_x: f64, center_y: f64) -> Self {
+    pub fn new(
+        plate_shape: Shape,
+        resolution: f64,
+        algorithm: Algorithm,
+        center_x: f64,
+        center_y: f64,
+    ) -> Self {
         let boxed_plate_shape: Box<dyn PlateShape> = match plate_shape {
             Shape::Rectangle(r) => Box::new(r),
-            Shape::Circle(c) => Box::new(c)
+            Shape::Circle(c) => Box::new(c),
         };
 
         Request {
@@ -134,7 +140,6 @@ impl Request {
 
     pub fn set_delta_r(&mut self, rotation_interval: f64) {
         self.delta_r = stl::util::deg_to_rad(rotation_interval as f64);
-        ;
     }
 
     pub fn set_precision(&mut self, precision: f64) {
@@ -173,7 +178,10 @@ impl Request {
         Some(())
     }
 
-    pub fn process<T>(&self, on_solution_found: impl Fn(&Solution) -> T) -> Result<T, PlacingError> {
+    pub fn process<T>(
+        &self,
+        on_solution_found: impl Fn(&Solution) -> T,
+    ) -> Result<T, PlacingError> {
         let strategy = match self.algorithm.strategy {
             Strategy::PixelPack => Request::pixelpack,
             Strategy::SpiralPlace => Request::spiral_place,
@@ -183,15 +191,21 @@ impl Request {
     }
 
     // Replace with explicit error handling
-    pub fn spiral_place<T>(&self, on_solution_found: impl Fn(&Solution) -> T) -> Result<T, PlacingError> {
+    pub fn spiral_place<T>(
+        &self,
+        on_solution_found: impl Fn(&Solution) -> T,
+    ) -> Result<T, PlacingError> {
         let mut placer = Placer::new(self);
         placer.sort_parts(SurfaceDec);
 
-        let mut placers = default_sort_modes().into_iter().map(|mode| {
-            let mut p = Placer::new(self);
-            p.sort_parts(mode);
-            p
-        }).collect_vec();
+        let mut placers = default_sort_modes()
+            .into_iter()
+            .map(|mode| {
+                let mut p = Placer::new(self);
+                p.sort_parts(mode);
+                p
+            })
+            .collect_vec();
 
         let place = match &self.algorithm.threading_mode {
             ThreadingMode::SingleThreaded => Request::place_all_single_threaded,
@@ -200,16 +214,16 @@ impl Request {
 
         let solutions = place(&mut placers);
 
-        let solution = solutions
-            .get(0)
-            .ok_or(PlacingError::NoSolutionFound)?;
+        let solution = solutions.get(0).ok_or(PlacingError::NoSolutionFound)?;
 
         Ok(on_solution_found(solution))
     }
 
-
     // Replace with explicit error handling
-    pub fn pixelpack<T>(&self, on_solution_found: impl Fn(&Solution) -> T) -> Result<T, PlacingError> {
+    pub fn pixelpack<T>(
+        &self,
+        on_solution_found: impl Fn(&Solution) -> T,
+    ) -> Result<T, PlacingError> {
         let mut placers = vec![];
         let sort_modes = Vec::clone(&self.sort_modes);
 
@@ -229,10 +243,7 @@ impl Request {
         }
         placers.shuffle(&mut thread_rng());
 
-        let mut subset = {
-            placers
-        };
-
+        let mut subset = { placers };
 
         let place_all_placers = match self.algorithm.threading_mode {
             ThreadingMode::SingleThreaded => Request::place_all_single_threaded,
@@ -242,9 +253,7 @@ impl Request {
         let mut solutions = place_all_placers(&mut subset);
         solutions.sort_by(|x, y| f64::partial_cmp(&x.plate_area(), &y.plate_area()).unwrap());
 
-        let solution = solutions
-            .get(0)
-            .ok_or(PlacingError::NoSolutionFound)?;
+        let solution = solutions.get(0).ok_or(PlacingError::NoSolutionFound)?;
 
         Ok(on_solution_found(solution))
     }
@@ -269,9 +278,7 @@ impl Request {
     fn place_all_multi_threaded<'a>(placers: &'a mut [Placer<'a>]) -> Vec<Solution<'a>> {
         placers
             .into_par_iter()
-            .map(|placer| {
-                placer.place().unwrap()
-            })
+            .map(|placer| placer.place().unwrap())
             .collect::<Vec<_>>()
     }
 }

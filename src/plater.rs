@@ -9,5 +9,5 @@ pub(crate) mod point;
 pub(crate) mod rectangle;
 pub mod request;
 pub mod solution;
-pub(crate) mod util;
 mod spiral;
+pub(crate) mod util;

@@ -47,9 +47,7 @@ impl Part {
         } else {
             (0..num_bitmaps as usize)
                 .into_iter()
-                .map(|k|
-                    bitmap.rotate((k as f64) * delta_r).trim()
-                )
+                .map(|k| bitmap.rotate((k as f64) * delta_r).trim())
                 .collect()
         };
 
@@ -80,7 +78,12 @@ impl Part {
         }
 
         if correct == 0 {
-            anyhow::bail!("None of the rotations of {} fit within Plate width {} height {}", id, plate_width, plate_height);
+            anyhow::bail!(
+                "None of the rotations of {} fit within Plate width {} height {}",
+                id,
+                plate_width,
+                plate_height
+            );
         }
 
         p.surface /= correct as f64;

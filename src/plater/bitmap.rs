@@ -2,12 +2,17 @@ use std::cmp::{max, min};
 
 use crate::plater::util;
 
-const NEIGHBORS: [(i32, i32); 9] =
-    [
-        (-1, -1), (0, -1), (1, -1),
-        (-1, 0), (0, 0), (1, 0),
-        (-1, 1), (0, 1), (1, 1)
-    ];
+const NEIGHBORS: [(i32, i32); 9] = [
+    (-1, -1),
+    (0, -1),
+    (1, -1),
+    (-1, 0),
+    (0, 0),
+    (1, 0),
+    (-1, 1),
+    (0, 1),
+    (1, 1),
+];
 
 pub struct Bitmap {
     // Image dimensions
@@ -186,7 +191,6 @@ impl Bitmap {
         }
     }
 
-
     // This only copies if other is fully contained in self
     #[allow(dead_code)]
     pub(crate) fn copy_from(&mut self, other: &Self, off_x: i32, off_y: i32) -> Option<()> {
@@ -290,16 +294,11 @@ impl Bitmap {
 
                 let max_of_neighbors = NEIGHBORS
                     .iter()
-                    .map(|(off_x, off_y)| self.get_point(
-                        center_x + *off_x,
-                        center_y + *off_y,
-                    )).max().unwrap();
+                    .map(|(off_x, off_y)| self.get_point(center_x + *off_x, center_y + *off_y))
+                    .max()
+                    .unwrap();
 
-                rotated.set_point(
-                    x,
-                    y,
-                    max_of_neighbors,
-                );
+                rotated.set_point(x, y, max_of_neighbors);
             }
         }
         rotated
@@ -370,7 +369,6 @@ impl Bitmap {
         expanded
     }
 
-
     pub fn get_bound(&self) -> (f64, f64, f64, f64) {
         let (width, height) = self.get_dims();
 
@@ -403,7 +401,6 @@ impl Bitmap {
 
             counter as f64
         };
-
 
         let left_space = {
             let mut counter = 0;
