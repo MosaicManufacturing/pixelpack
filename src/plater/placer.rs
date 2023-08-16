@@ -3,21 +3,21 @@ use std::error::Error;
 use std::fmt::Debug;
 use std::vec;
 
+use rand::rngs::StdRng;
+use rand::SeedableRng;
 use rand::seq::SliceRandom;
-use rand::thread_rng;
 
 use crate::plater::placed_part::PlacedPart;
+use crate::plater::placer::GravityMode::{GravityEQ, GravityXY, GravityYX};
 use crate::plater::placer::helpers::find_solution;
 use crate::plater::placer::rect::Rect;
-use crate::plater::placer::score::ScoreOrder;
-use crate::plater::placer::search::exponential_search;
-use crate::plater::placer::GravityMode::{GravityEQ, GravityXY, GravityYX};
+use crate::plater::placer::search::{Attempts, binary_search, exponential_search_simple};
 use crate::plater::plate::Plate;
 use crate::plater::plate_shape::PlateShape;
 use crate::plater::request::{BedExpansionMode, Request};
 use crate::plater::solution::Solution;
 
-pub(crate) const N: usize = 1024;
+pub(crate) const N: usize = 128;
 
 #[derive(Clone, Copy)]
 pub enum SortMode {
@@ -26,7 +26,7 @@ pub enum SortMode {
     // SortSurfaceInc sorts parts in ascending order of surface area.
     SurfaceInc,
     // SortShuffle sorts parts in random order.
-    Shuffle,
+    Shuffle(usize),
     WidthDec,
     HeightDec,
 }
@@ -36,7 +36,7 @@ impl From<SortMode> for usize {
         match x {
             SortMode::SurfaceDec => 0,
             SortMode::SurfaceInc => 1,
-            SortMode::Shuffle => 2,
+            SortMode::Shuffle(_) => 2,
             SortMode::WidthDec => 3,
             SortMode::HeightDec => 4,
         }
@@ -83,7 +83,6 @@ pub(crate) struct Placer<'a> {
     // center_x, center_y, width, height
     current_bounding_box: Option<Rect>,
     pub smallest_observed_plate: Option<usize>,
-    pub(crate) score_order: Option<ScoreOrder>,
 }
 
 impl<'a> Placer<'a> {
@@ -99,7 +98,6 @@ impl<'a> Placer<'a> {
             request,
             current_bounding_box: None,
             smallest_observed_plate: None,
-            score_order: None,
         };
 
         for part in request.parts.values() {
@@ -138,8 +136,8 @@ impl<'a> Placer<'a> {
                     f64::partial_cmp(&s2, &s1).unwrap()
                 });
             }
-            SortMode::Shuffle => {
-                let mut rng = thread_rng();
+            SortMode::Shuffle(seed) => {
+                let mut rng = StdRng::seed_from_u64(seed as u64);
                 self.unlocked_parts.shuffle(&mut rng)
             }
             SortMode::WidthDec => {
@@ -176,10 +174,6 @@ impl<'a> Placer<'a> {
 
     pub(crate) fn set_rotate_offset(&mut self, offset: i32) {
         self.rotate_offset = offset;
-    }
-
-    pub(crate) fn set_score_order(&mut self, score_order: ScoreOrder) {
-        self.score_order = Some(score_order);
     }
 
     fn place_single_plate_linear(&mut self) -> Option<Solution> {
@@ -261,24 +255,41 @@ impl<'a> Placer<'a> {
             self.request.center_y - original_shape.height() / (2.0 * self.request.precision),
         );
 
+        let mut hash_map: HashMap<usize, Attempts<Solution>> = HashMap::new();
         let mut search = {
             let original_shape = &original_shape;
             let res = &res;
+            let hash_map = &mut hash_map;
             |search_index: usize| {
-                find_solution(search_index, original_shape, res, self, bottom_left)
+                match hash_map.get(&search_index) {
+                    Some(Attempts::Failure | Attempts::Solved(_)) => {}
+                    Some(Attempts::ToCompute) | None => {
+                        let solution =
+                            find_solution(search_index, original_shape, res, self, bottom_left);
+                        let res = match solution {
+                            None => Attempts::Failure,
+                            Some(sol) => Attempts::Solved(sol),
+                        };
+                        hash_map.insert(search_index, res);
+                    }
+                };
+
+                match hash_map.get(&search_index) {
+                    Some(Attempts::Failure) => false,
+                    Some(Attempts::Solved(_)) => true,
+                    _ => panic!("Case should have been handled"),
+                }
             }
         };
 
-        let smaller = exponential_search(N + 1, &mut search).map(|x| x.0);
-        if smaller.is_some() {
-            return smaller;
-        }
+        let smaller = if let Some(upper) = res {
+            binary_search(1, upper - 1, &mut search)
+        } else {
+            exponential_search_simple(N + 1 + 50, &mut search, Some(5))
+        };
 
-        for i in (N + 1)..(N + 50) {
-            let res = search(i);
-            if res.is_some() {
-                return res;
-            }
+        if let Some(mut index) = smaller {
+            return hash_map.remove(&mut index).unwrap().into();
         }
 
         None
@@ -321,7 +332,7 @@ impl<'a> Placer<'a> {
                                 self.request.center_x,
                                 self.request.center_y,
                             )
-                            .unwrap();
+                                .unwrap();
                             solution.add_plate(next_plate);
                         }
                         current_part = part;

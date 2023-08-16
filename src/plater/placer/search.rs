@@ -1,6 +1,6 @@
 use std::fmt::Debug;
 
-use crate::plater::placer::search::Attempts::{Failure, Solved, ToCompute};
+use crate::plater::placer::search::Attempts::Solved;
 
 #[derive(Clone, Debug)]
 pub(crate) enum Attempts<T> {
@@ -18,150 +18,10 @@ impl<T> Into<Option<T>> for Attempts<T> {
     }
 }
 
-// TODO: move computation driving to the closure, the search function shouldn't care about how this happens
-pub(crate) fn exponential_search<T: Clone + Debug>(
-    limit: usize,
-    mut run: impl FnMut(usize) -> Option<T>,
-) -> Option<(T, usize)> {
-    let mut first_found_solution = None;
-
-    let mut i = 1;
-    let mut lower = i;
-
-    while i < limit {
-        let res = run(i);
-        if res.is_some() {
-            first_found_solution = res;
-            break;
-        }
-
-        if i * 2 >= limit {
-            break;
-        }
-
-        lower = i;
-        i *= 2;
-    }
-
-    let mut results = vec![ToCompute; 2 * limit];
-    results.iter_mut().for_each(|x| *x = ToCompute);
-    if results.len() < i + 1 {
-        unreachable!()
-    }
-
-    let mut j = 1;
-    while j < i {
-        results[j] = Failure;
-        j *= 2;
-    }
-
-    let mut lo = lower as usize;
-    let mut hi;
-
-    if let Some(x) = first_found_solution {
-        results[(i) as usize] = Solved(x);
-        hi = (i) as usize;
-    } else {
-        hi = limit;
-    }
-
-    let mut boundary_index = 1;
-
-    while lo <= hi {
-        let gap = hi - lo;
-        let mid = lo + gap / 2;
-        if let ToCompute = results[mid] {
-            results[mid] = match run(mid) {
-                None => Failure,
-                Some(x) => Solved(x),
-            }
-        }
-
-        match results[mid] {
-            Solved(_) => {
-                if mid == 1 {
-                    boundary_index = mid as i32;
-                    break;
-                }
-
-                if let ToCompute = results[mid - 1] {
-                    results[mid - 1] = match run(mid - 1) {
-                        None => Failure,
-                        Some(x) => Solved(x),
-                    }
-                }
-
-                if let Failure = results[mid - 1] {
-                    boundary_index = mid as i32;
-                    break;
-                }
-
-                hi = mid - 1;
-            }
-            Failure => {
-                lo = mid + 1;
-            }
-            ToCompute => unreachable!(),
-        }
-    }
-
-    let mut ans = ToCompute;
-    std::mem::swap(&mut ans, &mut results[boundary_index as usize]);
-    match ans {
-        Solved(x) => Some((x, boundary_index as usize)),
-        _ => None,
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use std::ops::Range;
-
-    use itertools::Itertools;
-
-    use crate::plater::placer::search::exponential_search;
-
-    fn find_min_val_gt_cut_in_range(range: Range<i32>, cut: i32) -> Option<i32> {
-        let xs = &(range.clone()).collect_vec();
-        let result = exponential_search((&range.max().unwrap() + 1) as usize, |i| {
-            let res = xs.get(i);
-            if let Some(x) = res {
-                if *x > cut {
-                    Some(*x)
-                } else {
-                    None
-                }
-            } else {
-                None
-            }
-        })
-        .map(|x| (x.0));
-        result
-    }
-
-    #[test]
-    fn test() {
-        for i in 0..(10000 - 1) {
-            println!("{}", i);
-            assert_eq!(find_min_val_gt_cut_in_range(0..10000, i), Some(i + 1))
-        }
-    }
-
-    #[test]
-    fn test1() {
-        assert_eq!(find_min_val_gt_cut_in_range(0..1024, 2), Some(3));
-        assert_eq!(find_min_val_gt_cut_in_range(0..1024, 10), Some(11));
-        assert_eq!(find_min_val_gt_cut_in_range(0..1024, 63), Some(64));
-        assert_eq!(find_min_val_gt_cut_in_range(0..1024, 100), Some(101));
-        assert_eq!(find_min_val_gt_cut_in_range(0..1024, 128), Some(129));
-        assert_eq!(find_min_val_gt_cut_in_range(0..1024, 510), Some(511));
-        assert_eq!(find_min_val_gt_cut_in_range(0..1024, 600), Some(601));
-    }
-}
-
 pub(crate) fn exponential_search_simple(
     limit: usize,
     mut run: impl FnMut(usize) -> bool,
+    search_limit: Option<usize>,
 ) -> Option<usize> {
     let mut first_found_solution = None;
 
@@ -182,8 +42,8 @@ pub(crate) fn exponential_search_simple(
         i *= 2;
     }
 
-    let mut lo = lower as usize;
-    let mut hi;
+    let lo = lower as usize;
+    let hi;
 
     if let Some(x) = first_found_solution {
         hi = x;
@@ -191,11 +51,38 @@ pub(crate) fn exponential_search_simple(
         hi = limit;
     }
 
+    binary_search_with_bound(lo, hi, run, search_limit)
+}
+
+pub(crate) fn binary_search(lo: usize, hi: usize, run: impl FnMut(usize) -> bool) -> Option<usize> {
+    binary_search_with_bound(lo, hi, run, None)
+}
+
+// Binary search, but relax the constrain for a non boundary solution, but any solution
+pub(crate) fn binary_search_with_bound(
+    mut lo: usize,
+    mut hi: usize,
+    mut run: impl FnMut(usize) -> bool,
+    limit: Option<usize>,
+) -> Option<usize> {
+    let mut iter_count = 0;
+    let mut solution = None;
     while lo <= hi {
+        iter_count += 1;
+
+        if let Some(lim) = limit {
+            if iter_count > lim {
+                if solution.is_some() {
+                    return solution;
+                }
+            }
+        }
+
         let gap = hi - lo;
         let mid = lo + gap / 2;
 
         if run(mid) {
+            solution = Some(mid);
             if mid == 1 || !run(mid - 1) {
                 return Some(mid);
             }
@@ -215,24 +102,24 @@ mod tests1 {
     #[test]
     fn test() {
         let f = |x: usize| x >= 10;
-        assert_eq!(exponential_search_simple(1000, f), Some(10));
+        assert_eq!(exponential_search_simple(1000, f, None), Some(10));
     }
 
     #[test]
     fn test2() {
         let f = |x: usize| x >= 2;
-        assert_eq!(exponential_search_simple(1000, f), Some(2));
+        assert_eq!(exponential_search_simple(1000, f, None), Some(2));
     }
 
     #[test]
     fn test3() {
         let f = |x: usize| x > 512;
-        assert_eq!(exponential_search_simple(1000, f), Some(513));
+        assert_eq!(exponential_search_simple(1000, f, None), Some(513));
     }
 
     #[test]
     fn test4() {
         let f = |x: usize| false;
-        assert_eq!(exponential_search_simple(1000, f), None);
+        assert_eq!(exponential_search_simple(1000, f, None), None);
     }
 }

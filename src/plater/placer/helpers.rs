@@ -1,5 +1,5 @@
 use crate::plater::placed_part::PlacedPart;
-use crate::plater::placer::{Placer, N};
+use crate::plater::placer::{N, Placer};
 use crate::plater::plate::Plate;
 use crate::plater::plate_shape::PlateShape;
 use crate::plater::solution::Solution;
@@ -38,7 +38,7 @@ pub(crate) fn find_solution<'a, 'b>(
     let mut should_align_to_bed = false;
     placer.current_bounding_box = None;
 
-    let mut shape = if search_index < N {
+    let shape = if search_index < N {
         original_shape.contract((N - search_index) as f64 * EXPAND_MM)?
     } else if search_index == N {
         original_shape.clone()

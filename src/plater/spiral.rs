@@ -157,17 +157,17 @@ impl Iterator for InclusiveRange {
     }
 }
 
-struct WindowIter<A, T: Iterator<Item = A>, const N: usize> {
+struct WindowIter<A, T: Iterator<Item=A>, const N: usize> {
     iter: T,
 }
 
-impl<A, T: Iterator<Item = A>, const N: usize> WindowIter<A, T, N> {
+impl<A, T: Iterator<Item=A>, const N: usize> WindowIter<A, T, N> {
     fn new(iter: T) -> Self {
         WindowIter { iter }
     }
 }
 
-impl<A, T: Iterator<Item = A>, const N: usize> Iterator for WindowIter<A, T, N> {
+impl<A, T: Iterator<Item=A>, const N: usize> Iterator for WindowIter<A, T, N> {
     type Item = [Option<A>; N];
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -192,7 +192,7 @@ pub(crate) fn spiral_iterator(
     height: f64,
     original_width: f64,
     original_height: f64,
-) -> impl Iterator<Item = (f64, f64)> {
+) -> impl Iterator<Item=(f64, f64)> {
     let d_width = f64::floor(width / delta) as isize;
     let d_height = f64::floor(height / delta) as isize;
 
