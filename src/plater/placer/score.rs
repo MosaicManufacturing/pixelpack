@@ -228,11 +228,3 @@ impl ScoreWrapper for ScoreWrapperD {
         ScoreWrapperD(score)
     }
 }
-
-#[derive(Clone)]
-pub(crate) enum ScoreOrder {
-    D1,
-    D2,
-    D3,
-    D4,
-}
