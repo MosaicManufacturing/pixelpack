@@ -3,7 +3,6 @@ use std::error::Error;
 use std::fmt::Debug;
 use std::vec;
 
-use log::info;
 use rand::rngs::StdRng;
 use rand::seq::SliceRandom;
 use rand::SeedableRng;
@@ -11,7 +10,6 @@ use rand::SeedableRng;
 use crate::plater::placed_part::PlacedPart;
 use crate::plater::placer::helpers::find_solution;
 use crate::plater::placer::rect::Rect;
-use crate::plater::placer::score::ScoreOrder;
 use crate::plater::placer::search::{binary_search, exponential_search_simple, Attempts};
 use crate::plater::placer::GravityMode::{GravityEQ, GravityXY, GravityYX};
 use crate::plater::plate::Plate;
@@ -85,7 +83,6 @@ pub(crate) struct Placer<'a> {
     // center_x, center_y, width, height
     current_bounding_box: Option<Rect>,
     pub smallest_observed_plate: Option<usize>,
-    pub(crate) score_order: Option<ScoreOrder>,
 }
 
 impl<'a> Placer<'a> {
@@ -101,7 +98,6 @@ impl<'a> Placer<'a> {
             request,
             current_bounding_box: None,
             smallest_observed_plate: None,
-            score_order: None,
         };
 
         for part in request.parts.values() {
@@ -178,10 +174,6 @@ impl<'a> Placer<'a> {
 
     pub(crate) fn set_rotate_offset(&mut self, offset: i32) {
         self.rotate_offset = offset;
-    }
-
-    pub(crate) fn set_score_order(&mut self, score_order: ScoreOrder) {
-        self.score_order = Some(score_order);
     }
 
     fn place_single_plate_linear(&mut self) -> Option<Solution> {

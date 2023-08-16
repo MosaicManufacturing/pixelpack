@@ -8,7 +8,6 @@ use rayon::prelude::{IntoParallelIterator, ParallelIterator};
 use thiserror::Error;
 
 use crate::plater::part::Part;
-use crate::plater::placer::score::ScoreOrder;
 use crate::plater::placer::SortMode::{Shuffle, SurfaceDec};
 use crate::plater::placer::{Placer, SortMode, N};
 use crate::plater::plate_shape::{PlateShape, Shape};
@@ -238,20 +237,6 @@ impl Request {
         for sort_mode in sort_modes {
             for rotate_offset in 0..2 {
                 for rotate_direction in 0..2 {
-                    for score in [
-                        ScoreOrder::D1,
-                        ScoreOrder::D2,
-                        ScoreOrder::D3,
-                        ScoreOrder::D4,
-                    ] {
-                        let mut placer = Placer::new(self);
-                        placer.sort_parts(sort_mode);
-                        placer.set_rotate_direction(rotate_direction);
-                        placer.set_rotate_offset(rotate_offset);
-                        placer.set_score_order(score);
-                        placers.push(placer)
-                    }
-
                     let mut placer = Placer::new(self);
                     placer.sort_parts(sort_mode);
                     placer.set_rotate_direction(rotate_direction);
