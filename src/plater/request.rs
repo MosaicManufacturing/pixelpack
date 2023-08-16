@@ -8,8 +8,8 @@ use rayon::prelude::{IntoParallelIterator, ParallelIterator};
 use thiserror::Error;
 
 use crate::plater::part::Part;
+use crate::plater::placer::{N, Placer, SortMode};
 use crate::plater::placer::SortMode::{Shuffle, SurfaceDec};
-use crate::plater::placer::{Placer, SortMode, N};
 use crate::plater::plate_shape::{PlateShape, Shape};
 use crate::plater::recommender::{Recommender, Suggestion};
 use crate::plater::solution::Solution;

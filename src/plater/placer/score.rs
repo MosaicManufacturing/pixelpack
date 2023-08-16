@@ -10,8 +10,8 @@ pub(crate) enum Preference {
 
 impl Preference {
     fn defer_to<F>(self, f: F) -> Preference
-    where
-        F: Fn() -> Preference,
+        where
+            F: Fn() -> Preference,
     {
         match self {
             NoPreference => f(),

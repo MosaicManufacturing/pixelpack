@@ -3,13 +3,13 @@ use std::f64::consts::PI;
 
 use crate::plater::placed_part::PlacedPart;
 use crate::plater::placer::rect::Rect;
-use crate::plater::placer::score::Position::{Inside, Outside};
-use crate::plater::placer::score::Prefer;
-use crate::plater::placer::score::Preference::Second;
 use crate::plater::placer::score::{
     DefaultScoreWrapper, FloatWrapper, Score, ScoreWrapper, ScoreWrapperA, ScoreWrapperB,
     ScoreWrapperC, ScoreWrapperD,
 };
+use crate::plater::placer::score::Position::{Inside, Outside};
+use crate::plater::placer::score::Prefer;
+use crate::plater::placer::score::Preference::Second;
 use crate::plater::plate::Plate;
 use crate::plater::plate_shape::PlateShape;
 use crate::plater::request::Strategy;
@@ -49,18 +49,18 @@ impl<'a> Placer<'a> {
                     &mut plate.clone(),
                     &mut part,
                 )
-                .or_else(|| {
-                    Placer::spiral_place::<ScoreWrapperA>(self, rs, &mut plate.clone(), &mut part)
-                })
-                .or_else(|| {
-                    Placer::spiral_place::<ScoreWrapperB>(self, rs, &mut plate.clone(), &mut part)
-                })
-                .or_else(|| {
-                    Placer::spiral_place::<ScoreWrapperC>(self, rs, &mut plate.clone(), &mut part)
-                })
-                .or_else(|| {
-                    Placer::spiral_place::<ScoreWrapperD>(self, rs, &mut plate.clone(), &mut part)
-                }),
+                    .or_else(|| {
+                        Placer::spiral_place::<ScoreWrapperA>(self, rs, &mut plate.clone(), &mut part)
+                    })
+                    .or_else(|| {
+                        Placer::spiral_place::<ScoreWrapperB>(self, rs, &mut plate.clone(), &mut part)
+                    })
+                    .or_else(|| {
+                        Placer::spiral_place::<ScoreWrapperC>(self, rs, &mut plate.clone(), &mut part)
+                    })
+                    .or_else(|| {
+                        Placer::spiral_place::<ScoreWrapperD>(self, rs, &mut plate.clone(), &mut part)
+                    }),
             };
 
         if let Some((better_x, better_y, better_r)) = res {
@@ -185,12 +185,12 @@ impl<'a> Placer<'a> {
             self.request.plate_shape.width(),
             self.request.plate_shape.height(),
         )
-        .map(|(x, y)| {
-            (
-                x + plate.center_x - plate.width / 2.0,
-                y + plate.center_y - plate.height / 2.0,
-            )
-        });
+            .map(|(x, y)| {
+                (
+                    x + plate.center_x - plate.width / 2.0,
+                    y + plate.center_y - plate.height / 2.0,
+                )
+            });
 
         let cond = self.request.plate_shape.width() + (plate.center_x - plate.width / 2.0);
 

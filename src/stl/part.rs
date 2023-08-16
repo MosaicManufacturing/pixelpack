@@ -44,7 +44,7 @@ pub(crate) fn load_model(
         plate_height,
         locked,
     )
-    .ok()?;
+        .ok()?;
 
     Some((part, next_model))
 }
