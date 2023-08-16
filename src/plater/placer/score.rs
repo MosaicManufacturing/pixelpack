@@ -90,9 +90,9 @@ pub(crate) trait ScoreWrapper: Prefer + Copy {
 }
 
 #[derive(Copy, Clone)]
-pub(crate) struct Default(Score);
+pub(crate) struct DefaultScoreWrapper(Score);
 
-impl Prefer for Default {
+impl Prefer for DefaultScoreWrapper {
     fn compare_prefer(self, other: Self) -> Preference {
         let cmp_position = || self.0.position.compare_prefer(other.0.position);
         let cmp_inertia = || {
@@ -111,16 +111,16 @@ impl Prefer for Default {
     }
 }
 
-impl ScoreWrapper for Default {
+impl ScoreWrapper for DefaultScoreWrapper {
     fn from(score: Score) -> Self {
-        Default(score)
+        DefaultScoreWrapper(score)
     }
 }
 
 #[derive(Copy, Clone)]
-pub(crate) struct Default1(Score);
+pub(crate) struct ScoreWrapperA(Score);
 
-impl Prefer for Default1 {
+impl Prefer for ScoreWrapperA {
     fn compare_prefer(self, other: Self) -> Preference {
         let cmp_position = || self.0.position.compare_prefer(other.0.position);
         let cmp_inertia = || {
@@ -139,16 +139,16 @@ impl Prefer for Default1 {
     }
 }
 
-impl ScoreWrapper for Default1 {
+impl ScoreWrapper for ScoreWrapperA {
     fn from(score: Score) -> Self {
-        Default1(score)
+        ScoreWrapperA(score)
     }
 }
 
 #[derive(Copy, Clone)]
-pub(crate) struct Default2(Score);
+pub(crate) struct ScoreWrapperB(Score);
 
-impl Prefer for Default2 {
+impl Prefer for ScoreWrapperB {
     fn compare_prefer(self, other: Self) -> Preference {
         let cmp_position = || self.0.position.compare_prefer(other.0.position);
         let cmp_inertia = || {
@@ -167,16 +167,16 @@ impl Prefer for Default2 {
     }
 }
 
-impl ScoreWrapper for Default2 {
+impl ScoreWrapper for ScoreWrapperB {
     fn from(score: Score) -> Self {
-        Default2(score)
+        ScoreWrapperB(score)
     }
 }
 
 #[derive(Copy, Clone)]
-pub(crate) struct Default3(Score);
+pub(crate) struct ScoreWrapperC(Score);
 
-impl Prefer for Default3 {
+impl Prefer for ScoreWrapperC {
     fn compare_prefer(self, other: Self) -> Preference {
         let cmp_position = || self.0.position.compare_prefer(other.0.position);
         let cmp_inertia = || {
@@ -195,16 +195,16 @@ impl Prefer for Default3 {
     }
 }
 
-impl ScoreWrapper for Default3 {
+impl ScoreWrapper for ScoreWrapperC {
     fn from(score: Score) -> Self {
-        Default3(score)
+        ScoreWrapperC(score)
     }
 }
 
 #[derive(Copy, Clone)]
-pub(crate) struct Default4(Score);
+pub(crate) struct ScoreWrapperD(Score);
 
-impl Prefer for Default4 {
+impl Prefer for ScoreWrapperD {
     fn compare_prefer(self, other: Self) -> Preference {
         let cmp_position = || self.0.position.compare_prefer(other.0.position);
         let cmp_inertia = || {
@@ -223,9 +223,9 @@ impl Prefer for Default4 {
     }
 }
 
-impl ScoreWrapper for Default4 {
+impl ScoreWrapper for ScoreWrapperD {
     fn from(score: Score) -> Self {
-        Default4(score)
+        ScoreWrapperD(score)
     }
 }
 

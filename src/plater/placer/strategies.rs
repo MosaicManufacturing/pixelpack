@@ -7,7 +7,8 @@ use crate::plater::placer::score::Position::{Inside, Outside};
 use crate::plater::placer::score::Prefer;
 use crate::plater::placer::score::Preference::Second;
 use crate::plater::placer::score::{
-    Default, Default1, Default2, Default3, Default4, FloatWrapper, Score, ScoreWrapper,
+    DefaultScoreWrapper, FloatWrapper, Score, ScoreWrapper, ScoreWrapperA, ScoreWrapperB,
+    ScoreWrapperC, ScoreWrapperD,
 };
 use crate::plater::plate::Plate;
 use crate::plater::plate_shape::PlateShape;
@@ -39,24 +40,28 @@ impl<'a> Placer<'a> {
         }
         let rs = f64::ceil(PI * 2.0 / part.part.delta_r) as usize;
 
-        let res = match self.request.algorithm.strategy {
-            Strategy::PixelPack => Placer::pixel_place(self, rs, plate, &mut part),
-            Strategy::SpiralPlace => {
-                Placer::spiral_place::<Default>(self, rs, &mut plate.clone(), &mut part)
-                    .or_else(|| {
-                        Placer::spiral_place::<Default1>(self, rs, &mut plate.clone(), &mut part)
-                    })
-                    .or_else(|| {
-                        Placer::spiral_place::<Default2>(self, rs, &mut plate.clone(), &mut part)
-                    })
-                    .or_else(|| {
-                        Placer::spiral_place::<Default3>(self, rs, &mut plate.clone(), &mut part)
-                    })
-                    .or_else(|| {
-                        Placer::spiral_place::<Default4>(self, rs, &mut plate.clone(), &mut part)
-                    })
-            }
-        };
+        let res =
+            match self.request.algorithm.strategy {
+                Strategy::PixelPack => Placer::pixel_place(self, rs, plate, &mut part),
+                Strategy::SpiralPlace => Placer::spiral_place::<DefaultScoreWrapper>(
+                    self,
+                    rs,
+                    &mut plate.clone(),
+                    &mut part,
+                )
+                .or_else(|| {
+                    Placer::spiral_place::<ScoreWrapperA>(self, rs, &mut plate.clone(), &mut part)
+                })
+                .or_else(|| {
+                    Placer::spiral_place::<ScoreWrapperB>(self, rs, &mut plate.clone(), &mut part)
+                })
+                .or_else(|| {
+                    Placer::spiral_place::<ScoreWrapperC>(self, rs, &mut plate.clone(), &mut part)
+                })
+                .or_else(|| {
+                    Placer::spiral_place::<ScoreWrapperD>(self, rs, &mut plate.clone(), &mut part)
+                }),
+            };
 
         if let Some((better_x, better_y, better_r)) = res {
             part.set_rotation(better_r as i32);
