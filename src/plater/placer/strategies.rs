@@ -4,11 +4,11 @@ use std::f64::consts::PI;
 use crate::plater::placed_part::PlacedPart;
 use crate::plater::placer::rect::Rect;
 use crate::plater::placer::score::Position::{Inside, Outside};
+use crate::plater::placer::score::Prefer;
 use crate::plater::placer::score::Preference::Second;
 use crate::plater::placer::score::{
     Default, Default1, Default2, Default3, Default4, FloatWrapper, Score, ScoreWrapper,
 };
-use crate::plater::placer::score::{Prefer, ScoreOrder};
 use crate::plater::plate::Plate;
 use crate::plater::plate_shape::PlateShape;
 use crate::plater::request::Strategy;
@@ -41,21 +41,21 @@ impl<'a> Placer<'a> {
 
         let res = match self.request.algorithm.strategy {
             Strategy::PixelPack => Placer::pixel_place(self, rs, plate, &mut part),
-            Strategy::SpiralPlace => match self.score_order {
-                None => Placer::spiral_place::<Default>(self, rs, plate, &mut part),
-                Some(ScoreOrder::D1) => {
-                    Placer::spiral_place::<Default1>(self, rs, plate, &mut part)
-                }
-                Some(ScoreOrder::D2) => {
-                    Placer::spiral_place::<Default2>(self, rs, plate, &mut part)
-                }
-                Some(ScoreOrder::D3) => {
-                    Placer::spiral_place::<Default3>(self, rs, plate, &mut part)
-                }
-                Some(ScoreOrder::D4) => {
-                    Placer::spiral_place::<Default4>(self, rs, plate, &mut part)
-                }
-            },
+            Strategy::SpiralPlace => {
+                Placer::spiral_place::<Default>(self, rs, &mut plate.clone(), &mut part)
+                    .or_else(|| {
+                        Placer::spiral_place::<Default1>(self, rs, &mut plate.clone(), &mut part)
+                    })
+                    .or_else(|| {
+                        Placer::spiral_place::<Default2>(self, rs, &mut plate.clone(), &mut part)
+                    })
+                    .or_else(|| {
+                        Placer::spiral_place::<Default3>(self, rs, &mut plate.clone(), &mut part)
+                    })
+                    .or_else(|| {
+                        Placer::spiral_place::<Default4>(self, rs, &mut plate.clone(), &mut part)
+                    })
+            }
         };
 
         if let Some((better_x, better_y, better_r)) = res {
