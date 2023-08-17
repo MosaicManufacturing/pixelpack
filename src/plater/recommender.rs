@@ -32,8 +32,9 @@ impl Recommender {
     pub(crate) fn observe(&mut self, value: Option<usize>) -> Suggestion {
         self.attempts += 1;
         let now = instant::Instant::now();
+        let diff = (&now).saturating_duration_since(self.start);
 
-        if instant::Instant::saturating_duration_since(&self.start, now) > self.max_duration {
+        if diff > self.max_duration {
             return Stop;
         }
 
