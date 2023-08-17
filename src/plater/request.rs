@@ -164,7 +164,7 @@ impl Request {
         self.max_threads = max_threads;
     }
 
-    pub fn set_duration(&mut self, duration: Duration) {
+    pub fn set_timeout(&mut self, duration: Duration) {
         self.timeout = Some(duration);
     }
 
