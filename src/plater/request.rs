@@ -252,7 +252,6 @@ impl Request {
                 }
             }
         }
-        // placers.shuffle(&mut thread_rng());
 
         let mut subset = { placers };
 
