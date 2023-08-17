@@ -309,9 +309,21 @@ impl Request {
         placers: &'a mut [Placer<'a>],
         timeout: Option<Duration>,
     ) -> Vec<Solution<'a>> {
+        let start = &instant::Instant::now();
+        let timeout = &timeout;
+
         placers
             .into_par_iter()
-            .map(|placer| placer.place().unwrap())
+            .filter_map(|placer| {
+                if let Some(limit) = timeout {
+                    let now = instant::Instant::now();
+                    if now.saturating_duration_since(start.clone()) > *limit {
+                        return None;
+                    }
+                }
+
+                placer.place()
+            })
             .collect::<Vec<_>>()
     }
 }
