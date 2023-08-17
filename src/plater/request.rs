@@ -1,15 +1,15 @@
 use std::collections::HashMap;
 use std::f64::consts::PI;
+use std::time::Duration;
 
 use itertools::Itertools;
-use log::info;
 use rand::prelude::SliceRandom;
 use rayon::prelude::{IntoParallelIterator, ParallelIterator};
 use thiserror::Error;
 
 use crate::plater::part::Part;
-use crate::plater::placer::{N, Placer, SortMode};
 use crate::plater::placer::SortMode::{Shuffle, SurfaceDec};
+use crate::plater::placer::{Placer, SortMode, N};
 use crate::plater::plate_shape::{PlateShape, Shape};
 use crate::plater::recommender::{Recommender, Suggestion};
 use crate::plater::solution::Solution;
@@ -44,6 +44,8 @@ pub struct Request {
 
     pub(crate) center_x: f64,
     pub(crate) center_y: f64,
+
+    pub(crate) timeout: Option<Duration>,
 }
 
 #[derive(Clone)]
@@ -134,6 +136,7 @@ impl Request {
             algorithm,
             center_x: center_x * resolution,
             center_y: center_y * resolution,
+            timeout: None,
         }
     }
 
@@ -159,6 +162,10 @@ impl Request {
 
     pub fn set_max_threads(&mut self, max_threads: usize) {
         self.max_threads = max_threads;
+    }
+
+    pub fn set_timeout(&mut self, duration: Duration) {
+        self.timeout = Some(duration);
     }
 
     pub fn get_spacing(&self) -> f64 {
@@ -219,7 +226,7 @@ impl Request {
             ThreadingMode::MultiThreaded => Request::place_all_multi_threaded,
         };
 
-        let solutions = place(&mut placers);
+        let solutions = place(&mut placers, self.timeout);
 
         let solution = solutions.get(0).ok_or(PlacingError::NoSolutionFound)?;
 
@@ -245,7 +252,6 @@ impl Request {
                 }
             }
         }
-        // placers.shuffle(&mut thread_rng());
 
         let mut subset = { placers };
 
@@ -254,7 +260,7 @@ impl Request {
             ThreadingMode::MultiThreaded => Request::place_all_multi_threaded,
         };
 
-        let mut solutions = place_all_placers(&mut subset);
+        let mut solutions = place_all_placers(&mut subset, self.timeout);
         solutions.sort_by(|x, y| f64::partial_cmp(&x.plate_area(), &y.plate_area()).unwrap());
 
         let solution = solutions.get(0).ok_or(PlacingError::NoSolutionFound)?;
@@ -262,46 +268,61 @@ impl Request {
         Ok(on_solution_found(solution))
     }
 
-    fn place_all_single_threaded<'a>(placers: &'a mut [Placer<'a>]) -> Vec<Solution<'a>> {
-        let mut k = None;
-        let max_duration = instant::Duration::from_secs(10);
+    fn place_all_single_threaded<'a>(
+        placers: &'a mut [Placer<'a>],
+        timeout: Option<Duration>,
+    ) -> Vec<Solution<'a>> {
+        let mut smallest_plate_index = None;
+        let max_duration = timeout.unwrap_or_else(|| Duration::from_secs(10));
         let mut rec = Recommender::new(max_duration, placers.len());
         let rec = &mut rec;
 
-        info!("Starting");
-        placers
-            .into_iter()
-            .filter_map(|placer| {
-                if let Some(x) = k.clone() {
-                    if x <= N {
-                        return None;
-                    }
+        let mut results = vec![];
+        for placer in placers {
+            if let Some(plate_index) = smallest_plate_index.clone() {
+                if plate_index <= N {
+                    break;
                 }
+            }
 
-                match rec.observe(k.clone()) {
-                    Suggestion::Stop => {
-                        return None;
-                    }
-                    Suggestion::Continue => {}
+            match rec.observe(smallest_plate_index.clone()) {
+                Suggestion::Stop => {
+                    break;
                 }
+                Suggestion::Continue => {}
+            }
 
-                placer.smallest_observed_plate = k.clone();
-                info!("Smallest plate {:#?}", k);
-                let mut cur = placer.place();
+            placer.smallest_observed_plate = smallest_plate_index.clone();
 
-                // Update the best solution if we found something better
-                if let Some(d) = &mut cur {
-                    k = Option::clone(&d.best_so_far);
-                }
-                cur
-            })
-            .collect::<Vec<_>>()
+            // Update the best solution if we found something better
+            if let Some(solution) = placer.place() {
+                smallest_plate_index = Option::clone(&solution.best_so_far);
+                results.push(solution)
+            }
+        }
+
+        results
     }
 
-    fn place_all_multi_threaded<'a>(placers: &'a mut [Placer<'a>]) -> Vec<Solution<'a>> {
+    fn place_all_multi_threaded<'a>(
+        placers: &'a mut [Placer<'a>],
+        timeout: Option<Duration>,
+    ) -> Vec<Solution<'a>> {
+        let start = &instant::Instant::now();
+        let timeout = &timeout;
+
         placers
             .into_par_iter()
-            .map(|placer| placer.place().unwrap())
+            .filter_map(|placer| {
+                if let Some(limit) = timeout {
+                    let now = instant::Instant::now();
+                    if now.saturating_duration_since(start.clone()) > *limit {
+                        return None;
+                    }
+                }
+
+                placer.place()
+            })
             .collect::<Vec<_>>()
     }
 }
