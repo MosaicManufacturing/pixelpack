@@ -278,32 +278,31 @@ impl Request {
         let mut rec = Recommender::new(max_duration, placers.len());
         let rec = &mut rec;
 
-        placers
-            .into_iter()
-            .filter_map(|placer| {
-                if let Some(plate_index) = smallest_plate_index.clone() {
-                    if plate_index <= N {
-                        return None;
-                    }
+        let mut results = vec![];
+        for placer in placers {
+            if let Some(plate_index) = smallest_plate_index.clone() {
+                if plate_index <= N {
+                    break;
                 }
+            }
 
-                match rec.observe(smallest_plate_index.clone()) {
-                    Suggestion::Stop => {
-                        return None;
-                    }
-                    Suggestion::Continue => {}
+            match rec.observe(smallest_plate_index.clone()) {
+                Suggestion::Stop => {
+                    break;
                 }
+                Suggestion::Continue => {}
+            }
 
-                placer.smallest_observed_plate = smallest_plate_index.clone();
-                let mut cur = placer.place();
+            placer.smallest_observed_plate = smallest_plate_index.clone();
 
-                // Update the best solution if we found something better
-                if let Some(solution) = &mut cur {
-                    smallest_plate_index = Option::clone(&solution.best_so_far);
-                }
-                cur
-            })
-            .collect::<Vec<_>>()
+            // Update the best solution if we found something better
+            if let Some(solution) = placer.place() {
+                smallest_plate_index = Option::clone(&solution.best_so_far);
+                results.push(solution)
+            }
+        }
+
+        results
     }
 
     fn place_all_multi_threaded<'a>(
