@@ -2,6 +2,7 @@ use std::collections::HashMap;
 
 use crate::plater;
 use crate::plater::plate_shape::{PlateShape, Shape};
+use crate::plater::progress_config::{FutureKillSwitch, ProgressConfig};
 use crate::plater::request::{
     Algorithm, BedExpansionMode, ConfigOrder, PlacingError, PointEnumerationMode, Strategy,
     ThreadingMode,
@@ -18,11 +19,11 @@ pub struct Request {
 }
 
 impl Request {
-    pub fn process<T>(
+    pub fn process<T, F1: Fn(&Solution) -> T, F2: Fn(&str), F3: FutureKillSwitch>(
         &self,
-        on_solution_found: impl Fn(&Solution) -> T,
+        config: ProgressConfig<T, F1, F2, F3>,
     ) -> Result<T, PlacingError> {
-        self.request.process(on_solution_found)
+        self.request.process(config)
     }
 
     pub fn new(plate_shape: Shape, resolution: f64) -> Self {

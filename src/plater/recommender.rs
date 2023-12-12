@@ -4,7 +4,7 @@ use instant;
 
 use crate::plater::recommender::Suggestion::{Continue, Stop};
 
-pub(crate) enum Suggestion {
+pub enum Suggestion {
     Stop,
     Continue,
 }
@@ -50,8 +50,8 @@ impl Recommender {
         let v = *self.map.get(&value).unwrap();
 
         let cut: usize = match value {
-            None => 10,
-            Some(_) => 5,
+            None => 10,   // Observe None at least 10 times in a row
+            Some(_) => 5, // Observed some non non3 value at least 5 times in row
         };
 
         // At least 50% of total placers should be attempted
