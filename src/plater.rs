@@ -1,4 +1,5 @@
 pub mod bitmap;
+pub mod execution_mode;
 pub mod part;
 mod placed_part;
 mod placement;

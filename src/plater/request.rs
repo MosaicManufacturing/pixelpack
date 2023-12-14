@@ -2,19 +2,14 @@ use std::collections::HashMap;
 use std::f64::consts::PI;
 use std::time::Duration;
 
-use itertools::Itertools;
-use log::info;
 use rand::prelude::SliceRandom;
-use rayon::prelude::{IntoParallelIterator, ParallelIterator};
 use thiserror::Error;
 
+use crate::plater::execution_mode::threading_mode::ThreadingMode;
 use crate::plater::part::Part;
 use crate::plater::placer::SortMode::{Shuffle, SurfaceDec};
-use crate::plater::placer::{Placer, SortMode, N};
+use crate::plater::placer::{Placer, SortMode};
 use crate::plater::plate_shape::{PlateShape, Shape};
-use crate::plater::progress_config::{FutureKillSwitch, ProgressConfig};
-use crate::plater::recommender::{Recommender, Suggestion};
-use crate::plater::solution::Solution;
 use crate::stl;
 
 // DEFAULT_RESOLUTION is the default bitmap resolution, in pixels per mm.
@@ -48,12 +43,6 @@ pub struct Request {
     pub(crate) center_y: f64,
 
     pub(crate) timeout: Option<Duration>,
-}
-
-#[derive(Clone)]
-pub enum ThreadingMode {
-    SingleThreaded,
-    MultiThreaded,
 }
 
 #[derive(Clone)]
@@ -194,69 +183,7 @@ impl Request {
         Some(())
     }
 
-    pub fn process<T, F1: Fn(&Solution) -> T, F2: Fn(&str), F3: FutureKillSwitch>(
-        &self,
-        config: ProgressConfig<T, F1, F2, F3>,
-    ) -> Result<T, PlacingError> {
-        let strategy = match self.algorithm.strategy {
-            Strategy::PixelPack => Request::pixelpack,
-            Strategy::SpiralPlace => Request::spiral_place,
-        };
-
-        strategy(&self, config)
-    }
-
-    // Replace with explicit error handling
-    pub fn pixelpack<T, F1: Fn(&Solution) -> T, F2: Fn(&str), F3: FutureKillSwitch>(
-        &self,
-        mut config: ProgressConfig<T, F1, F2, F3>,
-    ) -> Result<T, PlacingError> {
-        let mut placer = Placer::new(self);
-        placer.sort_parts(SurfaceDec);
-
-        let mut placers = default_sort_modes()
-            .into_iter()
-            .map(|mode| {
-                let mut p = Placer::new(self);
-                p.sort_parts(mode);
-                p
-            })
-            .collect_vec();
-
-        let place = match &self.algorithm.threading_mode {
-            ThreadingMode::SingleThreaded => Request::place_all_single_threaded,
-            ThreadingMode::MultiThreaded => Request::place_all_multi_threaded,
-        };
-
-        let solutions = place(&mut placers, self.timeout, &config);
-
-        let solution = solutions.get(0).ok_or(PlacingError::NoSolutionFound)?;
-
-        Ok(config.on_sol(solution))
-    }
-
-    // Replace with explicit error handling
-    pub async fn spiral_place_async<
-        T,
-        F1: Fn(&Solution) -> T,
-        F2: Fn(&str),
-        F3: FutureKillSwitch,
-    >(
-        &self,
-        mut config: ProgressConfig<T, F1, F2, F3>,
-    ) -> Result<T, PlacingError> {
-        let mut placers = self.get_placers_for_spiral_place();
-
-        let mut solutions =
-            Request::place_all_single_threaded_async(&mut placers, self.timeout, &mut config).await;
-
-        solutions.sort_by(|x, y| f64::partial_cmp(&x.plate_area(), &y.plate_area()).unwrap());
-
-        let solution = solutions.get(0).ok_or(PlacingError::NoSolutionFound)?;
-        Ok(config.on_sol(solution))
-    }
-
-    fn get_placers_for_spiral_place(&self) -> Vec<Placer> {
+    pub(crate) fn get_placers_for_spiral_place(&self) -> Vec<Placer> {
         let mut placers = vec![];
         let sort_modes = Vec::clone(&self.sort_modes);
 
@@ -273,153 +200,5 @@ impl Request {
         }
 
         placers
-    }
-
-    // Replace with explicit error handling
-    pub fn spiral_place<T, F1: Fn(&Solution) -> T, F2: Fn(&str), F3: FutureKillSwitch>(
-        &self,
-        mut config: ProgressConfig<T, F1, F2, F3>,
-    ) -> Result<T, PlacingError> {
-        let mut placers = self.get_placers_for_spiral_place();
-        let place_all_placers = match self.algorithm.threading_mode {
-            ThreadingMode::SingleThreaded => Request::place_all_single_threaded,
-            ThreadingMode::MultiThreaded => Request::place_all_multi_threaded,
-        };
-
-        let mut solutions = place_all_placers(&mut placers, self.timeout, &config);
-        solutions.sort_by(|x, y| f64::partial_cmp(&x.plate_area(), &y.plate_area()).unwrap());
-
-        let solution = solutions.get(0).ok_or(PlacingError::NoSolutionFound)?;
-        Ok(config.on_sol(solution))
-    }
-
-    async fn place_all_single_threaded_async<
-        'a,
-        T,
-        F1: Fn(&Solution) -> T,
-        F2: Fn(&str),
-        F3: FutureKillSwitch,
-    >(
-        placers: &'a mut [Placer<'a>],
-        timeout: Option<Duration>,
-        config: &mut ProgressConfig<T, F1, F2, F3>,
-    ) -> Vec<Solution<'a>> {
-        let mut smallest_plate_index = None;
-        // TODO: fix duration issue
-        let max_duration = timeout.unwrap_or_else(|| Duration::MAX);
-        let mut rec = Recommender::new(max_duration, placers.len());
-        let rec = &mut rec;
-
-        let total = placers.len();
-
-        let mut results = vec![];
-        'placing_loop: for (index, placer) in placers.iter_mut().enumerate() {
-            config.on_prog(|| format!("Working on {}/{}", index, total));
-            // This line is required to periodically yield to the executor for fairer scheduling
-            let mut timer = gloo_timers::future::sleep(Duration::from_millis(0));
-            match futures::future::select(config.get_cancellation_future_mut(), &mut timer).await {
-                futures::future::Either::Left(_) => break 'placing_loop,
-                _ => {
-                    info!("Failed {}", index);
-                }
-            }
-
-            if let Some(plate_index) = smallest_plate_index.clone() {
-                if plate_index <= N {
-                    break 'placing_loop;
-                }
-            }
-
-            match rec.observe(smallest_plate_index.clone()) {
-                Suggestion::Stop => break 'placing_loop,
-                Suggestion::Continue => {}
-            }
-
-            placer.smallest_observed_plate = smallest_plate_index.clone();
-
-            // Update the best solution if we found something better
-            if let Some(solution) = placer.place() {
-                smallest_plate_index = Option::clone(&solution.best_so_far);
-                results.push(solution)
-            }
-        }
-
-        results
-    }
-
-    fn place_all_single_threaded<
-        'a,
-        T,
-        F1: Fn(&Solution) -> T,
-        F2: Fn(&str),
-        F3: FutureKillSwitch,
-    >(
-        placers: &'a mut [Placer<'a>],
-        timeout: Option<Duration>,
-        config: &ProgressConfig<T, F1, F2, F3>,
-    ) -> Vec<Solution<'a>> {
-        config.on_prog(|| format!("Starting, total placers: {}", placers.len()));
-
-        let mut smallest_plate_index = None;
-        let max_duration = timeout.unwrap_or_else(|| Duration::from_secs(10));
-        let mut rec = Recommender::new(max_duration, placers.len());
-        let rec = &mut rec;
-
-        let mut results = vec![];
-        for (index, placer) in placers.iter_mut().enumerate() {
-            config.on_prog(|| format!("Working on placer # {}", index));
-
-            if let Some(plate_index) = smallest_plate_index.clone() {
-                if plate_index <= N {
-                    break;
-                }
-            }
-
-            match rec.observe(smallest_plate_index.clone()) {
-                Suggestion::Stop => {
-                    break;
-                }
-                Suggestion::Continue => {}
-            }
-
-            placer.smallest_observed_plate = smallest_plate_index.clone();
-
-            // Update the best solution if we found something better
-            if let Some(solution) = placer.place() {
-                smallest_plate_index = Option::clone(&solution.best_so_far);
-                results.push(solution)
-            }
-        }
-
-        results
-    }
-
-    fn place_all_multi_threaded<
-        'a,
-        T,
-        F1: Fn(&Solution) -> T,
-        F2: Fn(&str),
-        F3: FutureKillSwitch,
-    >(
-        placers: &'a mut [Placer<'a>],
-        timeout: Option<Duration>,
-        config: &ProgressConfig<T, F1, F2, F3>,
-    ) -> Vec<Solution<'a>> {
-        let start = &instant::Instant::now();
-        let timeout = &timeout;
-
-        placers
-            .into_par_iter()
-            .filter_map(|placer| {
-                if let Some(limit) = timeout {
-                    let now = instant::Instant::now();
-                    if now.saturating_duration_since(start.clone()) > *limit {
-                        return None;
-                    }
-                }
-
-                placer.place()
-            })
-            .collect::<Vec<_>>()
     }
 }
