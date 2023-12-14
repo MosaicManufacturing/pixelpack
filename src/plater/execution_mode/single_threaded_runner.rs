@@ -9,10 +9,10 @@ pub struct SingleThreadedRunner<'r> {
     request: &'r Request,
 }
 
-fn place_all_single_threaded<'a, T, F1: Fn(&Solution) -> T, F2: Fn(&str), F3: FutureKillSwitch>(
+fn place_all_single_threaded<'a, T, F1: Fn(&Solution) -> T, F2: Fn(&str)>(
     placers: &'a mut [Placer<'a>],
     timeout: Option<Duration>,
-    config: &ProgressConfig<T, F1, F2, F3>,
+    config: &ProgressConfig<T, F1, F2>,
 ) -> Vec<Solution<'a>> {
     config.on_prog(|| format!("Starting, total placers: {}", placers.len()));
 
@@ -51,12 +51,12 @@ fn place_all_single_threaded<'a, T, F1: Fn(&Solution) -> T, F2: Fn(&str), F3: Fu
 }
 
 impl<'r> SingleThreadedRunner<'r> {
-    pub(crate) fn new(request: &'r Request) -> Self {
+    pub fn new(request: &'r Request) -> Self {
         SingleThreadedRunner { request }
     }
-    pub(crate) fn place<T, F1: Fn(&Solution) -> T, F2: Fn(&str), F3: FutureKillSwitch>(
+    pub fn place<T, F1: Fn(&Solution) -> T, F2: Fn(&str)>(
         &self,
-        mut config: ProgressConfig<T, F1, F2, F3>,
+        mut config: ProgressConfig<T, F1, F2>,
     ) -> Result<T, PlacingError> {
         let mut placers = self.request.get_placers_for_spiral_place();
         let solutions =

@@ -21,9 +21,9 @@ pub struct Request {
 }
 
 impl Request {
-    pub fn process<T, F1: Fn(&Solution) -> T, F2: Fn(&str), F3: FutureKillSwitch>(
+    pub fn process<T, F1: Fn(&Solution) -> T, F2: Fn(&str)>(
         &self,
-        config: ProgressConfig<T, F1, F2, F3>,
+        config: ProgressConfig<T, F1, F2>,
     ) -> Result<T, PlacingError> {
         match &self.request.algorithm.threading_mode {
             ThreadingMode::SingleThreaded => SingleThreadedRunner::new(&self.request).place(config),

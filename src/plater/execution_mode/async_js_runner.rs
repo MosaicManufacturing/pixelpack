@@ -1,21 +1,25 @@
+use std::future::Future;
+use std::pin::Pin;
 use std::time::Duration;
 
 use log::info;
 
 use crate::plater::placer::{Placer, N};
-use crate::plater::progress_config::{FutureKillSwitch, ProgressConfig};
+use crate::plater::progress_config::ProgressConfig;
 use crate::plater::recommender::{Recommender, Suggestion};
 use crate::plater::request::{PlacingError, Request};
 use crate::plater::solution::Solution;
 
-pub struct AsyncJsRunner<'r> {
+pub struct AsyncJsRunner<'r, F: Future> {
     request: &'r Request,
+    cancellation_future: Pin<Box<F>>,
 }
 
-async fn place_async<'a, T, F1: Fn(&Solution) -> T, F2: Fn(&str), F3: FutureKillSwitch>(
+async fn place_async<'a, T, F1: Fn(&Solution) -> T, F2: Fn(&str), F3: Future + Unpin>(
     placers: &'a mut [Placer<'a>],
     timeout: Option<Duration>,
-    config: &mut ProgressConfig<T, F1, F2, F3>,
+    config: &mut ProgressConfig<T, F1, F2>,
+    mut cancellation_future: F3,
 ) -> Vec<Solution<'a>> {
     let mut smallest_plate_index = None;
     // TODO: fix duration issue
@@ -30,7 +34,7 @@ async fn place_async<'a, T, F1: Fn(&Solution) -> T, F2: Fn(&str), F3: FutureKill
         config.on_prog(|| format!("Working on {}/{}", index, total));
         // This line is required to periodically yield to the executor for fairer scheduling
         let mut timer = gloo_timers::future::sleep(Duration::from_millis(0));
-        match futures::future::select(config.get_cancellation_future_mut(), &mut timer).await {
+        match futures::future::select(&mut cancellation_future, &mut timer).await {
             futures::future::Either::Left(_) => break 'placing_loop,
             _ => {
                 info!("Failed {}", index);
@@ -60,19 +64,29 @@ async fn place_async<'a, T, F1: Fn(&Solution) -> T, F2: Fn(&str), F3: FutureKill
     results
 }
 
-impl<'r> AsyncJsRunner<'r> {
-    pub fn new(request: &'r Request) -> Self {
-        AsyncJsRunner { request }
+impl<'r, F: Future> AsyncJsRunner<'r, F> {
+    pub fn new(request: &'r Request, cancellation_future: F) -> Self {
+        AsyncJsRunner {
+            request,
+            cancellation_future: Box::pin(cancellation_future),
+        }
     }
-    pub async fn place<T, F1: Fn(&Solution) -> T, F2: Fn(&str), F3: FutureKillSwitch>(
-        &self,
-        mut config: ProgressConfig<T, F1, F2, F3>,
+    pub async fn place<T, F1: Fn(&Solution) -> T, F2: Fn(&str)>(
+        &mut self,
+        mut config: ProgressConfig<T, F1, F2>,
     ) -> Result<T, PlacingError> {
         let mut placers = self.request.get_placers_for_spiral_place();
-        let solutions = place_async(&mut placers, self.request.timeout.clone(), &mut config).await;
+        let solutions = place_async(
+            &mut placers,
+            self.request.timeout.clone(),
+            &mut config,
+            &mut self.cancellation_future,
+        )
+        .await;
 
         let solution = solutions.get(0).ok_or(PlacingError::NoSolutionFound)?;
 
+        info!("Found a solution");
         Ok(config.on_sol(solution))
     }
 }
