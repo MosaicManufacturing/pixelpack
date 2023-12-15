@@ -8,7 +8,7 @@ use crate::plater::placer::{Placer, N};
 use crate::plater::progress_config::ProgressConfig;
 use crate::plater::recommender::{Recommender, Suggestion};
 use crate::plater::request::{PlacingError, Request};
-use crate::plater::solution::Solution;
+use crate::plater::solution::{get_smallest_solution, Solution};
 
 pub struct AsyncJsRunner<'r, F: Future> {
     request: &'r Request,
@@ -84,7 +84,7 @@ impl<'r, F: Future> AsyncJsRunner<'r, F> {
         )
         .await;
 
-        let solution = solutions.get(0).ok_or(PlacingError::NoSolutionFound)?;
+        let solution = get_smallest_solution(&solutions).ok_or(PlacingError::NoSolutionFound)?;
 
         info!("Found a solution");
         Ok(config.on_sol(solution))

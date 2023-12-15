@@ -5,7 +5,7 @@ use rayon::prelude::{IntoParallelIterator, ParallelIterator};
 use crate::plater::placer::Placer;
 use crate::plater::progress_config::ProgressConfig;
 use crate::plater::request::{PlacingError, Request};
-use crate::plater::solution::Solution;
+use crate::plater::solution::{get_smallest_solution, Solution};
 
 pub struct MultiThreadedRunner<'r> {
     request: &'r Request,
@@ -46,7 +46,7 @@ impl<'r> MultiThreadedRunner<'r> {
         let solutions =
             place_all_multi_threaded(&mut placers, self.request.timeout.clone(), &config);
 
-        let solution = solutions.get(0).ok_or(PlacingError::NoSolutionFound)?;
+        let solution = get_smallest_solution(&solutions).ok_or(PlacingError::NoSolutionFound)?;
 
         Ok(config.on_sol(solution))
     }

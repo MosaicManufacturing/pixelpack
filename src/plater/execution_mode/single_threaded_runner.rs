@@ -1,9 +1,10 @@
+use std::time::Duration;
+
 use crate::plater::placer::{Placer, N};
-use crate::plater::progress_config::{FutureKillSwitch, ProgressConfig};
+use crate::plater::progress_config::ProgressConfig;
 use crate::plater::recommender::{Recommender, Suggestion};
 use crate::plater::request::{PlacingError, Request};
-use crate::plater::solution::Solution;
-use std::time::Duration;
+use crate::plater::solution::{get_smallest_solution, Solution};
 
 pub struct SingleThreadedRunner<'r> {
     request: &'r Request,
@@ -62,7 +63,7 @@ impl<'r> SingleThreadedRunner<'r> {
         let solutions =
             place_all_single_threaded(&mut placers, self.request.timeout.clone(), &config);
 
-        let solution = solutions.get(0).ok_or(PlacingError::NoSolutionFound)?;
+        let solution = get_smallest_solution(&solutions).ok_or(PlacingError::NoSolutionFound)?;
 
         Ok(config.on_sol(solution))
     }

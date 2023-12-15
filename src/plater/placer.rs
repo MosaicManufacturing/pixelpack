@@ -4,14 +4,14 @@ use std::fmt::Debug;
 use std::vec;
 
 use rand::rngs::StdRng;
-use rand::SeedableRng;
 use rand::seq::SliceRandom;
+use rand::SeedableRng;
 
 use crate::plater::placed_part::PlacedPart;
-use crate::plater::placer::GravityMode::{GravityEQ, GravityXY, GravityYX};
 use crate::plater::placer::helpers::find_solution;
 use crate::plater::placer::rect::Rect;
-use crate::plater::placer::search::{Attempts, binary_search, exponential_search_simple};
+use crate::plater::placer::search::{binary_search, exponential_search_simple, Attempts};
+use crate::plater::placer::GravityMode::{GravityEQ, GravityXY, GravityYX};
 use crate::plater::plate::Plate;
 use crate::plater::plate_shape::PlateShape;
 use crate::plater::request::{BedExpansionMode, Request};
@@ -332,7 +332,7 @@ impl<'a> Placer<'a> {
                                 self.request.center_x,
                                 self.request.center_y,
                             )
-                                .unwrap();
+                            .unwrap();
                             solution.add_plate(next_plate);
                         }
                         current_part = part;

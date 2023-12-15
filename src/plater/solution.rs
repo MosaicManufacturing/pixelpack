@@ -6,13 +6,36 @@ use crate::plater::plate::Plate;
 #[derive(Clone)]
 pub struct Solution<'a> {
     plates: Vec<Plate<'a>>,
-    pub(crate) best_so_far: Option<usize>,
+    pub best_so_far: Option<usize>,
 }
 
 impl<'a> Debug for Solution<'a> {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "{:#?}", self.best_so_far)
     }
+}
+
+pub(crate) fn get_smallest_solution<'a, 'b>(
+    solutions: &'b Vec<Solution<'a>>,
+) -> Option<&'b Solution<'a>> {
+    let mut smallest_area = None;
+    let mut best_solution = None;
+
+    for solution in solutions {
+        let area = solution.plate_area();
+        if let Some(smallest_so_far) = &mut smallest_area {
+            if area < *smallest_so_far {
+                *smallest_so_far = area;
+            }
+
+            best_solution = Some(solution);
+        } else {
+            smallest_area = Some(area);
+            best_solution = Some(solution);
+        }
+    }
+
+    best_solution
 }
 
 impl<'a> Solution<'a> {
