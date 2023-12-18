@@ -89,6 +89,6 @@ impl<'r, F: Future> AsyncJsRunner<'r, F> {
         )
         .await;
 
-        get_smallest_solution(&mut solutions).ok_or(PlacingError::NoSolutionFound)
+        get_smallest_solution(&mut solutions)
     }
 }

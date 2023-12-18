@@ -2,6 +2,7 @@ use std::fmt::{Debug, Formatter};
 
 use crate::plater::placed_part::PlacedPart;
 use crate::plater::plate::Plate;
+use crate::plater::request::PlacingError;
 
 #[derive(Clone)]
 pub struct Solution<'a> {
@@ -17,7 +18,7 @@ impl<'a> Debug for Solution<'a> {
 
 pub(crate) fn get_smallest_solution<'solutions, 'part>(
     solutions: &'solutions mut Vec<Solution<'part>>,
-) -> Option<Solution<'part>> {
+) -> Result<Solution<'part>, PlacingError> {
     let mut smallest_area = None;
     let mut best_solution = None;
 
@@ -36,8 +37,8 @@ pub(crate) fn get_smallest_solution<'solutions, 'part>(
     }
 
     match best_solution {
-        None => None,
-        Some(index) => Some(solutions.swap_remove(index)),
+        None => Err(PlacingError::NoSolutionFound),
+        Some(index) => Ok(solutions.swap_remove(index)),
     }
 }
 

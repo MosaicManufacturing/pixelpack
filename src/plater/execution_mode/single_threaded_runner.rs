@@ -59,6 +59,6 @@ impl<'r> SingleThreadedRunner<'r> {
         let mut solutions =
             place_all_single_threaded(&mut placers, self.request.timeout.clone(), config);
 
-        get_smallest_solution(&mut solutions).ok_or(PlacingError::NoSolutionFound)
+        get_smallest_solution(&mut solutions)
     }
 }
