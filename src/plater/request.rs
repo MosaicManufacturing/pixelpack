@@ -7,7 +7,6 @@ use thiserror::Error;
 
 use crate::plater::execution_mode::threading_mode::ThreadingMode;
 use crate::plater::part::Part;
-use crate::plater::placer::SortMode::{Shuffle, SurfaceDec};
 use crate::plater::placer::{Placer, SortMode};
 use crate::plater::plate_shape::{PlateShape, Shape};
 use crate::stl;
@@ -77,7 +76,6 @@ pub enum PlacingError {
 
 #[derive(Clone)]
 pub struct Algorithm {
-    pub threading_mode: ThreadingMode,
     pub strategy: Strategy,
     pub order_config: ConfigOrder,
     pub point_enumeration_mode: PointEnumerationMode,

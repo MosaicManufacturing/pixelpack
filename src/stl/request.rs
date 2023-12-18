@@ -2,8 +2,6 @@ use std::collections::HashMap;
 
 use crate::plater;
 use crate::plater::execution_mode::multi_threaded_runner::MultiThreadedRunner;
-use crate::plater::execution_mode::single_threaded_runner::SingleThreadedRunner;
-use crate::plater::execution_mode::threading_mode::ThreadingMode;
 use crate::plater::plate_shape::{PlateShape, Shape};
 use crate::plater::progress_config::{ProgressConfig, ProgressMessage};
 use crate::plater::request::{
@@ -25,15 +23,11 @@ impl Request {
         &self,
         config: ProgressConfig<T, F1, F2>,
     ) -> Result<T, PlacingError> {
-        match &self.request.algorithm.threading_mode {
-            ThreadingMode::SingleThreaded => SingleThreadedRunner::new(&self.request).place(config),
-            ThreadingMode::MultiThreaded => MultiThreadedRunner::new(&self.request).place(config),
-        }
+        MultiThreadedRunner::new(&self.request).place(config)
     }
 
     pub fn new(plate_shape: Shape, resolution: f64) -> Self {
         let alg = Algorithm {
-            threading_mode: ThreadingMode::MultiThreaded,
             strategy: Strategy::SpiralPlace,
             order_config: ConfigOrder::PointFirst,
             point_enumeration_mode: PointEnumerationMode::Row,
