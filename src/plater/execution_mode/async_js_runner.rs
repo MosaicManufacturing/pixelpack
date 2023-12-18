@@ -2,10 +2,8 @@ use std::future::Future;
 use std::pin::Pin;
 use std::time::Duration;
 
-use log::info;
-
 use crate::plater::placer::{Placer, N};
-use crate::plater::progress_config::ProgressConfig;
+use crate::plater::progress_config::{ProgressConfig, ProgressMessage};
 use crate::plater::recommender::{Recommender, Suggestion};
 use crate::plater::request::{PlacingError, Request};
 use crate::plater::solution::{get_smallest_solution, Solution};
@@ -15,7 +13,7 @@ pub struct AsyncJsRunner<'r, F: Future> {
     cancellation_future: Pin<Box<F>>,
 }
 
-async fn place_async<'a, T, F1: Fn(&Solution) -> T, F2: Fn(&str), F3: Future + Unpin>(
+async fn place_async<'a, T, F1: Fn(&Solution) -> T, F2: Fn(ProgressMessage), F3: Future + Unpin>(
     placers: &'a mut [Placer<'a>],
     timeout: Option<Duration>,
     config: &mut ProgressConfig<T, F1, F2>,
@@ -29,16 +27,24 @@ async fn place_async<'a, T, F1: Fn(&Solution) -> T, F2: Fn(&str), F3: Future + U
 
     let total = placers.len();
 
+    config.on_prog(|| ProgressMessage::PreRun {
+        total_placers: total
+            .try_into()
+            .expect("Could not represent placement count as u32"),
+    });
+
     let mut results = vec![];
     'placing_loop: for (index, placer) in placers.iter_mut().enumerate() {
-        config.on_prog(|| format!("Working on {}/{}", index, total));
+        config.on_prog(|| ProgressMessage::Placement {
+            placer_index: index as u32,
+            percentage: index as f64 * 100.00 / total as f64,
+            total_placers: total as u32,
+        });
         // This line is required to periodically yield to the executor for fairer scheduling
         let mut timer = gloo_timers::future::sleep(Duration::from_millis(0));
         match futures::future::select(&mut cancellation_future, &mut timer).await {
             futures::future::Either::Left(_) => break 'placing_loop,
-            _ => {
-                info!("Failed {}", index);
-            }
+            _ => {}
         }
 
         if let Some(plate_index) = smallest_plate_index.clone() {
@@ -71,7 +77,7 @@ impl<'r, F: Future> AsyncJsRunner<'r, F> {
             cancellation_future: Box::pin(cancellation_future),
         }
     }
-    pub async fn place<T, F1: Fn(&Solution) -> T, F2: Fn(&str)>(
+    pub async fn place<T, F1: Fn(&Solution) -> T, F2: Fn(ProgressMessage)>(
         &mut self,
         mut config: ProgressConfig<T, F1, F2>,
     ) -> Result<T, PlacingError> {
@@ -86,7 +92,6 @@ impl<'r, F: Future> AsyncJsRunner<'r, F> {
 
         let solution = get_smallest_solution(&solutions).ok_or(PlacingError::NoSolutionFound)?;
 
-        info!("Found a solution");
         Ok(config.on_sol(solution))
     }
 }

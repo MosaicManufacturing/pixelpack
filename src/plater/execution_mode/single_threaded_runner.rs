@@ -1,7 +1,7 @@
 use std::time::Duration;
 
 use crate::plater::placer::{Placer, N};
-use crate::plater::progress_config::ProgressConfig;
+use crate::plater::progress_config::{ProgressConfig, ProgressMessage};
 use crate::plater::recommender::{Recommender, Suggestion};
 use crate::plater::request::{PlacingError, Request};
 use crate::plater::solution::{get_smallest_solution, Solution};
@@ -10,13 +10,11 @@ pub struct SingleThreadedRunner<'r> {
     request: &'r Request,
 }
 
-fn place_all_single_threaded<'a, T, F1: Fn(&Solution) -> T, F2: Fn(&str)>(
+fn place_all_single_threaded<'a, T, F1: Fn(&Solution) -> T, F2: Fn(ProgressMessage)>(
     placers: &'a mut [Placer<'a>],
     timeout: Option<Duration>,
     config: &ProgressConfig<T, F1, F2>,
 ) -> Vec<Solution<'a>> {
-    config.on_prog(|| format!("Starting, total placers: {}", placers.len()));
-
     let mut smallest_plate_index = None;
     let max_duration = timeout.unwrap_or_else(|| Duration::from_secs(10));
     let mut rec = Recommender::new(max_duration, placers.len());
@@ -24,8 +22,6 @@ fn place_all_single_threaded<'a, T, F1: Fn(&Solution) -> T, F2: Fn(&str)>(
 
     let mut results = vec![];
     for (index, placer) in placers.iter_mut().enumerate() {
-        config.on_prog(|| format!("Working on placer # {}", index));
-
         if let Some(plate_index) = smallest_plate_index.clone() {
             if plate_index <= N {
                 break;
@@ -55,7 +51,7 @@ impl<'r> SingleThreadedRunner<'r> {
     pub fn new(request: &'r Request) -> Self {
         SingleThreadedRunner { request }
     }
-    pub fn place<T, F1: Fn(&Solution) -> T, F2: Fn(&str)>(
+    pub fn place<T, F1: Fn(&Solution) -> T, F2: Fn(ProgressMessage)>(
         &self,
         mut config: ProgressConfig<T, F1, F2>,
     ) -> Result<T, PlacingError> {

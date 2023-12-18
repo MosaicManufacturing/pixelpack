@@ -5,7 +5,7 @@ use crate::plater::execution_mode::multi_threaded_runner::MultiThreadedRunner;
 use crate::plater::execution_mode::single_threaded_runner::SingleThreadedRunner;
 use crate::plater::execution_mode::threading_mode::ThreadingMode;
 use crate::plater::plate_shape::{PlateShape, Shape};
-use crate::plater::progress_config::{FutureKillSwitch, ProgressConfig};
+use crate::plater::progress_config::{ProgressConfig, ProgressMessage};
 use crate::plater::request::{
     Algorithm, BedExpansionMode, ConfigOrder, PlacingError, PointEnumerationMode, Strategy,
 };
@@ -21,7 +21,7 @@ pub struct Request {
 }
 
 impl Request {
-    pub fn process<T, F1: Fn(&Solution) -> T, F2: Fn(&str)>(
+    pub fn process<T, F1: Fn(&Solution) -> T, F2: Fn(ProgressMessage)>(
         &self,
         config: ProgressConfig<T, F1, F2>,
     ) -> Result<T, PlacingError> {

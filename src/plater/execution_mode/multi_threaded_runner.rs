@@ -3,7 +3,7 @@ use std::time::Duration;
 use rayon::prelude::{IntoParallelIterator, ParallelIterator};
 
 use crate::plater::placer::Placer;
-use crate::plater::progress_config::ProgressConfig;
+use crate::plater::progress_config::{ProgressConfig, ProgressMessage};
 use crate::plater::request::{PlacingError, Request};
 use crate::plater::solution::{get_smallest_solution, Solution};
 
@@ -11,7 +11,7 @@ pub struct MultiThreadedRunner<'r> {
     request: &'r Request,
 }
 
-fn place_all_multi_threaded<'a, T, F1: Fn(&Solution) -> T, F2: Fn(&str)>(
+fn place_all_multi_threaded<'a, T, F1: Fn(&Solution) -> T, F2: Fn(ProgressMessage)>(
     placers: &'a mut [Placer<'a>],
     timeout: Option<Duration>,
     config: &ProgressConfig<T, F1, F2>,
@@ -38,7 +38,7 @@ impl<'r> MultiThreadedRunner<'r> {
     pub fn new(request: &'r Request) -> Self {
         MultiThreadedRunner { request }
     }
-    pub fn place<T, F1: Fn(&Solution) -> T, F2: Fn(&str)>(
+    pub fn place<T, F1: Fn(&Solution) -> T, F2: Fn(ProgressMessage)>(
         &self,
         mut config: ProgressConfig<T, F1, F2>,
     ) -> Result<T, PlacingError> {
