@@ -19,10 +19,10 @@ pub struct Request {
 }
 
 impl Request {
-    pub fn process<T, F1: Fn(&Solution) -> T, F2: Fn(ProgressMessage)>(
+    pub fn process<F2: Fn(ProgressMessage)>(
         &self,
-        config: ProgressConfig<T, F1, F2>,
-    ) -> Result<T, PlacingError> {
+        config: ProgressConfig<F2>,
+    ) -> Result<Solution, PlacingError> {
         MultiThreadedRunner::new(&self.request).place(config)
     }
 

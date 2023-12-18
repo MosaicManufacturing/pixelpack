@@ -176,7 +176,7 @@ impl<'a> Placer<'a> {
         self.rotate_offset = offset;
     }
 
-    fn place_single_plate_linear(&mut self) -> Option<Solution> {
+    fn place_single_plate_linear<'b>(&'b mut self) -> Option<Solution<'a>> {
         let mut shape = Clone::clone(&self.request.plate_shape);
         let mut plate = Plate::make_plate_with_placed_parts(
             shape.as_ref(),
@@ -241,7 +241,7 @@ impl<'a> Placer<'a> {
         Some(solution)
     }
 
-    fn place_single_plate_exp(&mut self) -> Option<Solution> {
+    fn place_single_plate_exp<'b>(&'b mut self) -> Option<Solution<'a>> {
         let original_shape = Clone::clone(&self.request.plate_shape);
 
         for (i, part) in self.unlocked_parts.iter_mut().enumerate() {
@@ -295,7 +295,7 @@ impl<'a> Placer<'a> {
         None
     }
 
-    fn place_multi_plate(&mut self) -> Option<Solution> {
+    fn place_multi_plate<'b>(&'b mut self) -> Option<Solution<'a>> {
         let mut solution = Solution::new();
 
         let plate_shape = Clone::clone(&self.request.plate_shape);
@@ -346,7 +346,7 @@ impl<'a> Placer<'a> {
         Some(solution)
     }
 
-    pub(crate) fn place(&mut self) -> Option<Solution> {
+    pub(crate) fn place<'b>(&'b mut self) -> Option<Solution<'a>> {
         if self.request.single_plate_mode {
             match self.request.algorithm.bed_expansion_mode {
                 BedExpansionMode::Linear => self.place_single_plate_linear(),

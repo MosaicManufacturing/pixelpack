@@ -10,11 +10,11 @@ pub struct SingleThreadedRunner<'r> {
     request: &'r Request,
 }
 
-fn place_all_single_threaded<'a, T, F1: Fn(&Solution) -> T, F2: Fn(ProgressMessage)>(
-    placers: &'a mut [Placer<'a>],
+fn place_all_single_threaded<'request, F2: Fn(ProgressMessage)>(
+    placers: &mut [Placer<'request>],
     timeout: Option<Duration>,
-    config: &ProgressConfig<T, F1, F2>,
-) -> Vec<Solution<'a>> {
+    config: ProgressConfig<F2>,
+) -> Vec<Solution<'request>> {
     let mut smallest_plate_index = None;
     let max_duration = timeout.unwrap_or_else(|| Duration::from_secs(10));
     let mut rec = Recommender::new(max_duration, placers.len());
@@ -51,16 +51,14 @@ impl<'r> SingleThreadedRunner<'r> {
     pub fn new(request: &'r Request) -> Self {
         SingleThreadedRunner { request }
     }
-    pub fn place<T, F1: Fn(&Solution) -> T, F2: Fn(ProgressMessage)>(
+    pub fn place<F2: Fn(ProgressMessage)>(
         &self,
-        mut config: ProgressConfig<T, F1, F2>,
-    ) -> Result<T, PlacingError> {
+        config: ProgressConfig<F2>,
+    ) -> Result<Solution<'r>, PlacingError> {
         let mut placers = self.request.get_placers_for_spiral_place();
-        let solutions =
-            place_all_single_threaded(&mut placers, self.request.timeout.clone(), &config);
+        let mut solutions =
+            place_all_single_threaded(&mut placers, self.request.timeout.clone(), config);
 
-        let solution = get_smallest_solution(&solutions).ok_or(PlacingError::NoSolutionFound)?;
-
-        Ok(config.on_sol(solution))
+        get_smallest_solution(&mut solutions).ok_or(PlacingError::NoSolutionFound)
     }
 }

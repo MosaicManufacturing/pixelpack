@@ -13,14 +13,13 @@ pub struct AsyncJsRunner<'r, F: Future> {
     cancellation_future: Pin<Box<F>>,
 }
 
-async fn place_async<'a, T, F1: Fn(&Solution) -> T, F2: Fn(ProgressMessage), F3: Future + Unpin>(
-    placers: &'a mut [Placer<'a>],
+async fn place_async<'request_part, F2: Fn(ProgressMessage), F3: Future + Unpin>(
+    placers: &mut [Placer<'request_part>],
     timeout: Option<Duration>,
-    config: &mut ProgressConfig<T, F1, F2>,
+    config: ProgressConfig<F2>,
     mut cancellation_future: F3,
-) -> Vec<Solution<'a>> {
+) -> Vec<Solution<'request_part>> {
     let mut smallest_plate_index = None;
-    // TODO: fix duration issue
     let max_duration = Duration::MAX;
     let mut rec = Recommender::new(max_duration, placers.len());
     let rec = &mut rec;
@@ -77,21 +76,19 @@ impl<'r, F: Future> AsyncJsRunner<'r, F> {
             cancellation_future: Box::pin(cancellation_future),
         }
     }
-    pub async fn place<T, F1: Fn(&Solution) -> T, F2: Fn(ProgressMessage)>(
+    pub async fn place<F2: Fn(ProgressMessage)>(
         &mut self,
-        mut config: ProgressConfig<T, F1, F2>,
-    ) -> Result<T, PlacingError> {
-        let mut placers = self.request.get_placers_for_spiral_place();
-        let solutions = place_async(
+        config: ProgressConfig<F2>,
+    ) -> Result<Solution<'r>, PlacingError> {
+        let mut placers: Vec<Placer<'r>> = self.request.get_placers_for_spiral_place();
+        let mut solutions = place_async(
             &mut placers,
             self.request.timeout.clone(),
-            &mut config,
+            config,
             &mut self.cancellation_future,
         )
         .await;
 
-        let solution = get_smallest_solution(&solutions).ok_or(PlacingError::NoSolutionFound)?;
-
-        Ok(config.on_sol(solution))
+        get_smallest_solution(&mut solutions).ok_or(PlacingError::NoSolutionFound)
     }
 }

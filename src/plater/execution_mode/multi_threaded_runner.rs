@@ -11,11 +11,11 @@ pub struct MultiThreadedRunner<'r> {
     request: &'r Request,
 }
 
-fn place_all_multi_threaded<'a, T, F1: Fn(&Solution) -> T, F2: Fn(ProgressMessage)>(
-    placers: &'a mut [Placer<'a>],
+fn place_all_multi_threaded<'request, F2: Fn(ProgressMessage)>(
+    placers: &mut [Placer<'request>],
     timeout: Option<Duration>,
-    config: &ProgressConfig<T, F1, F2>,
-) -> Vec<Solution<'a>> {
+    config: ProgressConfig<F2>,
+) -> Vec<Solution<'request>> {
     let start = &instant::Instant::now();
     let timeout = &timeout;
 
@@ -38,16 +38,14 @@ impl<'r> MultiThreadedRunner<'r> {
     pub fn new(request: &'r Request) -> Self {
         MultiThreadedRunner { request }
     }
-    pub fn place<T, F1: Fn(&Solution) -> T, F2: Fn(ProgressMessage)>(
+    pub fn place<F2: Fn(ProgressMessage)>(
         &self,
-        mut config: ProgressConfig<T, F1, F2>,
-    ) -> Result<T, PlacingError> {
-        let mut placers = self.request.get_placers_for_spiral_place();
-        let solutions =
-            place_all_multi_threaded(&mut placers, self.request.timeout.clone(), &config);
+        config: ProgressConfig<F2>,
+    ) -> Result<Solution<'r>, PlacingError> {
+        let mut placers: Vec<Placer<'r>> = self.request.get_placers_for_spiral_place();
+        let mut solutions: Vec<Solution<'r>> =
+            place_all_multi_threaded(&mut placers, self.request.timeout.clone(), config);
 
-        let solution = get_smallest_solution(&solutions).ok_or(PlacingError::NoSolutionFound)?;
-
-        Ok(config.on_sol(solution))
+        get_smallest_solution(&mut solutions).ok_or(PlacingError::NoSolutionFound)
     }
 }

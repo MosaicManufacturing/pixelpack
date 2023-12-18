@@ -15,27 +15,30 @@ impl<'a> Debug for Solution<'a> {
     }
 }
 
-pub(crate) fn get_smallest_solution<'a, 'b>(
-    solutions: &'b Vec<Solution<'a>>,
-) -> Option<&'b Solution<'a>> {
+pub(crate) fn get_smallest_solution<'solutions, 'part>(
+    solutions: &'solutions mut Vec<Solution<'part>>,
+) -> Option<Solution<'part>> {
     let mut smallest_area = None;
     let mut best_solution = None;
 
-    for solution in solutions {
+    for (index, solution) in solutions.iter_mut().enumerate() {
         let area = solution.plate_area();
         if let Some(smallest_so_far) = &mut smallest_area {
             if area < *smallest_so_far {
                 *smallest_so_far = area;
             }
 
-            best_solution = Some(solution);
+            best_solution = Some(index);
         } else {
             smallest_area = Some(area);
-            best_solution = Some(solution);
+            best_solution = Some(index);
         }
     }
 
-    best_solution
+    match best_solution {
+        None => None,
+        Some(index) => Some(solutions.swap_remove(index)),
+    }
 }
 
 impl<'a> Solution<'a> {
