@@ -5,7 +5,6 @@ use std::time::Duration;
 use rand::prelude::SliceRandom;
 use thiserror::Error;
 
-use crate::plater::execution_mode::threading_mode::ThreadingMode;
 use crate::plater::part::Part;
 use crate::plater::placer::{Placer, SortMode};
 use crate::plater::plate_shape::{PlateShape, Shape};
@@ -83,17 +82,20 @@ pub struct Algorithm {
 }
 
 pub fn default_sort_modes() -> Vec<SortMode> {
-    let mut modes = Vec::with_capacity(1001);
-    modes.push(SurfaceDec);
+    let mut modes = Vec::with_capacity(25);
+    modes.push(SortMode::SurfaceDec);
+    modes.push(SortMode::SurfaceInc);
+    modes.push(SortMode::WidthDec);
+    modes.push(SortMode::HeightDec);
 
-    for i in 0..1000 {
-        modes.push(Shuffle(i))
+    for i in 0..21 {
+        modes.push(SortMode::Shuffle(i))
     }
 
-    let xs: &mut [SortMode] = &mut (modes.as_mut_slice())[1..];
+    let shuffle_range: &mut [SortMode] = &mut (modes.as_mut_slice())[4..];
 
     let mut rng = rand::thread_rng();
-    xs.shuffle(&mut rng);
+    shuffle_range.shuffle(&mut rng);
 
     modes
 }
