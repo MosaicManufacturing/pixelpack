@@ -1,5 +1,8 @@
 use std::f64::consts::PI;
 
+use itertools::Itertools;
+use log::info;
+
 use crate::plater::bitmap::Bitmap;
 
 pub struct Part {
@@ -29,27 +32,73 @@ impl Part {
         plate_width: f64,
         plate_height: f64,
         locked: bool,
+        dilation_spacing: i32,
+        top_left_spacing: i32,
     ) -> anyhow::Result<Self> {
+        let trimmed_original = bitmap.trim();
+        drop(bitmap);
+
         let mut num_bitmaps = f64::ceil(PI * 2.0 / delta_r) as i32;
         if locked {
             num_bitmaps = 1;
         }
 
-        let (width, height) = bitmap.get_dims();
+        let (width, height) = trimmed_original.get_dims();
 
         // Improvement, we currently only use a rotation if it fits within the original plate
 
         // if for every model there exists a rotation that is contained within,
         // we may attempt to place the model
 
-        let bitmaps = if locked {
-            vec![bitmap]
+        info!("Original");
+        info!("{}", trimmed_original.to_ppm());
+
+        let undilated_bitmaps = if locked {
+            vec![trimmed_original]
         } else {
             (0..num_bitmaps as usize)
                 .into_iter()
-                .map(|k| bitmap.rotate((k as f64) * delta_r).trim())
+                .map(|k| trimmed_original.rotate((k as f64) * delta_r))
                 .collect()
         };
+
+        let addition_spacing = dilation_spacing + top_left_spacing;
+
+        let bitmaps = undilated_bitmaps
+            .into_iter()
+            .map(|x| {
+                // info!("Pre shrink");
+                // info!("{}", x.to_ppm());
+                x
+            })
+            .map(|bmp| bmp.trim())
+            .map(|bmp| {
+                // info!("Shrunk");
+                // info!("{}", bmp.to_ppm());
+                let mut bmp = bmp.grow(addition_spacing, addition_spacing);
+                //
+                // info!("Pre");
+                // info!("{}", bmp.to_ppm());
+
+                // TODO: ensure that the bmp has enough space present for the dilation to be applied. If the model goes to the ends of the bitmap, this entire exercise is futile. Add a buffer of dilation_spacign + top_left_spacign, idlate and then downsize
+                if dilation_spacing > 0 {
+                    bmp.dilate(dilation_spacing);
+                }
+
+                if top_left_spacing > 0 {
+                    bmp.top_left_dilate(top_left_spacing);
+                }
+                //
+                // info!("Inter");
+                // info!("{}", bmp.to_ppm());
+
+                info!("Post");
+                let b = bmp.trim();
+                info!("{}", b.to_ppm());
+
+                b
+            })
+            .collect_vec();
 
         let mut p = Part {
             precision,

@@ -158,6 +158,30 @@ impl Bitmap {
         }
     }
 
+    pub fn top_left_dilate(&mut self, distance: i32) {
+        let width = self.width as usize;
+        let height = self.height as usize;
+
+        let mut old_version = Bitmap::clone(self);
+
+        for _ in 0..(distance as usize) {
+            // This is equivalent to cloning self, but reusing an allocation
+            old_version.initialize_data(self);
+            for y in 0..height {
+                for x in 0..width {
+                    if old_version.get_point(x as i32, y as i32) == 0 {
+                        if old_version.get_point(x as i32 + 1, y as i32) != 0
+                            || old_version.get_point(x as i32, y as i32 + 1) != 0
+                            || old_version.get_point(x as i32 + 1, y as i32 + 1) != 0
+                        {
+                            self.set_point(x as i32, y as i32, 1);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     pub fn dilate(&mut self, distance: i32) {
         let width = self.width as usize;
         let height = self.height as usize;
@@ -278,8 +302,8 @@ impl Bitmap {
 
         let old_center_x = self.center_x;
         let old_center_y = self.center_y;
-        let center_x = (width / 2) as f64;
-        let center_y = (height / 2) as f64;
+        let center_x = (width as f64 / 2.0);
+        let center_y = (height as f64 / 2.0);
 
         let mut rotated = Bitmap::new(width, height);
 
@@ -336,8 +360,8 @@ impl Bitmap {
             }
         }
 
-        let delta_x = max_x - min_x;
-        let delta_y = max_y - min_y;
+        let delta_x = max_x - min_x + 1;
+        let delta_y = max_y - min_y + 1;
         let mut trimmed = Bitmap::new(delta_x, delta_y);
         trimmed.center_x = self.center_x - min_x as f64;
         trimmed.center_y = self.center_y - min_y as f64;
@@ -352,7 +376,7 @@ impl Bitmap {
     }
 
     #[allow(dead_code)]
-    fn grow(&self, dx: i32, dy: i32) -> Self {
+    pub fn grow(&self, dx: i32, dy: i32) -> Self {
         let new_width = self.width + (2 * dx);
         let new_height = self.height + (2 * dy);
         let mut expanded = Bitmap::new(new_width, new_height);
