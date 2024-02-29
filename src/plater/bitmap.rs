@@ -1,4 +1,5 @@
 use std::cmp::{max, min};
+use std::f64::consts::PI;
 
 use crate::plater::util;
 
@@ -65,6 +66,34 @@ impl Bitmap {
             s_x: 0,
             s_y: 0,
             pixels: 0,
+        }
+    }
+
+    pub fn rotate_90_clockwise(&self) -> Self {
+        let width = self.height;
+        let height = self.width;
+
+        let center_y = self.center_x;
+        let center_x = self.center_y;
+
+        let mut data = Vec::with_capacity((width * height) as usize);
+
+        for x in 0..self.width {
+            for y in (0..self.height).rev() {
+                data.push(self.at(x, y));
+            }
+        }
+
+        Bitmap {
+            // TODO: consider populating empty values with actual values
+            width,
+            height,
+            center_x,
+            center_y,
+            s_x: 0,
+            s_y: 0,
+            pixels: 0,
+            data,
         }
     }
 
@@ -283,6 +312,22 @@ impl Bitmap {
 
     pub(crate) fn rotate(&self, mut r: f64) -> Self {
         r = -r;
+
+        let pi_factor = r / (PI / 2.0);
+        // ensure factor is an integer factor of pi/2
+        if f64::abs(pi_factor - pi_factor.ceil()) < 0.001 {
+            let n = f64::abs(pi_factor.ceil()) as i32 % 4;
+            if n == 0 {
+                return self.clone();
+            }
+
+            let mut bmp = self.clone();
+            for i in 0..n {
+                bmp = bmp.rotate_90_clockwise();
+            }
+
+            return bmp;
+        }
 
         let w = self.width as f64;
         let h = self.height as f64;
