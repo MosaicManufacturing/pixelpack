@@ -32,8 +32,6 @@ impl Part {
         plate_width: f64,
         plate_height: f64,
         locked: bool,
-        dilation_spacing: i32,
-        top_left_spacing: i32,
     ) -> anyhow::Result<Self> {
         let trimmed_original = bitmap.trim();
         drop(bitmap);
@@ -62,25 +60,17 @@ impl Part {
                 .collect()
         };
 
-        let addition_spacing = dilation_spacing + top_left_spacing;
+        let rounded_spacing = spacing.ceil() as i32;
+        let dilation_spacing = rounded_spacing / 2;
+        let top_left_spacing = rounded_spacing % 2;
+
+        let spacing_growth = dilation_spacing + top_left_spacing;
 
         let bitmaps = undilated_bitmaps
             .into_iter()
-            .map(|x| {
-                // info!("Pre shrink");
-                // info!("{}", x.to_ppm());
-                x
-            })
             .map(|bmp| bmp.trim())
             .map(|bmp| {
-                // info!("Shrunk");
-                // info!("{}", bmp.to_ppm());
-                let mut bmp = bmp.grow(addition_spacing, addition_spacing);
-                //
-                // info!("Pre");
-                // info!("{}", bmp.to_ppm());
-
-                // TODO: ensure that the bmp has enough space present for the dilation to be applied. If the model goes to the ends of the bitmap, this entire exercise is futile. Add a buffer of dilation_spacign + top_left_spacign, idlate and then downsize
+                let mut bmp = bmp.grow(spacing_growth, spacing_growth);
                 if dilation_spacing > 0 {
                     bmp.dilate(dilation_spacing);
                 }
@@ -88,15 +78,7 @@ impl Part {
                 if top_left_spacing > 0 {
                     bmp.top_left_dilate(top_left_spacing);
                 }
-                //
-                // info!("Inter");
-                // info!("{}", bmp.to_ppm());
-
-                info!("Post");
-                let b = bmp.trim();
-                info!("{}", b.to_ppm());
-
-                b
+                bmp.trim()
             })
             .collect_vec();
 

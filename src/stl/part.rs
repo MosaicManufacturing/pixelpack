@@ -42,9 +42,7 @@ pub(crate) fn load_model(
         spacing,
         plate_width,
         plate_height,
-        locked, // TODO
-        0,
-        0,
+        locked,
     )
     .ok()?;
 

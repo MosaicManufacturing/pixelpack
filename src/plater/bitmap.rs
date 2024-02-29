@@ -15,6 +15,18 @@ const NEIGHBORS: [(i32, i32); 9] = [
     (1, 1),
 ];
 
+fn parse_int(input: f64) -> Option<i32> {
+    if (input - input.ceil()).abs() > 0.0001 {
+        return None;
+    }
+
+    if i32::MIN as f64 <= input && input <= i32::MAX as f64 {
+        return Some(input as i32);
+    }
+
+    return None;
+}
+
 pub struct Bitmap {
     // Image dimensions
     pub(crate) width: i32,
@@ -317,20 +329,33 @@ impl Bitmap {
     pub(crate) fn rotate(&self, mut r: f64) -> Self {
         r = -r;
 
-        let pi_factor = r / (PI / 2.0);
-        // ensure factor is an integer factor of pi/2
-        if f64::abs(pi_factor - pi_factor.ceil()) < 0.001 {
-            let n = f64::abs(pi_factor.ceil()) as i32 % 4;
-            if n == 0 {
+        // Apply special logic If the rotation angle is an integer multiple of pi/2 (90 degrees)
+        let pi_over_2_factor = r / (PI / 2.0);
+        match parse_int(pi_over_2_factor).map(|n| {
+            // normalize values to range of [0, 2*pi)
+            let value = n % 4;
+            if value < 0 {
+                4 + value
+            } else {
+                value
+            }
+        }) {
+            Some(0) => {
                 return self.clone();
             }
-
-            let mut bmp = self.clone();
-            for i in 0..n {
-                bmp = bmp.rotate_90_clockwise();
+            Some(1) => {
+                return self
+                    .rotate_90_clockwise()
+                    .rotate_90_clockwise()
+                    .rotate_90_clockwise();
             }
-
-            return bmp;
+            Some(2) => {
+                return self.rotate_90_clockwise().rotate_90_clockwise();
+            }
+            Some(3) => {
+                return self.rotate_90_clockwise();
+            }
+            _ => {}
         }
 
         let w = self.width as f64;
