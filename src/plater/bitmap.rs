@@ -449,7 +449,6 @@ impl Bitmap {
         trimmed
     }
 
-    #[allow(dead_code)]
     pub fn grow(&self, dx: i32, dy: i32) -> Self {
         let new_width = self.width + (2 * dx);
         let new_height = self.height + (2 * dy);
