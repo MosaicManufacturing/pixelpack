@@ -1,7 +1,6 @@
 use std::f64::consts::PI;
 
 use itertools::Itertools;
-use log::info;
 
 use crate::plater::bitmap::Bitmap;
 
@@ -47,9 +46,6 @@ impl Part {
 
         // if for every model there exists a rotation that is contained within,
         // we may attempt to place the model
-
-        info!("Original");
-        info!("{}", trimmed_original.to_ppm());
 
         let undilated_bitmaps = if locked {
             vec![trimmed_original]
