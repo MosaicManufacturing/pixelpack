@@ -76,6 +76,11 @@ impl Bitmap {
         let center_y = self.center_x;
         let center_x = self.center_y;
 
+        let pixels = self.pixels;
+
+        let s_y = self.s_x;
+        let s_x = self.s_y;
+
         let mut data = Vec::with_capacity((width * height) as usize);
 
         for x in 0..self.width {
@@ -85,14 +90,13 @@ impl Bitmap {
         }
 
         Bitmap {
-            // TODO: consider populating empty values with actual values
             width,
             height,
             center_x,
             center_y,
-            s_x: 0,
-            s_y: 0,
-            pixels: 0,
+            s_x,
+            s_y,
+            pixels,
             data,
         }
     }
