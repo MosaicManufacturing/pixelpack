@@ -1,5 +1,7 @@
 use std::f64::consts::PI;
 
+use itertools::Itertools;
+
 use crate::plater::bitmap::Bitmap;
 
 pub struct Part {
@@ -30,26 +32,51 @@ impl Part {
         plate_height: f64,
         locked: bool,
     ) -> anyhow::Result<Self> {
+        let trimmed_original = bitmap.trim();
+        drop(bitmap);
+
         let mut num_bitmaps = f64::ceil(PI * 2.0 / delta_r) as i32;
         if locked {
             num_bitmaps = 1;
         }
 
-        let (width, height) = bitmap.get_dims();
+        let (width, height) = trimmed_original.get_dims();
 
         // Improvement, we currently only use a rotation if it fits within the original plate
 
         // if for every model there exists a rotation that is contained within,
         // we may attempt to place the model
 
-        let bitmaps = if locked {
-            vec![bitmap]
+        let undilated_bitmaps = if locked {
+            vec![trimmed_original]
         } else {
             (0..num_bitmaps as usize)
                 .into_iter()
-                .map(|k| bitmap.rotate((k as f64) * delta_r).trim())
+                .map(|k| trimmed_original.rotate((k as f64) * delta_r))
                 .collect()
         };
+
+        let rounded_spacing = spacing.ceil() as i32;
+        let dilation_spacing = rounded_spacing / 2;
+        let top_left_spacing = rounded_spacing % 2;
+
+        let spacing_growth = dilation_spacing + top_left_spacing;
+
+        let bitmaps = undilated_bitmaps
+            .into_iter()
+            .map(|bmp| bmp.trim())
+            .map(|bmp| {
+                let mut bmp = bmp.grow(spacing_growth, spacing_growth);
+                if dilation_spacing > 0 {
+                    bmp.dilate(dilation_spacing);
+                }
+
+                if top_left_spacing > 0 {
+                    bmp.top_left_dilate(top_left_spacing);
+                }
+                bmp.trim()
+            })
+            .collect_vec();
 
         let mut p = Part {
             precision,

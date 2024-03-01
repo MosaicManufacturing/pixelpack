@@ -1,4 +1,5 @@
 use std::cmp::{max, min};
+use std::f64::consts::PI;
 
 use crate::plater::util;
 
@@ -13,6 +14,18 @@ const NEIGHBORS: [(i32, i32); 9] = [
     (0, 1),
     (1, 1),
 ];
+
+fn parse_int(input: f64) -> Option<i32> {
+    if (input - input.ceil()).abs() > 0.0001 {
+        return None;
+    }
+
+    if i32::MIN as f64 <= input && input <= i32::MAX as f64 {
+        return Some(input as i32);
+    }
+
+    return None;
+}
 
 pub struct Bitmap {
     // Image dimensions
@@ -65,6 +78,38 @@ impl Bitmap {
             s_x: 0,
             s_y: 0,
             pixels: 0,
+        }
+    }
+
+    pub fn rotate_90_clockwise(&self) -> Self {
+        let width = self.height;
+        let height = self.width;
+
+        let center_y = self.center_x;
+        let center_x = self.center_y;
+
+        let pixels = self.pixels;
+
+        let s_y = self.s_x;
+        let s_x = self.s_y;
+
+        let mut data = Vec::with_capacity((width * height) as usize);
+
+        for x in 0..self.width {
+            for y in (0..self.height).rev() {
+                data.push(self.at(x, y));
+            }
+        }
+
+        Bitmap {
+            width,
+            height,
+            center_x,
+            center_y,
+            s_x,
+            s_y,
+            pixels,
+            data,
         }
     }
 
@@ -155,6 +200,30 @@ impl Bitmap {
             self.s_x += x as i64;
             self.s_y += y as i64;
             self.pixels += 1;
+        }
+    }
+
+    pub fn top_left_dilate(&mut self, distance: i32) {
+        let width = self.width as usize;
+        let height = self.height as usize;
+
+        let mut old_version = Bitmap::clone(self);
+
+        for _ in 0..(distance as usize) {
+            // This is equivalent to cloning self, but reusing an allocation
+            old_version.initialize_data(self);
+            for y in 0..height {
+                for x in 0..width {
+                    if old_version.get_point(x as i32, y as i32) == 0 {
+                        if old_version.get_point(x as i32 + 1, y as i32) != 0
+                            || old_version.get_point(x as i32, y as i32 + 1) != 0
+                            || old_version.get_point(x as i32 + 1, y as i32 + 1) != 0
+                        {
+                            self.set_point(x as i32, y as i32, 1);
+                        }
+                    }
+                }
+            }
         }
     }
 
@@ -260,6 +329,35 @@ impl Bitmap {
     pub(crate) fn rotate(&self, mut r: f64) -> Self {
         r = -r;
 
+        // Apply special logic If the rotation angle is an integer multiple of pi/2 (90 degrees)
+        let pi_over_2_factor = r / (PI / 2.0);
+        match parse_int(pi_over_2_factor).map(|n| {
+            // normalize values to range of [0, 2*pi)
+            let value = n % 4;
+            if value < 0 {
+                4 + value
+            } else {
+                value
+            }
+        }) {
+            Some(0) => {
+                return self.clone();
+            }
+            Some(1) => {
+                return self
+                    .rotate_90_clockwise()
+                    .rotate_90_clockwise()
+                    .rotate_90_clockwise();
+            }
+            Some(2) => {
+                return self.rotate_90_clockwise().rotate_90_clockwise();
+            }
+            Some(3) => {
+                return self.rotate_90_clockwise();
+            }
+            _ => {}
+        }
+
         let w = self.width as f64;
         let h = self.height as f64;
 
@@ -278,8 +376,8 @@ impl Bitmap {
 
         let old_center_x = self.center_x;
         let old_center_y = self.center_y;
-        let center_x = (width / 2) as f64;
-        let center_y = (height / 2) as f64;
+        let center_x = (width as f64 / 2.0);
+        let center_y = (height as f64 / 2.0);
 
         let mut rotated = Bitmap::new(width, height);
 
@@ -336,8 +434,8 @@ impl Bitmap {
             }
         }
 
-        let delta_x = max_x - min_x;
-        let delta_y = max_y - min_y;
+        let delta_x = max_x - min_x + 1;
+        let delta_y = max_y - min_y + 1;
         let mut trimmed = Bitmap::new(delta_x, delta_y);
         trimmed.center_x = self.center_x - min_x as f64;
         trimmed.center_y = self.center_y - min_y as f64;
@@ -351,8 +449,7 @@ impl Bitmap {
         trimmed
     }
 
-    #[allow(dead_code)]
-    fn grow(&self, dx: i32, dy: i32) -> Self {
+    pub fn grow(&self, dx: i32, dy: i32) -> Self {
         let new_width = self.width + (2 * dx);
         let new_height = self.height + (2 * dy);
         let mut expanded = Bitmap::new(new_width, new_height);
