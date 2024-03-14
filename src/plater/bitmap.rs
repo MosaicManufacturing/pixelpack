@@ -376,8 +376,8 @@ impl Bitmap {
 
         let old_center_x = self.center_x;
         let old_center_y = self.center_y;
-        let center_x = (width as f64 / 2.0);
-        let center_y = (height as f64 / 2.0);
+        let center_x = width as f64 / 2.0;
+        let center_y = height as f64 / 2.0;
 
         let mut rotated = Bitmap::new(width, height);
 
