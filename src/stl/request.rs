@@ -1,10 +1,11 @@
 use std::collections::HashMap;
 
 use crate::plater;
+use crate::plater::execution_mode::multi_threaded_runner::MultiThreadedRunner;
 use crate::plater::plate_shape::{PlateShape, Shape};
+use crate::plater::progress::{ProgressMessage, ProgressMessenger};
 use crate::plater::request::{
     Algorithm, BedExpansionMode, ConfigOrder, PlacingError, PointEnumerationMode, Strategy,
-    ThreadingMode,
 };
 use crate::plater::solution::Solution;
 use crate::stl::model::Model;
@@ -18,16 +19,15 @@ pub struct Request {
 }
 
 impl Request {
-    pub fn process<T>(
+    pub fn process<F2: Fn(ProgressMessage)>(
         &self,
-        on_solution_found: impl Fn(&Solution) -> T,
-    ) -> Result<T, PlacingError> {
-        self.request.process(on_solution_found)
+        messenger: ProgressMessenger<F2>,
+    ) -> Result<Solution, PlacingError> {
+        MultiThreadedRunner::new(&self.request).place(messenger)
     }
 
     pub fn new(plate_shape: Shape, resolution: f64) -> Self {
         let alg = Algorithm {
-            threading_mode: ThreadingMode::MultiThreaded,
             strategy: Strategy::SpiralPlace,
             order_config: ConfigOrder::PointFirst,
             point_enumeration_mode: PointEnumerationMode::Row,

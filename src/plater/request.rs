@@ -2,17 +2,12 @@ use std::collections::HashMap;
 use std::f64::consts::PI;
 use std::time::Duration;
 
-use itertools::Itertools;
 use rand::prelude::SliceRandom;
-use rayon::prelude::{IntoParallelIterator, ParallelIterator};
 use thiserror::Error;
 
 use crate::plater::part::Part;
-use crate::plater::placer::SortMode::{Shuffle, SurfaceDec};
-use crate::plater::placer::{Placer, SortMode, N};
+use crate::plater::placer::{Placer, SortMode};
 use crate::plater::plate_shape::{PlateShape, Shape};
-use crate::plater::recommender::{Recommender, Suggestion};
-use crate::plater::solution::Solution;
 use crate::stl;
 
 // DEFAULT_RESOLUTION is the default bitmap resolution, in pixels per mm.
@@ -49,12 +44,6 @@ pub struct Request {
 }
 
 #[derive(Clone)]
-pub enum ThreadingMode {
-    SingleThreaded,
-    MultiThreaded,
-}
-
-#[derive(Clone)]
 pub enum Strategy {
     PixelPack,
     SpiralPlace,
@@ -86,7 +75,6 @@ pub enum PlacingError {
 
 #[derive(Clone)]
 pub struct Algorithm {
-    pub threading_mode: ThreadingMode,
     pub strategy: Strategy,
     pub order_config: ConfigOrder,
     pub point_enumeration_mode: PointEnumerationMode,
@@ -94,17 +82,20 @@ pub struct Algorithm {
 }
 
 pub fn default_sort_modes() -> Vec<SortMode> {
-    let mut modes = Vec::with_capacity(1001);
-    modes.push(SurfaceDec);
+    let mut modes = Vec::with_capacity(25);
+    modes.push(SortMode::SurfaceDec);
+    modes.push(SortMode::SurfaceInc);
+    modes.push(SortMode::WidthDec);
+    modes.push(SortMode::HeightDec);
 
-    for i in 0..1000 {
-        modes.push(Shuffle(i))
+    for i in 0..21 {
+        modes.push(SortMode::Shuffle(i))
     }
 
-    let xs: &mut [SortMode] = &mut (modes.as_mut_slice())[1..];
+    let shuffle_range: &mut [SortMode] = &mut (modes.as_mut_slice())[4..];
 
     let mut rng = rand::thread_rng();
-    xs.shuffle(&mut rng);
+    shuffle_range.shuffle(&mut rng);
 
     modes
 }
@@ -192,52 +183,7 @@ impl Request {
         Some(())
     }
 
-    pub fn process<T>(
-        &self,
-        on_solution_found: impl Fn(&Solution) -> T,
-    ) -> Result<T, PlacingError> {
-        let strategy = match self.algorithm.strategy {
-            Strategy::PixelPack => Request::pixelpack,
-            Strategy::SpiralPlace => Request::spiral_place,
-        };
-
-        strategy(&self, on_solution_found)
-    }
-
-    // Replace with explicit error handling
-    pub fn pixelpack<T>(
-        &self,
-        on_solution_found: impl Fn(&Solution) -> T,
-    ) -> Result<T, PlacingError> {
-        let mut placer = Placer::new(self);
-        placer.sort_parts(SurfaceDec);
-
-        let mut placers = default_sort_modes()
-            .into_iter()
-            .map(|mode| {
-                let mut p = Placer::new(self);
-                p.sort_parts(mode);
-                p
-            })
-            .collect_vec();
-
-        let place = match &self.algorithm.threading_mode {
-            ThreadingMode::SingleThreaded => Request::place_all_single_threaded,
-            ThreadingMode::MultiThreaded => Request::place_all_multi_threaded,
-        };
-
-        let solutions = place(&mut placers, self.timeout);
-
-        let solution = solutions.get(0).ok_or(PlacingError::NoSolutionFound)?;
-
-        Ok(on_solution_found(solution))
-    }
-
-    // Replace with explicit error handling
-    pub fn spiral_place<T>(
-        &self,
-        on_solution_found: impl Fn(&Solution) -> T,
-    ) -> Result<T, PlacingError> {
+    pub(crate) fn get_placers_for_spiral_place(&self) -> Vec<Placer> {
         let mut placers = vec![];
         let sort_modes = Vec::clone(&self.sort_modes);
 
@@ -253,76 +199,6 @@ impl Request {
             }
         }
 
-        let mut subset = { placers };
-
-        let place_all_placers = match self.algorithm.threading_mode {
-            ThreadingMode::SingleThreaded => Request::place_all_single_threaded,
-            ThreadingMode::MultiThreaded => Request::place_all_multi_threaded,
-        };
-
-        let mut solutions = place_all_placers(&mut subset, self.timeout);
-        solutions.sort_by(|x, y| f64::partial_cmp(&x.plate_area(), &y.plate_area()).unwrap());
-
-        let solution = solutions.get(0).ok_or(PlacingError::NoSolutionFound)?;
-
-        Ok(on_solution_found(solution))
-    }
-
-    fn place_all_single_threaded<'a>(
-        placers: &'a mut [Placer<'a>],
-        timeout: Option<Duration>,
-    ) -> Vec<Solution<'a>> {
-        let mut smallest_plate_index = None;
-        let max_duration = timeout.unwrap_or_else(|| Duration::from_secs(10));
-        let mut rec = Recommender::new(max_duration, placers.len());
-        let rec = &mut rec;
-
-        let mut results = vec![];
-        for placer in placers {
-            if let Some(plate_index) = smallest_plate_index.clone() {
-                if plate_index <= N {
-                    break;
-                }
-            }
-
-            match rec.observe(smallest_plate_index.clone()) {
-                Suggestion::Stop => {
-                    break;
-                }
-                Suggestion::Continue => {}
-            }
-
-            placer.smallest_observed_plate = smallest_plate_index.clone();
-
-            // Update the best solution if we found something better
-            if let Some(solution) = placer.place() {
-                smallest_plate_index = Option::clone(&solution.best_so_far);
-                results.push(solution)
-            }
-        }
-
-        results
-    }
-
-    fn place_all_multi_threaded<'a>(
-        placers: &'a mut [Placer<'a>],
-        timeout: Option<Duration>,
-    ) -> Vec<Solution<'a>> {
-        let start = &instant::Instant::now();
-        let timeout = &timeout;
-
         placers
-            .into_par_iter()
-            .filter_map(|placer| {
-                if let Some(limit) = timeout {
-                    let now = instant::Instant::now();
-                    if now.saturating_duration_since(start.clone()) > *limit {
-                        return None;
-                    }
-                }
-
-                placer.place()
-            })
-            .collect::<Vec<_>>()
     }
 }

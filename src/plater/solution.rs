@@ -2,16 +2,43 @@ use std::fmt::{Debug, Formatter};
 
 use crate::plater::placed_part::PlacedPart;
 use crate::plater::plate::Plate;
+use crate::plater::request::PlacingError;
 
 #[derive(Clone)]
 pub struct Solution<'a> {
     plates: Vec<Plate<'a>>,
-    pub(crate) best_so_far: Option<usize>,
+    pub best_so_far: Option<usize>,
 }
 
 impl<'a> Debug for Solution<'a> {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "{:#?}", self.best_so_far)
+    }
+}
+
+pub(crate) fn get_smallest_solution<'solutions, 'part>(
+    solutions: &'solutions mut Vec<Solution<'part>>,
+) -> Result<Solution<'part>, PlacingError> {
+    let mut smallest_area = None;
+    let mut best_solution = None;
+
+    for (index, solution) in solutions.iter_mut().enumerate() {
+        let area = solution.plate_area();
+        if let Some(smallest_so_far) = &mut smallest_area {
+            if area < *smallest_so_far {
+                *smallest_so_far = area;
+            }
+
+            best_solution = Some(index);
+        } else {
+            smallest_area = Some(area);
+            best_solution = Some(index);
+        }
+    }
+
+    match best_solution {
+        None => Err(PlacingError::NoSolutionFound),
+        Some(index) => Ok(solutions.swap_remove(index)),
     }
 }
 

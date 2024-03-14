@@ -4,14 +4,14 @@ use std::fmt::Debug;
 use std::vec;
 
 use rand::rngs::StdRng;
-use rand::SeedableRng;
 use rand::seq::SliceRandom;
+use rand::SeedableRng;
 
 use crate::plater::placed_part::PlacedPart;
-use crate::plater::placer::GravityMode::{GravityEQ, GravityXY, GravityYX};
 use crate::plater::placer::helpers::find_solution;
 use crate::plater::placer::rect::Rect;
-use crate::plater::placer::search::{Attempts, binary_search, exponential_search_simple};
+use crate::plater::placer::search::{binary_search, exponential_search_simple, Attempts};
+use crate::plater::placer::GravityMode::{GravityEQ, GravityXY, GravityYX};
 use crate::plater::plate::Plate;
 use crate::plater::plate_shape::PlateShape;
 use crate::plater::request::{BedExpansionMode, Request};
@@ -176,7 +176,7 @@ impl<'a> Placer<'a> {
         self.rotate_offset = offset;
     }
 
-    fn place_single_plate_linear(&mut self) -> Option<Solution> {
+    fn place_single_plate_linear<'b>(&'b mut self) -> Option<Solution<'a>> {
         let mut shape = Clone::clone(&self.request.plate_shape);
         let mut plate = Plate::make_plate_with_placed_parts(
             shape.as_ref(),
@@ -241,7 +241,7 @@ impl<'a> Placer<'a> {
         Some(solution)
     }
 
-    fn place_single_plate_exp(&mut self) -> Option<Solution> {
+    fn place_single_plate_exp<'b>(&'b mut self) -> Option<Solution<'a>> {
         let original_shape = Clone::clone(&self.request.plate_shape);
 
         for (i, part) in self.unlocked_parts.iter_mut().enumerate() {
@@ -295,7 +295,7 @@ impl<'a> Placer<'a> {
         None
     }
 
-    fn place_multi_plate(&mut self) -> Option<Solution> {
+    fn place_multi_plate<'b>(&'b mut self) -> Option<Solution<'a>> {
         let mut solution = Solution::new();
 
         let plate_shape = Clone::clone(&self.request.plate_shape);
@@ -332,7 +332,7 @@ impl<'a> Placer<'a> {
                                 self.request.center_x,
                                 self.request.center_y,
                             )
-                                .unwrap();
+                            .unwrap();
                             solution.add_plate(next_plate);
                         }
                         current_part = part;
@@ -346,7 +346,7 @@ impl<'a> Placer<'a> {
         Some(solution)
     }
 
-    pub(crate) fn place(&mut self) -> Option<Solution> {
+    pub(crate) fn place<'b>(&'b mut self) -> Option<Solution<'a>> {
         if self.request.single_plate_mode {
             match self.request.algorithm.bed_expansion_mode {
                 BedExpansionMode::Linear => self.place_single_plate_linear(),
