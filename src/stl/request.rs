@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use crate::plater;
 use crate::plater::execution_mode::multi_threaded_runner::MultiThreadedRunner;
 use crate::plater::plate_shape::{PlateShape, Shape};
-use crate::plater::progress_config::{ProgressConfig, ProgressMessage};
+use crate::plater::progress_config::{ProgressMessage, ProgressMessenger};
 use crate::plater::request::{
     Algorithm, BedExpansionMode, ConfigOrder, PlacingError, PointEnumerationMode, Strategy,
 };
@@ -21,7 +21,7 @@ pub struct Request {
 impl Request {
     pub fn process<F2: Fn(ProgressMessage)>(
         &self,
-        config: ProgressConfig<F2>,
+        config: ProgressMessenger<F2>,
     ) -> Result<Solution, PlacingError> {
         MultiThreadedRunner::new(&self.request).place(config)
     }

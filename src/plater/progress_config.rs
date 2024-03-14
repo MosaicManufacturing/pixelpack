@@ -1,5 +1,3 @@
-use std::future::Future;
-
 pub enum ProgressMessage {
     PreRun {
         total_placers: u32,
@@ -15,16 +13,18 @@ pub enum ProgressMessage {
     },
 }
 
-pub struct ProgressConfig<F2: Fn(ProgressMessage)> {
-    on_progress: F2,
+pub struct ProgressMessenger<F2: Fn(ProgressMessage)> {
+    receiver_function: F2,
 }
 
-impl<F2: Fn(ProgressMessage)> ProgressConfig<F2> {
+impl<F2: Fn(ProgressMessage)> ProgressMessenger<F2> {
     pub fn new(f2: F2) -> Self {
-        ProgressConfig { on_progress: f2 }
+        ProgressMessenger {
+            receiver_function: f2,
+        }
     }
 
-    pub fn on_prog<F: Fn() -> ProgressMessage>(&self, f: F) {
-        (self.on_progress)(f());
+    pub fn send_message<F: Fn() -> ProgressMessage>(&self, sender_function: F) {
+        (self.receiver_function)(sender_function());
     }
 }

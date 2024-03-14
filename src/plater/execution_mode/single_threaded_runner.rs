@@ -1,7 +1,7 @@
 use std::time::Duration;
 
 use crate::plater::placer::{Placer, N};
-use crate::plater::progress_config::{ProgressConfig, ProgressMessage};
+use crate::plater::progress_config::{ProgressMessage, ProgressMessenger};
 use crate::plater::recommender::{Recommender, Suggestion};
 use crate::plater::request::{PlacingError, Request};
 use crate::plater::solution::{get_smallest_solution, Solution};
@@ -13,7 +13,7 @@ pub struct SingleThreadedRunner<'r> {
 fn place_all_single_threaded<'request, F2: Fn(ProgressMessage)>(
     placers: &mut [Placer<'request>],
     timeout: Option<Duration>,
-    config: ProgressConfig<F2>,
+    messenger: ProgressMessenger<F2>,
 ) -> Vec<Solution<'request>> {
     let mut smallest_plate_index = None;
     let max_duration = timeout.unwrap_or_else(|| Duration::from_secs(10));
@@ -53,11 +53,11 @@ impl<'r> SingleThreadedRunner<'r> {
     }
     pub fn place<F2: Fn(ProgressMessage)>(
         &self,
-        config: ProgressConfig<F2>,
+        messenger: ProgressMessenger<F2>,
     ) -> Result<Solution<'r>, PlacingError> {
         let mut placers = self.request.get_placers_for_spiral_place();
         let mut solutions =
-            place_all_single_threaded(&mut placers, self.request.timeout.clone(), config);
+            place_all_single_threaded(&mut placers, self.request.timeout.clone(), messenger);
 
         get_smallest_solution(&mut solutions)
     }
