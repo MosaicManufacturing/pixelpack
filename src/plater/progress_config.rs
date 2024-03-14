@@ -1,9 +1,5 @@
 use std::future::Future;
 
-pub trait FutureKillSwitch: Future {}
-
-impl<T: Future> FutureKillSwitch for T {}
-
 pub enum ProgressMessage {
     PreRun {
         total_placers: u32,
