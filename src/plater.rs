@@ -7,7 +7,7 @@ pub mod placer;
 pub(crate) mod plate;
 pub mod plate_shape;
 pub(crate) mod point;
-pub mod progress_config;
+pub mod progress;
 pub mod recommender;
 pub(crate) mod rectangle;
 pub mod request;

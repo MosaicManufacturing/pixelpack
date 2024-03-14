@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use crate::plater;
 use crate::plater::execution_mode::multi_threaded_runner::MultiThreadedRunner;
 use crate::plater::plate_shape::{PlateShape, Shape};
-use crate::plater::progress_config::{ProgressMessage, ProgressMessenger};
+use crate::plater::progress::{ProgressMessage, ProgressMessenger};
 use crate::plater::request::{
     Algorithm, BedExpansionMode, ConfigOrder, PlacingError, PointEnumerationMode, Strategy,
 };

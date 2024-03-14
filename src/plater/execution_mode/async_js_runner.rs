@@ -2,7 +2,7 @@ use std::future::Future;
 use std::time::Duration;
 
 use crate::plater::placer::{Placer, N};
-use crate::plater::progress_config::{ProgressMessage, ProgressMessenger};
+use crate::plater::progress::{ProgressMessage, ProgressMessenger};
 use crate::plater::recommender::{Recommender, Suggestion};
 use crate::plater::request::{PlacingError, Request};
 use crate::plater::solution::{get_smallest_solution, Solution};

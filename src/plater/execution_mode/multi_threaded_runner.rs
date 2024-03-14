@@ -3,7 +3,7 @@ use std::time::Duration;
 use rayon::prelude::{IntoParallelIterator, ParallelIterator};
 
 use crate::plater::placer::Placer;
-use crate::plater::progress_config::{ProgressMessage, ProgressMessenger};
+use crate::plater::progress::{ProgressMessage, ProgressMessenger};
 use crate::plater::request::{PlacingError, Request};
 use crate::plater::solution::{get_smallest_solution, Solution};
 
