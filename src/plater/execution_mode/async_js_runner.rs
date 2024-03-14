@@ -1,5 +1,4 @@
 use std::future::Future;
-use std::pin::Pin;
 use std::time::Duration;
 
 use crate::plater::placer::{Placer, N};
@@ -8,9 +7,8 @@ use crate::plater::recommender::{Recommender, Suggestion};
 use crate::plater::request::{PlacingError, Request};
 use crate::plater::solution::{get_smallest_solution, Solution};
 
-pub struct AsyncJsRunner<'r, F: Future> {
+pub struct AsyncJsRunner<'r> {
     request: &'r Request,
-    cancellation_future: Pin<Box<F>>,
 }
 
 async fn place_async<'request_part, F2: Fn(ProgressMessage), F3: Future + Unpin>(
@@ -73,23 +71,22 @@ async fn place_async<'request_part, F2: Fn(ProgressMessage), F3: Future + Unpin>
     results
 }
 
-impl<'r, F: Future> AsyncJsRunner<'r, F> {
-    pub fn new(request: &'r Request, cancellation_future: F) -> Self {
-        AsyncJsRunner {
-            request,
-            cancellation_future: Box::pin(cancellation_future),
-        }
+impl<'r> AsyncJsRunner<'r> {
+    pub fn new(request: &'r Request) -> Self {
+        AsyncJsRunner { request }
     }
-    pub async fn place<F2: Fn(ProgressMessage)>(
+    pub async fn place<F: Future, F2: Fn(ProgressMessage)>(
         &mut self,
         messenger: ProgressMessenger<F2>,
+        cancellation_future: F,
     ) -> Result<Solution<'r>, PlacingError> {
+        let pinned_future = Box::pin(cancellation_future);
         let mut placers: Vec<Placer<'r>> = self.request.get_placers_for_spiral_place();
         let mut solutions = place_async(
             &mut placers,
             self.request.timeout.clone(),
             messenger,
-            &mut self.cancellation_future,
+            pinned_future,
         )
         .await;
 

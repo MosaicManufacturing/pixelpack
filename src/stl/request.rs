@@ -21,9 +21,9 @@ pub struct Request {
 impl Request {
     pub fn process<F2: Fn(ProgressMessage)>(
         &self,
-        config: ProgressMessenger<F2>,
+        messenger: ProgressMessenger<F2>,
     ) -> Result<Solution, PlacingError> {
-        MultiThreadedRunner::new(&self.request).place(config)
+        MultiThreadedRunner::new(&self.request).place(messenger)
     }
 
     pub fn new(plate_shape: Shape, resolution: f64) -> Self {
