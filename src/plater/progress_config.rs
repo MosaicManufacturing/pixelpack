@@ -14,6 +14,9 @@ pub enum ProgressMessage {
         total_placers: u32,
     },
     StringMessage(String),
+    SolutionFound {
+        placer_index: u32,
+    },
 }
 
 pub struct ProgressConfig<F2: Fn(ProgressMessage)> {

@@ -61,6 +61,10 @@ async fn place_async<'request_part, F2: Fn(ProgressMessage), F3: Future + Unpin>
 
         // Update the best solution if we found something better
         if let Some(solution) = placer.place() {
+            config.on_prog(|| ProgressMessage::SolutionFound {
+                placer_index: index as u32,
+            });
+
             smallest_plate_index = Option::clone(&solution.best_so_far);
             results.push(solution)
         }
