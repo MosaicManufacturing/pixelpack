@@ -188,15 +188,9 @@ impl Request {
         let sort_modes = Vec::clone(&self.sort_modes);
 
         for sort_mode in sort_modes {
-            for rotate_offset in 0..2 {
-                for rotate_direction in 0..2 {
-                    let mut placer = Placer::new(self);
-                    placer.sort_parts(sort_mode);
-                    placer.set_rotate_direction(rotate_direction);
-                    placer.set_rotate_offset(rotate_offset);
-                    placers.push(placer)
-                }
-            }
+            let mut placer = Placer::new(self);
+            placer.sort_parts(sort_mode);
+            placers.push(placer)
         }
 
         placers
