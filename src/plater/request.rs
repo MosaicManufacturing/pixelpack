@@ -3,6 +3,7 @@ use std::f64::consts::PI;
 use std::time::Duration;
 
 use rand::prelude::SliceRandom;
+use rand::Rng;
 use thiserror::Error;
 
 use crate::plater::part::Part;
@@ -88,14 +89,8 @@ pub fn default_sort_modes() -> Vec<SortMode> {
     modes.push(SortMode::WidthDec);
     modes.push(SortMode::HeightDec);
 
-    for i in 0..21 {
-        modes.push(SortMode::Shuffle(i))
-    }
-
-    let shuffle_range: &mut [SortMode] = &mut (modes.as_mut_slice())[4..];
-
     let mut rng = rand::thread_rng();
-    shuffle_range.shuffle(&mut rng);
+    modes.push(SortMode::Shuffle(rng.gen()));
 
     modes
 }
@@ -188,15 +183,9 @@ impl Request {
         let sort_modes = Vec::clone(&self.sort_modes);
 
         for sort_mode in sort_modes {
-            for rotate_offset in 0..2 {
-                for rotate_direction in 0..2 {
-                    let mut placer = Placer::new(self);
-                    placer.sort_parts(sort_mode);
-                    placer.set_rotate_direction(rotate_direction);
-                    placer.set_rotate_offset(rotate_offset);
-                    placers.push(placer)
-                }
-            }
+            let mut placer = Placer::new(self);
+            placer.sort_parts(sort_mode);
+            placers.push(placer)
         }
 
         placers
