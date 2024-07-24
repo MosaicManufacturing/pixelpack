@@ -6,7 +6,7 @@ pub trait PlateShape: Send + Sync {
     fn width(&self) -> f64;
     fn height(&self) -> f64;
     fn string(&self) -> String;
-    fn mask_bitmap(&self, bitmap: &mut Bitmap, precision: f64);
+    fn make_masked_bitmap(&self, precision: f64) -> Bitmap;
     fn expand(&self, size: f64) -> Box<dyn PlateShape>;
     fn dyn_clone(&self) -> Box<dyn PlateShape>;
     fn intersect_square(&self, size: f64) -> Option<Box<dyn PlateShape>>;
@@ -83,8 +83,11 @@ impl PlateShape for PlateRectangle {
         format!("{} x {} micron", self.width, self.height)
     }
 
-    fn mask_bitmap(&self, _bitmap: &mut Bitmap, _precision: f64) {
-        // no-op for rectangular piece
+    fn make_masked_bitmap(&self, precision: f64) -> Bitmap {
+        let width = self.width();
+        let height = self.height();
+
+        Bitmap::new((width / precision) as i32, (height / precision) as i32)
     }
 
     fn expand(&self, size: f64) -> Box<dyn PlateShape> {
@@ -172,7 +175,11 @@ impl PlateShape for PlateCircle {
         format!("{} micron (circle)", self.diameter)
     }
 
-    fn mask_bitmap(&self, bitmap: &mut Bitmap, precision: f64) {
+    fn make_masked_bitmap(&self, precision: f64) -> Bitmap {
+        let width = self.width();
+        let height = self.height();
+
+        let mut bitmap = Bitmap::new((width / precision) as i32, (height / precision) as i32);
         // fill all pixels outside plate radius so parts cannot be placed there
         let radius = self.diameter / 2.0;
 
@@ -186,13 +193,15 @@ impl PlateShape for PlateCircle {
                 }
             }
         }
+
+        bitmap
     }
 
     // We return a rectangle when expanding a circle
     fn expand(&self, size: f64) -> Box<dyn PlateShape> {
         Box::new(PlateCircle {
             resolution: self.resolution,
-            diameter: self.diameter * size,
+            diameter: self.diameter * size, // TODO: chane the expansion policy
         })
     }
 
