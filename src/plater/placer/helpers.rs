@@ -1,5 +1,5 @@
 use crate::plater::placed_part::PlacedPart;
-use crate::plater::placer::{Placer, N};
+use crate::plater::placer::{N, Placer};
 use crate::plater::plate::Plate;
 use crate::plater::plate_shape::PlateShape;
 use crate::plater::solution::Solution;
