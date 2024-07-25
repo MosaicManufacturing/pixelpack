@@ -7,7 +7,7 @@ pub trait PlateShape: Send + Sync {
     fn height(&self) -> f64;
     fn string(&self) -> String;
     fn make_masked_bitmap(&self, precision: f64) -> Bitmap;
-    fn expand(&self, size: f64) -> Box<dyn PlateShape>;
+    fn extend_right(&self, size: f64) -> Box<dyn PlateShape>;
     fn dyn_clone(&self) -> Box<dyn PlateShape>;
     fn contract(&self, size: f64) -> Option<Box<dyn PlateShape>>;
 }
@@ -89,7 +89,7 @@ impl PlateShape for PlateRectangle {
         Bitmap::new((width / precision) as i32, (height / precision) as i32)
     }
 
-    fn expand(&self, size: f64) -> Box<dyn PlateShape> {
+    fn extend_right(&self, size: f64) -> Box<dyn PlateShape> {
         Box::new(PlateRectangle {
             resolution: self.resolution,
             width: self.width * size,
@@ -206,11 +206,11 @@ impl PlateShape for PlateCircle {
     }
 
     // We return a rectangle when expanding a circle
-    fn expand(&self, size: f64) -> Box<dyn PlateShape> {
+    fn extend_right(&self, size: f64) -> Box<dyn PlateShape> {
         Box::new(PlateCircle {
             resolution: self.resolution,
             diameter: self.diameter,
-            plate_expansion_factor: size, // TODO: maybe this expansion should stack multiplicative
+            plate_expansion_factor: self.plate_expansion_factor * size,
         })
     }
 

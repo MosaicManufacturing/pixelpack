@@ -44,7 +44,7 @@ pub(crate) fn find_solution<'a, 'b>(
         original_shape.clone()
     } else {
         should_align_to_bed = true;
-        original_shape.expand(compute_scale_factor(search_index, N, K, 5.0))
+        original_shape.extend_right(compute_scale_factor(search_index, N, K, 5.0))
     };
 
     let center = if search_index <= N {
