@@ -9,7 +9,6 @@ pub trait PlateShape: Send + Sync {
     fn make_masked_bitmap(&self, precision: f64) -> Bitmap;
     fn expand(&self, size: f64) -> Box<dyn PlateShape>;
     fn dyn_clone(&self) -> Box<dyn PlateShape>;
-    fn intersect_square(&self, size: f64) -> Option<Box<dyn PlateShape>>;
     fn contract(&self, size: f64) -> Option<Box<dyn PlateShape>>;
 }
 
@@ -104,21 +103,6 @@ impl PlateShape for PlateRectangle {
             width: self.width,
             height: self.height,
         })
-    }
-
-    fn intersect_square(&self, size: f64) -> Option<Box<dyn PlateShape>> {
-        if size <= 0.0 {
-            return None;
-        }
-
-        let width = self.width / self.resolution;
-        let height = self.height / self.resolution;
-
-        Some(Box::new(PlateRectangle::new(
-            f64::min(size, width),
-            f64::min(size, height),
-            self.resolution,
-        )))
     }
 
     fn contract(&self, size: f64) -> Option<Box<dyn PlateShape>> {
@@ -236,19 +220,6 @@ impl PlateShape for PlateCircle {
             diameter: self.diameter,
             plate_expansion_factor: self.plate_expansion_factor,
         })
-    }
-
-    fn intersect_square(&self, size: f64) -> Option<Box<dyn PlateShape>> {
-        if size <= 0.0 {
-            return None;
-        }
-
-        let diameter = self.diameter / self.resolution - size;
-        if diameter <= 0.0 {
-            None
-        } else {
-            Some(Box::new(PlateCircle::new(diameter, self.resolution)))
-        }
     }
 
     // Also mask bitmap
