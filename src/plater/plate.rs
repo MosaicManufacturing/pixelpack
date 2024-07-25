@@ -64,9 +64,7 @@ impl<'a> Plate<'a> {
     ) -> Self {
         let width = shape.width();
         let height = shape.height();
-
-        let mut bitmap = Bitmap::new((width / precision) as i32, (height / precision) as i32);
-        shape.mask_bitmap(&mut bitmap, precision);
+        let bitmap = shape.make_masked_bitmap(precision);
 
         Plate {
             plate_id: generate_unique_plate_id(),

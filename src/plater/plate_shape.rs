@@ -6,10 +6,9 @@ pub trait PlateShape: Send + Sync {
     fn width(&self) -> f64;
     fn height(&self) -> f64;
     fn string(&self) -> String;
-    fn mask_bitmap(&self, bitmap: &mut Bitmap, precision: f64);
-    fn expand(&self, size: f64) -> Box<dyn PlateShape>;
+    fn make_masked_bitmap(&self, precision: f64) -> Bitmap;
+    fn extend_right(&self, size: f64) -> Box<dyn PlateShape>;
     fn dyn_clone(&self) -> Box<dyn PlateShape>;
-    fn intersect_square(&self, size: f64) -> Option<Box<dyn PlateShape>>;
     fn contract(&self, size: f64) -> Option<Box<dyn PlateShape>>;
 }
 
@@ -34,7 +33,7 @@ pub enum Shape {
 
 impl Shape {
     pub fn new_circle(diameter: f64, resolution: f64) -> Self {
-        Circle(PlateCircle::new(diameter, resolution))
+        Circle(PlateCircle::new(diameter, resolution, 1.0))
     }
 
     pub fn new_rectangle(width: f64, height: f64, resolution: f64) -> Self {
@@ -83,11 +82,14 @@ impl PlateShape for PlateRectangle {
         format!("{} x {} micron", self.width, self.height)
     }
 
-    fn mask_bitmap(&self, _bitmap: &mut Bitmap, _precision: f64) {
-        // no-op for rectangular piece
+    fn make_masked_bitmap(&self, precision: f64) -> Bitmap {
+        let width = self.width();
+        let height = self.height();
+
+        Bitmap::new((width / precision) as i32, (height / precision) as i32)
     }
 
-    fn expand(&self, size: f64) -> Box<dyn PlateShape> {
+    fn extend_right(&self, size: f64) -> Box<dyn PlateShape> {
         Box::new(PlateRectangle {
             resolution: self.resolution,
             width: self.width * size,
@@ -101,21 +103,6 @@ impl PlateShape for PlateRectangle {
             width: self.width,
             height: self.height,
         })
-    }
-
-    fn intersect_square(&self, size: f64) -> Option<Box<dyn PlateShape>> {
-        if size <= 0.0 {
-            return None;
-        }
-
-        let width = self.width / self.resolution;
-        let height = self.height / self.resolution;
-
-        Some(Box::new(PlateRectangle::new(
-            f64::min(size, width),
-            f64::min(size, height),
-            self.resolution,
-        )))
     }
 
     fn contract(&self, size: f64) -> Option<Box<dyn PlateShape>> {
@@ -144,24 +131,47 @@ impl PlateShape for PlateRectangle {
 pub struct PlateCircle {
     resolution: f64,
     diameter: f64,
+    plate_expansion_factor: f64,
 }
 
 impl PlateCircle {
-    pub fn new(diameter: f64, resolution: f64) -> Self {
+    pub fn new(diameter: f64, resolution: f64, plate_expansion_factor: f64) -> Self {
         PlateCircle {
             resolution,
             diameter: diameter * resolution,
+            plate_expansion_factor,
         }
     }
 }
 
+fn make_standard_circle_bitmap(shape: &PlateCircle, precision: f64) -> Bitmap {
+    let width = shape.width();
+    let height = shape.height();
+
+    let mut bitmap = Bitmap::new((width * shape.plate_expansion_factor / precision) as i32, (height / precision) as i32);
+    // fill all pixels outside plate radius so parts cannot be placed there
+    let radius = shape.diameter / 2.0;
+
+    for y in 0..bitmap.height {
+        for x in 0..bitmap.width {
+            let dx = (x as f64 - bitmap.center_x) * precision;
+            let dy = (y as f64 - bitmap.center_y) * precision;
+
+            if f64::sqrt(dx * dx + dy * dy) > radius {
+                bitmap.set_point(x, y, 2)
+            }
+        }
+    }
+
+    bitmap
+}
 impl PlateShape for PlateCircle {
     fn resolution(&self) -> f64 {
         self.resolution
     }
 
     fn width(&self) -> f64 {
-        self.diameter
+        self.diameter * self.plate_expansion_factor
     }
 
     fn height(&self) -> f64 {
@@ -172,27 +182,35 @@ impl PlateShape for PlateCircle {
         format!("{} micron (circle)", self.diameter)
     }
 
-    fn mask_bitmap(&self, bitmap: &mut Bitmap, precision: f64) {
-        // fill all pixels outside plate radius so parts cannot be placed there
-        let radius = self.diameter / 2.0;
+    fn make_masked_bitmap(&self, precision: f64) -> Bitmap {
+        if self.plate_expansion_factor <= 1.0 {
+            return make_standard_circle_bitmap(self, precision);
+        }
 
-        for y in 0..bitmap.height {
-            for x in 0..bitmap.width {
-                let dx = (x as f64 - bitmap.center_x) * precision;
-                let dy = (y as f64 - bitmap.center_y) * precision;
+        let regular = make_standard_circle_bitmap(&PlateCircle { diameter: self.diameter, resolution: self.resolution, plate_expansion_factor: 1.0 }, precision);
 
-                if f64::sqrt(dx * dx + dy * dy) > radius {
-                    bitmap.set_point(x, y, 2)
-                }
+        let width = self.width();
+        let height = self.height();
+
+        let mut bitmap = Bitmap::new((width * self.plate_expansion_factor / precision) as i32, (height / precision) as i32);
+
+
+        // Super-impose the normal-sized circle onto the expanded bitmap
+        for y in 0..regular.height {
+            for x in 0..regular.width {
+                bitmap.set_point(x, y, regular.get_point(x, y))
             }
         }
+
+        bitmap
     }
 
     // We return a rectangle when expanding a circle
-    fn expand(&self, size: f64) -> Box<dyn PlateShape> {
+    fn extend_right(&self, size: f64) -> Box<dyn PlateShape> {
         Box::new(PlateCircle {
             resolution: self.resolution,
-            diameter: self.diameter * size,
+            diameter: self.diameter,
+            plate_expansion_factor: self.plate_expansion_factor * size,
         })
     }
 
@@ -200,20 +218,8 @@ impl PlateShape for PlateCircle {
         Box::new(PlateCircle {
             resolution: self.resolution,
             diameter: self.diameter,
+            plate_expansion_factor: self.plate_expansion_factor,
         })
-    }
-
-    fn intersect_square(&self, size: f64) -> Option<Box<dyn PlateShape>> {
-        if size <= 0.0 {
-            return None;
-        }
-
-        let diameter = self.diameter / self.resolution - size;
-        if diameter <= 0.0 {
-            None
-        } else {
-            Some(Box::new(PlateCircle::new(diameter, self.resolution)))
-        }
     }
 
     // Also mask bitmap
@@ -228,7 +234,7 @@ impl PlateShape for PlateCircle {
             return None;
         }
 
-        let circle = PlateCircle::new(width / self.resolution, self.resolution);
+        let circle = PlateCircle::new(width / self.resolution, self.resolution, self.plate_expansion_factor);
         Some(Box::new(circle))
     }
 }
