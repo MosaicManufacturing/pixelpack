@@ -183,7 +183,7 @@ impl PlateShape for PlateCircle {
     }
 
     fn make_masked_bitmap(&self, precision: f64) -> Bitmap {
-        if self.plate_expansion_factor < 1.0 {
+        if self.plate_expansion_factor <= 1.0 {
             return make_standard_circle_bitmap(self, precision);
         }
 
