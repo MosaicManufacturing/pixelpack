@@ -33,7 +33,7 @@ pub enum Shape {
 
 impl Shape {
     pub fn new_circle(diameter: f64, resolution: f64) -> Self {
-        Circle(PlateCircle::new(diameter, resolution))
+        Circle(PlateCircle::new(diameter, resolution, 1.0))
     }
 
     pub fn new_rectangle(width: f64, height: f64, resolution: f64) -> Self {
@@ -135,11 +135,11 @@ pub struct PlateCircle {
 }
 
 impl PlateCircle {
-    pub fn new(diameter: f64, resolution: f64) -> Self {
+    pub fn new(diameter: f64, resolution: f64, plate_expansion_factor: f64) -> Self {
         PlateCircle {
             resolution,
             diameter: diameter * resolution,
-            plate_expansion_factor: 1.0,
+            plate_expansion_factor,
         }
     }
 }
@@ -234,7 +234,7 @@ impl PlateShape for PlateCircle {
             return None;
         }
 
-        let circle = PlateCircle::new(width / self.resolution, self.resolution);
+        let circle = PlateCircle::new(width / self.resolution, self.resolution, self.plate_expansion_factor);
         Some(Box::new(circle))
     }
 }
